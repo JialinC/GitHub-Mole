@@ -72,6 +72,22 @@ class QueryNode:
         return self.__str__()
 
 
+class Query(QueryNode):
+    """
+    Terminal QueryNode that can be executed.
+    """
+    def substitute(self, **kwargs):
+        """
+        Substitutes Query with values.
+        Args:
+            **kwargs: Map of substitutions
+
+        Returns:
+            Modified Query as a string
+        """
+        return Template(self.__str__()).substitute(**kwargs)
+
+
 class QueryNodePaginator(QueryNode):
     """
     Specialized QueryNode for paginated requests.
@@ -137,23 +153,6 @@ class QueryNodePaginator(QueryNode):
 
         self._has_next_page = None
         self._end_cursor = None
-
-
-class Query(QueryNode):
-    """
-    Terminal QueryNode that can be executed.
-    """
-    def substitute(self, **kwargs):
-        """
-        Substitutes Query with values.
-        Args:
-            **kwargs: Map of substitutions
-
-        Returns:
-            Modified Query as a string
-        """
-        return Template(self.__str__()).substitute(**kwargs)
-
 
 class PaginatedQuery(Query):
     """
