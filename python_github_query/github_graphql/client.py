@@ -7,9 +7,8 @@ from typing import Union
 import requests
 from requests import Response
 from requests.exceptions import RequestException
-
-from github_graphql.authentication import Authenticator
-from github_graphql.query import PaginatedQuery, Query
+from .authentication import Authenticator
+from .query import PaginatedQuery, Query
 
 
 class InvalidAuthenticationError(Exception):
