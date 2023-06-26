@@ -2,7 +2,15 @@ from github_graphql.query import Query, QueryNode
 
 
 class UserLoginViewer(Query):
-    query = QueryNode(
+    """
+    The raw GraphQL query:
+    query {
+        viewer {
+            login
+        }
+    }
+    """
+    query = Query(
         fields=[
             QueryNode(
                 "viewer",
@@ -13,7 +21,18 @@ class UserLoginViewer(Query):
 
 
 class UserLogin(Query):
-    query = QueryNode(
+    """
+    The raw GraphQL query
+    query ($user: String!){
+        user(login: $user){
+            login
+            name
+            email
+            createdAt
+        }
+    }
+    """
+    query = Query(
         fields=[
             QueryNode(
                 "user",
