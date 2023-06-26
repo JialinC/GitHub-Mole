@@ -37,11 +37,6 @@ Instance methods:
 `get_authorization_header()`
 * Returns the authentication header as a dictionary i.e. {"Authorization": "your_access_token"}.
 
-### client  — 
-Source code: [github_graphql/client.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/github_graphql/client.py)
-
-This module contains
-
 ### query  — Classes for building GraphQL queries
 Source code: [github_graphql/query.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/github_graphql/query.py)
 
@@ -50,10 +45,12 @@ QueryNode represents a basic building block of a GraphQL query.
 QueryNodePaginator is a specialized QueryNode for paginated requests. 
 Query represents a terminal query node that can be executed. 
 PaginatedQuery represents a terminal query node designed for paginated requests.
+* You can find more information about GitHub GraphQL API here: [GitHub GraphQL API documentation](https://docs.github.com/en/graphql)
+* You can use GitHub GraphQL Explorer to try out queries: [GitHub GraphQL API Explorer](https://docs.github.com/en/graphql/overview/explorer)
 
 <span style="font-size: larger;">QueryNode Objects</span>
 
-The QueryNode class  this code provides a framework for constructing GraphQL queries using Python classes. 
+The QueryNode class provides a framework for constructing GraphQL queries using Python classes. 
 It allows for building complex queries with nested fields and supports pagination for paginated requests.
 
 `class QueryNode(name, fields, args)`
@@ -79,6 +76,44 @@ Instance methods:
 
 `__repr__()`
 * Debug method.
+
+Here is a basic example of how to use QueryNode class to create a GraphQL query:
+
+<table>
+<tr>
+<th>GraphQL</th>
+<th>Python</th>
+</tr>
+<tr>
+<td>
+
+```javascript
+query { 
+  viewer { 
+    login
+  }
+}
+```
+
+</td>
+<td>
+
+```python
+query = QueryNode(
+    fields=[
+        QueryNode(
+            "viewer",
+            fields=["login"]
+        )
+    ]
+)
+```
+
+</td>
+</tr>
+</table>
+
+<span style="font-size: larger;">Query Objects</span>
 
 <span style="font-size: larger;">QueryNodePaginator Objects</span>
 
@@ -107,12 +142,22 @@ Instance methods:
 `update_paginator`
 `reset_paginator`
 
-<span style="font-size: larger;">Query Objects</span>
+
 
 <span style="font-size: larger;">PaginatedQuery Objects</span>
 
-### repositories  — 
-Source code: [miners/repositories.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/miners/repositories.py)
+### client  — 
+Source code: [github_graphql/client.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/github_graphql/client.py)
+
+This module contains
+
+
+
+
+### login  — 
+Source code: [queries/login.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/login.py)
+
+
 
 ### comments  — 
 Source code: [queries/comments.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/comments.py)
@@ -123,9 +168,6 @@ Source code: [queries/commits.py](https://github.com/JialinC/GitHub_GraphQL/blob
 ### contributions  — 
 Source code: [queries/contributions.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/contributions.py)
 
-### login  — 
-Source code: [queries/login.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/login.py)
-
 ### metrics  — 
 Source code: [queries/metrics.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/metrics.py)
 
@@ -134,3 +176,6 @@ Source code: [queries/repositories.py](https://github.com/JialinC/GitHub_GraphQL
 
 ### repositories_graph —
 Source code: [queries/repositories_graph.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/repository_graph.py)
+
+### repositories  — 
+Source code: [miners/repositories.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/miners/repositories.py)
