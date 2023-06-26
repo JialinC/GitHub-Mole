@@ -1,4 +1,4 @@
-from github_graphql.query import Query, QueryNode
+from python_github_query.github_graphql.query import Query, QueryNode
 
 
 class UserLoginViewer(Query):
