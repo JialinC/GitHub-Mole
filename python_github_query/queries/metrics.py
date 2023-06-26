@@ -1,4 +1,4 @@
-from github_graphql.query import QueryNode, Query
+from python_github_query.github_graphql.query import QueryNode, Query
 
 
 class UserMetrics:
