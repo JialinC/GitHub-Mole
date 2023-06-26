@@ -4,8 +4,8 @@ from python_github_query.github_graphql.query import QueryNode, Query
 class UserMetrics:
     """
     The raw GraphQL query:
-    query ($user: String!){
-        user(login: $user){
+    query ($user: String!) {
+        user(login: $user) {
             login
             name
             email
@@ -19,43 +19,43 @@ class UserMetrics:
             isGitHubStar
             isHireable
             isSiteAdmin
-            watching{
+            watching {
                 totalCount
             }
-            starredRepositories{
+            starredRepositories {
                 totalCount
             }
-            following{
+            following {
                 totalCount
             }
-            followers{
+            followers {
                 totalCount
             }
-            gists{
+            gists {
                 totalCount
             }
-            gistComments{
+            gistComments {
                 totalCount
             }
-            issueComments{
+            issueComments {
                 totalCount
             }
-            issues{
+            issues {
                 totalCount
             }
-            projects{
+            projects {
                 totalCount
             }
-            pullRequests{
+            pullRequests {
                 totalCount
             }
-            repositories{
+            repositories {
                 totalCount
             }
-            repositoryDiscussionComments{
+            repositoryDiscussionComments {
                 totalCount
             }
-            repositoryDiscussions{
+            repositoryDiscussions {
                 totalCount
             }
         }
