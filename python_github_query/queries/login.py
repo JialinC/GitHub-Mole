@@ -40,7 +40,10 @@ class UserLogin(Query):
                     "login": "$user"
                 },
                 fields=[
-                    "login", "name", "email", "createdAt"
+                    "login",
+                    "name",
+                    "email",
+                    "createdAt"
                 ]
             )
         ]
