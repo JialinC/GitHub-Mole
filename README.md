@@ -336,10 +336,89 @@ query = Query(
 </tr>
 </table>
 
-
-
-### commits  — 
+### commits  — Query for user's contribution metrics within a specified time range
 Source code: [queries/commits.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/commits.py)
+
+UserCommits represents a GraphQL query for retrieving commit-related contributions of a user within a specified time range. 
+Inside the "user" field, there is a nested field called "contributionsCollection". This field represents the collection of contributions made by the user.
+The "contributionsCollection" field accepts two additional arguments, "from" and "to", with values of "$start" and "$end" respectively. 
+These variables represent the start and end dates of the time range for which the contributions are requested. 
+Inside the "contributionsCollection" field, several other fields are requested, 
+such as "startedAt", "endedAt", "hasActivityInThePast", "hasAnyContributions", "hasAnyRestrictedContributions", "restrictedContributionsCount", and various other commit-related metrics.
+By including these fields in the query, you can retrieve information about the user's commit contributions, issue contributions, pull request contributions, and other related metrics within the specified time range.
+
+<table>
+<tr>
+<th>GraphQL</th>
+<th>Python</th>
+</tr>
+<tr>
+<td>
+
+```
+query ($user: String!, $start: DateTime!, $end: DateTime!) {
+    user(login: "$user"){
+        contributionsCollection(from:"$start",to:"$end"){
+            startedAt
+            endedAt
+            hasActivityInThePast
+            hasAnyContributions
+            hasAnyRestrictedContributions
+            restrictedContributionsCount
+            totalCommitContributions
+            totalIssueContributions
+            totalPullRequestContributions
+            totalPullRequestReviewContributions
+            totalRepositoriesWithContributedCommits
+            totalRepositoriesWithContributedIssues
+            totalRepositoriesWithContributedPullRequestReviews
+            totalRepositoriesWithContributedPullRequests
+            totalRepositoryContributions
+        }
+    }
+}
+```
+
+</td>
+<td>
+
+```python
+query = Query(
+        fields=[
+            QueryNode(
+                "user",
+                args={"login": "$user"},
+                fields=[
+                    QueryNode(
+                        "contributionsCollection",
+                        args={"from": "$start", "to": "$end"},
+                        fields=[
+                            "startedAt",
+                            "endedAt",
+                            "hasActivityInThePast",
+                            "hasAnyContributions",
+                            "hasAnyRestrictedContributions",
+                            "restrictedContributionsCount",
+                            "totalCommitContributions",
+                            "totalIssueContributions",
+                            "totalPullRequestContributions",
+                            "totalPullRequestReviewContributions",
+                            "totalRepositoriesWithContributedCommits",
+                            "totalRepositoriesWithContributedIssues",
+                            "totalRepositoriesWithContributedPullRequestReviews",
+                            "totalRepositoriesWithContributedPullRequests",
+                            "totalRepositoryContributions",
+                        ]
+                    ),
+                ]
+            )
+        ]
+    )
+```
+
+</td>
+</tr>
+</table>
 
 ### comments  — 
 Source code: [queries/comments.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/comments.py)
