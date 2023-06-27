@@ -77,43 +77,15 @@ Instance methods:
 `__repr__()`
 * Debug method.
 
-Here is a basic example of how to use QueryNode class to create a GraphQL query:
-
-<table>
-<tr>
-<th>GraphQL</th>
-<th>Python</th>
-</tr>
-<tr>
-<td>
-
-```javascript
-query { 
-  viewer { 
-    login
-  }
-}
-```
-
-</td>
-<td>
-
-```python
-query = QueryNode(
-    fields=[
-        QueryNode(
-            "viewer",
-            fields=["login"]
-        )
-    ]
-)
-```
-
-</td>
-</tr>
-</table>
-
 <span style="font-size: larger;">Query Objects</span>
+
+The Query class is a subclass of QueryNode and represents a terminal QueryNode that can be executed. 
+It provides a substitute method to substitute values in the query using keyword arguments.
+
+Instance methods:
+
+`substitute(**kwargs)`
+* This method substitutes the placeholders in the query string with specific values provided as keyword arguments.
 
 <span style="font-size: larger;">QueryNodePaginator Objects</span>
 
@@ -121,7 +93,6 @@ The QueryNodePaginator class extends the QueryNode class and adds pagination-rel
 It keeps track of pagination state, appends pagination fields to the existing fields, 
 provides methods to check for a next page and update the pagination state, 
 and includes a method to reset the pagination state.
-
 
 `class QueryNodePaginator(name, fields, args, page_length)`
 * `name` is the name of the QueryNode, 
