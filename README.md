@@ -128,7 +128,90 @@ This module contains
 ### login  — 
 Source code: [queries/login.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/login.py)
 
+The `UserLoginViewer` class represents a GraphQL query that retrieves the login information of the currently authenticated user.
+The query is defined using the Query class, and the viewer field is requested with the login field nested inside it. 
 
+<table>
+<tr>
+<th>GraphQL</th>
+<th>Python</th>
+</tr>
+<tr>
+<td>
+
+```javascript
+query { 
+  viewer { 
+    login
+  }
+}
+```
+
+</td>
+<td>
+
+```python
+query = Query(
+        fields=[
+            QueryNode(
+                "viewer",
+                fields=["login"]
+            )
+        ]
+    )
+```
+
+</td>
+</tr>
+</table>
+
+The `UserLogin` class represents a GraphQL query that retrieves detailed information about a user. 
+The query accepts a variable called $user of type String!, which represents the user's login. The user field is requested with the login argument set to the value of the $user variable. Inside the user field, additional fields like login, name, email, and createdAt are requested. 
+
+<table>
+<tr>
+<th>GraphQL</th>
+<th>Python</th>
+</tr>
+<tr>
+<td>
+
+```javascript
+query ($user: String!){
+    user(login: $user){
+        login
+        name
+        email
+        createdAt
+    }
+}
+```
+
+</td>
+<td>
+
+```python
+query = Query(
+        fields=[
+            QueryNode(
+                "user",
+                args={
+                    "login": "$user"
+                },
+                fields=[
+                    "login", 
+                    "name", 
+                    "email", 
+                    "createdAt"
+                ]
+            )
+        ]
+    )
+```
+
+</td>
+</tr>
+</table>
 
 ### comments  — 
 Source code: [queries/comments.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/comments.py)
