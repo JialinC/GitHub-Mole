@@ -125,7 +125,7 @@ This module contains
 
 
 
-### login  — 
+### login  — Query for user basic login info
 Source code: [queries/login.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/login.py)
 
 The `UserLoginViewer` class represents a GraphQL query that retrieves the login information of the currently authenticated user.
@@ -139,7 +139,7 @@ The query is defined using the Query class, and the viewer field is requested wi
 <tr>
 <td>
 
-```javascript
+```
 query { 
   viewer { 
     login
@@ -176,7 +176,7 @@ The query accepts a variable called $user of type String!, which represents the 
 <tr>
 <td>
 
-```javascript
+```
 query ($user: String!){
     user(login: $user){
         login
@@ -213,17 +213,139 @@ query = Query(
 </tr>
 </table>
 
-### comments  — 
-Source code: [queries/comments.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/comments.py)
+### metrics  — Query for user's total contribution metrics
+Source code: [queries/metrics.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/metrics.py)
+
+`UserMetrics` class represents a GraphQL query that retrieves various metrics and information about a user. 
+It is designed to fetch information such as the user's login, name, email, creation date, bio, company, and several other metrics related to their GitHub activity.
+The root field in the query is "user", indicating that information about a specific user will be retrieved. The "user" field accepts an argument called "login", which represents the user's login.
+Inside the "user" field, various other fields are requested, including "login", "name", "email", "createdAt", "bio", "company", and several other metrics related to the user's GitHub activity.
+Some fields, such as "watching", "starredRepositories", "following", and "followers", have additional nested fields, specifically the "totalCount" field. 
+These nested fields allow you to retrieve the total count of certain metrics, such as the number of repositories a user is watching or the number of followers they have.
+
+<table>
+<tr>
+<th>GraphQL</th>
+<th>Python</th>
+</tr>
+<tr>
+<td>
+
+```
+query ($user: String!) {
+    user(login: $user) {
+        login
+        name
+        email
+        createdAt
+        bio
+        company
+        isBountyHunter
+        isCampusExpert
+        isDeveloperProgramMember
+        isEmployee
+        isGitHubStar
+        isHireable
+        isSiteAdmin
+        watching {
+            totalCount
+        }
+        starredRepositories {
+            totalCount
+        }
+        following {
+            totalCount
+        }
+        followers {
+            totalCount
+        }
+        gists {
+            totalCount
+        }
+        gistComments {
+            totalCount
+        }
+        issueComments {
+            totalCount
+        }
+        issues {
+            totalCount
+        }
+        projects {
+            totalCount
+        }
+        pullRequests {
+            totalCount
+        }
+        repositories {
+            totalCount
+        }
+        repositoryDiscussionComments {
+            totalCount
+        }
+        repositoryDiscussions {
+            totalCount
+        }
+    }
+}
+```
+
+</td>
+<td>
+
+```python
+query = Query(
+        fields=[
+            QueryNode(
+                "user",
+                args={"login": "$user"},
+                fields=[
+                    "login",
+                    "name",
+                    "email",
+                    "createdAt",
+                    "bio",
+                    "company",
+                    "isBountyHunter",
+                    "isCampusExpert",
+                    "isDeveloperProgramMember",
+                    "isEmployee",
+                    "isGitHubStar",
+                    "isHireable",
+                    "isSiteAdmin",
+                    QueryNode("watching", fields=["totalCount"]),
+                    QueryNode("starredRepositories", fields=["totalCount"]),
+                    QueryNode("following", fields=["totalCount"]),
+                    QueryNode("followers", fields=["totalCount"]),
+                    QueryNode("gists", fields=["totalCount"]),
+                    QueryNode("gistComments", fields=["totalCount"]),
+                    QueryNode("issueComments", fields=["totalCount"]),
+                    QueryNode("issues", fields=["totalCount"]),
+                    QueryNode("projects", fields=["totalCount"]),
+                    QueryNode("pullRequests", fields=["totalCount"]),
+                    QueryNode("repositories", fields=["totalCount"]),
+                    QueryNode("repositoryDiscussionComments", fields=["totalCount"]),
+                    QueryNode("repositoryDiscussions", fields=["totalCount"]),
+                ]
+            )
+        ]
+    )
+```
+
+</td>
+</tr>
+</table>
+
+
 
 ### commits  — 
 Source code: [queries/commits.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/commits.py)
 
+### comments  — 
+Source code: [queries/comments.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/comments.py)
+
 ### contributions  — 
 Source code: [queries/contributions.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/contributions.py)
-
-### metrics  — 
-Source code: [queries/metrics.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/metrics.py)
 
 ### repositories  — 
 Source code: [queries/repositories.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/repositories.py)
