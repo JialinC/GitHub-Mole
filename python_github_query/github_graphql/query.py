@@ -10,7 +10,7 @@ class QueryNode:
     """
     Basic building block of a Query.
     """
-    def __init__(self, name: str = "query", fields: List[Union[str, 'QueryNode']] = None, args: Dict = None):
+    def __init__(self, name: str = "query", fields: List[Union[str, 'QueryNode']] = [], args: Dict = None):
         """
         Initializes a QueryNode.
         Args:
@@ -39,7 +39,7 @@ class QueryNode:
             elif isinstance(value, list):
                 args_list.append(f'{key}: [{", ".join(value)}]')
             elif isinstance(value, dict):
-                args_list.append(f'{key}: {{{", ".join([f"{_k}:{_v}" for _k, _v in value.items()])}}}')
+                args_list.append(f'{key}: {{{", ".join([f"{_k}: {_v}" for _k, _v in value.items()])}}}')
             elif isinstance(value, bool):
                 args_list.append(f'{key}: {str(value).lower()}')
             else:
@@ -71,6 +71,16 @@ class QueryNode:
     def __repr__(self):
         return self.__str__()
 
+    def __eq__(self, other):
+        if not isinstance(other, QueryNode):
+            return False
+
+        return (
+                self.name == other.name
+                and self.fields == other.fields
+                and self.args == other.args
+        )
+
 
 class Query(QueryNode):
     """
@@ -95,7 +105,7 @@ class QueryNodePaginator(QueryNode):
     _has_next_page = True
     _end_cursor = None
 
-    def __init__(self, name: str = "query", fields: List[Union[str, 'QueryNode']] = None, args: Dict = None,
+    def __init__(self, name: str = "query", fields: List[Union[str, 'QueryNode']] = [], args: Dict = None,
                  page_length: int = 100):
         """
         Initializes a QueryNodePaginator.
@@ -122,7 +132,6 @@ class QueryNodePaginator(QueryNode):
         if self._end_cursor is not None:
             self.args.update({"after": self._end_cursor})
 
-        self.fields.append("totalCount")
         self.fields.append(QueryNode("pageInfo", fields=["hasNextPage", "endCursor"]))
 
     def has_next(self):
@@ -142,7 +151,6 @@ class QueryNodePaginator(QueryNode):
         """
         self._has_next_page = has_next_page
         self._end_cursor = end_cursor
-
         self.args.update({"after": self._end_cursor})
 
     def reset_paginator(self):
@@ -153,6 +161,16 @@ class QueryNodePaginator(QueryNode):
 
         self._has_next_page = None
         self._end_cursor = None
+
+    def __eq__(self, other):
+        if not isinstance(other, QueryNodePaginator):
+            return False
+
+        return (
+                super().__eq__(other)
+                and self.page_length == other.page_length
+        )
+
 
 class PaginatedQuery(Query):
     """
@@ -199,3 +217,4 @@ class PaginatedQuery(Query):
                 return [node.name, ] + path, paginator
 
         return [], None
+
