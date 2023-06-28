@@ -88,7 +88,7 @@ Instance methods:
 * This method substitutes the placeholders in the query string with specific values provided as keyword arguments.
 
 <span style="font-size: larger;">QueryNodePaginator Objects</span>
-
+This need a new design
 The QueryNodePaginator class extends the QueryNode class and adds pagination-related functionality. 
 It keeps track of pagination state, appends pagination fields to the existing fields, 
 provides methods to check for a next page and update the pagination state, 
