@@ -1,4 +1,4 @@
-from github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
+from python_github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 
 
 class UserComments:
@@ -12,6 +12,7 @@ class UserComments:
                     QueryNodePaginator(
                         "$comment_type",
                         fields=[
+                            "totalCount",
                             QueryNode(
                                 "nodes",
                                 fields=["body", "createdAt"]
