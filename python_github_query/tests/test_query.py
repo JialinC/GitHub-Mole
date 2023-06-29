@@ -1,4 +1,3 @@
-import pytest
 from python_github_query.github_graphql.query import QueryNode, Query, QueryNodePaginator, PaginatedQuery
 
 
@@ -8,10 +7,12 @@ class TestQuery:
                                "arg2": ["value2", "value3"],
                                "arg3": {"nested": "value4"},
                                "arg4": True,
-                               "arg5": 1})
+                               "arg5": 1,
+                               "arg6": "$pg_size"})
 
         formatted_args = node._format_args()
-        expected_args = '(arg1: "value1", arg2: [value2, value3], arg3: {nested: value4}, arg4: true, arg5: 1)'
+        expected_args = '(arg1: "value1", arg2: [value2, value3], arg3: {nested: value4}, ' \
+                        'arg4: true, arg5: 1, arg6: $pg_size)'
         assert formatted_args == expected_args
 
     def test_query_node_format_fields(self):
@@ -75,55 +76,66 @@ class TestQuery:
         assert substituted_query == expected_substituted_query
 
     def test_query_node_paginator_initialization(self):
-        page_length = 50
-        paginator = QueryNodePaginator(name="query", fields=["field1", "field2"], args={"arg1": "value1"},
-                                       page_length=page_length)
-
+        paginator = QueryNodePaginator(name="query", fields=["field1", "field2"], args={"arg1": "value1"})
         assert paginator.name == "query"
-        assert paginator.fields == ["field1", "field2", QueryNode("pageInfo", fields=["hasNextPage", "endCursor"])]
-        assert paginator.args == {"arg1": "value1", "first": page_length}
-        assert paginator.page_length == page_length
-        assert paginator._has_next_page is True
-        assert paginator._end_cursor is None
+        assert paginator.fields == ["field1", "field2"]
+        assert paginator.args == {"arg1": "value1"}
+        assert paginator.has_next_page is True
+
+    def test_query_node_paginator_update_paginator(self):
+        paginator = QueryNodePaginator(name="query", fields=["field1"], args={"arg1": "value1"})
+        paginator.update_paginator(has_next_page=False, end_cursor="abc123")
+
+        assert paginator.has_next_page is False
+        assert paginator.args["after"] == "abc123"
 
     def test_query_node_paginator_has_next(self):
         paginator = QueryNodePaginator()
         assert paginator.has_next() is True
 
-        paginator._has_next_page = False
+        paginator.has_next_page = False
         assert paginator.has_next() is False
 
-    def test_query_node_paginator_update_paginator(self):
-        paginator = QueryNodePaginator()
-        paginator.update_paginator(has_next_page=False, end_cursor="abc123")
-
-        assert paginator._has_next_page is False
-        assert paginator._end_cursor == "abc123"
-        assert paginator.args["after"] == "abc123"
-
     def test_query_node_paginator_reset_paginator(self):
-        paginator = QueryNodePaginator(name="query", fields=["field1"], args={"arg1": "value1"}, page_length=50)
-        paginator.update_paginator(has_next_page=True, end_cursor="abc123")
+        paginator = QueryNodePaginator(name="query", fields=["field1"], args={"arg1": "value1"})
+        paginator.has_next_page = False
+        paginator.args["after"] = "abc123"
         paginator.reset_paginator()
 
-        expected_fields = ["field1", QueryNode("pageInfo", fields=["hasNextPage", "endCursor"])]
-        assert paginator.fields == expected_fields
-
-        expected_args = {"arg1": "value1", "first": 50}
+        expected_args = {"arg1": "value1"}
         assert paginator.args == expected_args
-        assert paginator._has_next_page is None
-        assert paginator._end_cursor is None
+        assert paginator.has_next_page is None
 
-    def test_paginated_query_initialization():
+    def test_query_node_paginator_equality(self):
+        paginator1 = QueryNodePaginator(name="query", fields=["field1"], args={"arg1": "value1"})
+        paginator2 = QueryNodePaginator(name="query", fields=["field1"], args={"arg1": "value1"})
+        paginator3 = QueryNodePaginator(name="query", fields=["field2"], args={"arg1": "value1"})
+
+        assert paginator1 == paginator2
+        assert paginator1 != paginator3
+
+    def test_paginated_query_initialization(self):
         fields = [
-            QueryNode("user", fields=["login", "name"]),
-            QueryNodePaginator(page_length=50)
+            QueryNode("user", fields=[
+                "login",
+                "name",
+                QueryNode("repository",
+                          fields=[
+                              QueryNode("pageInfo",
+                                        fields=[
+                                            "endCursor",
+                                            "hasNextPage"]
+                                        )
+                              ]
+                          )
+                ]
+            )
         ]
 
         query = PaginatedQuery(name="query", fields=fields)
 
-        expected_path = ["query", "user"]
-        expected_paginator = QueryNodePaginator(page_length=50)
+        expected_path = ["user", "repository"]
+        expected_paginator = fields[0].fields[2]
 
         assert query.name == "query"
         assert query.fields == fields
@@ -131,40 +143,18 @@ class TestQuery:
         assert query.path == expected_path
         assert query.paginator == expected_paginator
 
-    def test_paginated_query_initialization_no_paginator():
+    def test_extract_path_to_pageinfo_node(self):
         fields = [
             QueryNode("user", fields=["login", "name"]),
+            QueryNode("repository", fields=[
+                QueryNode("pageInfo", fields=["endCursor", "hasNextPage"])
+            ])
         ]
 
-        with pytest.raises(InvalidQueryException):
-            query = PaginatedQuery(name="query", fields=fields)
-
-    # def test_paginated_query_get_path_to_paginator():
-    #     node1 = QueryNode("user", fields=["login"])
-    #     node2 = QueryNodePaginator(page_length=50)
-    #     node3 = QueryNode("repository", fields=["name"])
-    #
-    #     node1.fields.append(node2)
-    #     node2.fields.append(node3)
-    #
-    #     path, paginator = PaginatedQuery.get_path_to_paginator(node1)
-    #     expected_path = ["user"]
-    #     expected_paginator = node2
-    #
-    #     assert path == expected_path
-    #     assert paginator == expected_paginator
-    #
-    # def test_paginated_query_get_path_to_paginator_no_paginator():
-    #     node1 = QueryNode("user", fields=["login"])
-    #     node2 = QueryNode("repository", fields=["name"])
-    #
-    #     node1.fields.append(node2)
-    #
-    #     path, paginator = PaginatedQuery.get_path_to_paginator(node1)
-    #     expected_path = []
-    #     expected_paginator = None
-    #
-    #     assert path == expected_path
-    #     assert paginator == expected_paginator
-
+        query = PaginatedQuery(name="query", fields=fields)
+        path, paginator = PaginatedQuery.extract_path_to_pageinfo_node(query)
+        expected_path = ["repository"]
+        expected_paginator = query.fields[1]
+        assert path == expected_path
+        assert paginator == expected_paginator
 
