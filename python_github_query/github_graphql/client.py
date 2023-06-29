@@ -98,34 +98,34 @@ class Client:
         Returns:
             Response as a JSON
         """
-        while True:
-            response = requests.post(
-                self._base_path(),
-                json={
-                    'query': Template(query).substitute(**substitutions)
-                    if isinstance(query, str) else query.substitute(**substitutions)
-                },
-                headers=self._generate_headers()
-            )
+        # while True:
+        response = requests.post(
+            self._base_path(),
+            json={
+                'query': Template(query).substitute(**substitutions)
+                if isinstance(query, str) else query.substitute(**substitutions)
+            },
+            headers=self._generate_headers()
+        )
 
-            if int(response.headers["X-RateLimit-Remaining"]) < 2:
-                reset_at = datetime.utcfromtimestamp(int(response.headers["X-RateLimit-Reset"]))
-                current_time = datetime.utcnow()
+            # if int(response.headers["X-RateLimit-Remaining"]) < 2:
+            #     reset_at = datetime.utcfromtimestamp(int(response.headers["X-RateLimit-Reset"]))
+            #     current_time = datetime.utcnow()
+            #
+            #     seconds = (reset_at - current_time).total_seconds()
+            #     print(f"waiting for {seconds}s.")
+            #     time.sleep(seconds + 5)
 
-                seconds = (reset_at - current_time).total_seconds()
-                print(f"waiting for {seconds}s.")
-                time.sleep(seconds + 5)
+        try:
+            json_response = response.json()
 
-            try:
-                json_response = response.json()
+        except RequestException:
+            raise QueryFailedException(query=query, response=response)
 
-            except RequestException:
-                raise QueryFailedException(query=query, response=response)
-
-            if response.status_code == 200 and "errors" not in json_response:
-                return json_response["data"]
-            else:
-                raise QueryFailedException(query=query, response=response)
+        if response.status_code == 200 and "errors" not in json_response:
+            return json_response["data"]
+        else:
+            raise QueryFailedException(query=query, response=response)
 
     def execute(self, query: Union[str, Query, PaginatedQuery], substitutions: dict):
         """
@@ -154,17 +154,14 @@ class Client:
         """
         while query.paginator.has_next():
             response = self._execute(query, substitutions)
-
-            curr_info = response
+            curr_node = response
 
             for field_name in query.path:
-                curr_info = curr_info[Template(field_name).substitute(**substitutions)]
+                curr_node = curr_node[Template(field_name).substitute(**substitutions)]
 
-            end_cursor = curr_info["pageInfo"]["endCursor"]
-            has_next_page = curr_info["pageInfo"]["hasNextPage"]
-
+            end_cursor = curr_node["pageInfo"]["endCursor"]
+            has_next_page = curr_node["pageInfo"]["hasNextPage"]
             query.paginator.update_paginator(has_next_page, end_cursor)
-
             yield response
 
 
