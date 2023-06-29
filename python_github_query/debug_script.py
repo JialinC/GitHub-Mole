@@ -1,6 +1,8 @@
 import os
+from string import Template
+import json
 #from helper.helper import print_methods, print_attr
-from python_github_query.github_graphql.query import QueryNodePaginator, QueryNode
+from python_github_query.github_graphql.query import QueryNodePaginator, QueryNode, Query, PaginatedQuery
 from python_github_query.github_graphql.authentication import PersonalAccessTokenAuthenticator
 from python_github_query.github_graphql.client import Client
 from python_github_query.queries.login import UserLoginViewer, UserLogin
@@ -27,8 +29,90 @@ if __name__ == '__main__':
     path2 = "https://github.ncsu.edu/api/graphql"
     header2 = enterprise_client._generate_headers()
 
-    print(UserComments.query)
-    print(UserComments.query.path)
+
+    test = UserComments.query
+    # print(test)
+    # print(test.path)
+    # print(test.paginator)
+    args = {"user": "JialinC", "pg_size": 2, "comment_type": "issueComments"}
+    # path = PaginatedQuery.extract_path_to_pageinfo_node(test)
+    # print(path)
+    # pnode = path[1]
+    # print(pnode is test.fields[0].fields[1])
+    # print(test)
+    # test_query = test.substitute(**args)
+    # print(test_query)
+
+    # comments
+    # response1 = requests.post(
+    #     path1,
+    #     json={'query': test_query},
+    #     headers=header1
+    # )
+    # print(response1.json())
+    #
+    # while test.paginator.has_next():
+    #     test_query = test.substitute(**args)
+    #     print(test_query)
+    #     response = requests.post(
+    #         path1,
+    #         json={'query': test_query},
+    #         headers=header1
+    #     ).json()['data']
+    #     curr_node = response
+    #     print(curr_node)
+    #     for field_name in test.path:
+    #         curr_node = curr_node[Template(field_name).substitute(**args)]
+    #         print(curr_node)
+    #     end_cursor = curr_node["pageInfo"]["endCursor"]
+    #     print(end_cursor)
+    #     has_next_page = curr_node["pageInfo"]["hasNextPage"]
+    #     print(has_next_page)
+    #     test.paginator.update_paginator(has_next_page, end_cursor)
+
+    # test_query = test.substitute(**args)
+    # print(test_query)
+    # response = requests.post(
+    #    path1,
+    #    json={'query': test_query},
+    #    headers=header1
+    # ).json()['data']
+    # print(response)
+
+    for response in client.execute(query=UserComments.query, substitutions={"user": "JialinC", "pg_size": 2, "comment_type": "issueComments"}):
+        print(response)
+
+    for response in client.execute(query=UserComments.query, substitutions={"user": "JialinC", "pg_size": 2, "comment_type": "issueComments"}):
+        print(response)
+
+
+
+
+
+    # print(test1.name)
+    # print(test1.fields)
+    # print(len(test1.fields))
+    # print('=====')
+    # print(test1.fields[0].name)
+    # print(test1.fields[0].fields)
+    # print(len(test1.fields[0].fields))
+    # print('=====')
+    # print(test1.fields[0].fields[0])
+    # print('=====')
+    # print(test1.fields[0].fields[1].name)
+    # print(test1.fields[0].fields[1].fields)
+    # print(len(test1.fields[0].fields[1].fields))
+    # print('=====')
+    # print(test1.fields[0].fields[1].fields[0])
+    # print('=====')
+    # print(test1.fields[0].fields[1].fields[1].name)
+    # print(test1.fields[0].fields[1].fields[1].fields)
+    # print(len(test1.fields[0].fields[1].fields[1].fields))
+    # print('=====')
+    # print(test1.fields[0].fields[1].fields[2].name)
+    # print(test1.fields[0].fields[1].fields[2].fields)
+    # print(len(test1.fields[0].fields[1].fields[2].fields))
+
 
     # UserLogin
     # response1 = requests.post(
