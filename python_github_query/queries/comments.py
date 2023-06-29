@@ -1,7 +1,7 @@
 from python_github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 
 
-class UserComments:
+class UserComments(PaginatedQuery):
     query = PaginatedQuery(
         fields=[
             QueryNode(
@@ -11,11 +11,16 @@ class UserComments:
                     "login",
                     QueryNodePaginator(
                         "$comment_type",
+                        args={"first": "$pg_size"},
                         fields=[
                             "totalCount",
                             QueryNode(
                                 "nodes",
                                 fields=["body", "createdAt"]
+                            ),
+                            QueryNode(
+                                "pageInfo",
+                                fields=["endCursor", "hasNextPage"]
                             )
                         ]
                     )
