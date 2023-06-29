@@ -88,11 +88,13 @@ Instance methods:
 * This method substitutes the placeholders in the query string with specific values provided as keyword arguments.
 
 <span style="font-size: larger;">QueryNodePaginator Objects</span>
-This need a new design
+
 The QueryNodePaginator class extends the QueryNode class and adds pagination-related functionality. 
 It keeps track of pagination state, appends pagination fields to the existing fields, 
 provides methods to check for a next page and update the pagination state, 
 and includes a method to reset the pagination state.
+
+#### NOTE: We only implemented single level pagination, as multi-level pagination behavior is not well-defined in different scenarios. For example, you want to query all the pull requests a user made to all his/her repositories. You may develop a query that retrieves all repositories of a user as the first level pagination and all pull requests to each repository as the second level pagination. However, each repository not necessarily has the same number of pull requests. We leave this to the user to decide how they want to handle their multi-level pagination.
 
 `class QueryNodePaginator(name, fields, args, page_length)`
 * `name` is the name of the QueryNode, 
