@@ -4,9 +4,8 @@ from python_github_query.queries.login import UserLoginViewer, UserLogin
 
 @pytest.mark.usefixtures("graphql_client")
 class TestLogin:
-    def test_user_login_viewer_public(self, graphql_client):
-        client = graphql_client[0]
-        response = client.execute(
+    def test_user_login_viewer_public(self):
+        response = self.client.execute(
             query=UserLoginViewer(), substitutions={}
         )
 
@@ -17,9 +16,8 @@ class TestLogin:
         }
         assert response == expected_data
 
-    def test_user_login_viewer_enterprise(self, graphql_client):
-        client = graphql_client[1]
-        response = client.execute(
+    def test_user_login_viewer_enterprise(self):
+        response = self.enterprise_client.execute(
             query=UserLoginViewer(), substitutions={}
         )
 
@@ -30,9 +28,8 @@ class TestLogin:
         }
         assert response == expected_data
 
-    def test_user_login_public(self, graphql_client):
-        client = graphql_client[0]
-        response = client.execute(
+    def test_user_login_public(self):
+        response = self.client.execute(
             query=UserLogin(), substitutions={"user": "JialinC"}
         )
 
@@ -46,8 +43,7 @@ class TestLogin:
         assert response == expected_data
 
     def test_user_login_enterprise(self, graphql_client):
-        client = graphql_client[1]
-        response = client.execute(
+        response = self.enterprise_client.execute(
             query=UserLogin(), substitutions={"user": "jcui9"}
         )
 

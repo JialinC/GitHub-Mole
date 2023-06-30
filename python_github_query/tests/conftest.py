@@ -17,3 +17,12 @@ def graphql_client():
         authenticator=PersonalAccessTokenAuthenticator(token=os.environ.get("GITHUB_ENTERPRISE_PERSONAL_ACCESS_TOKEN"))
     )
     yield [client, enterprise_client]
+
+
+@pytest.fixture(autouse=True)
+def inject_graphql_clients(request, graphql_client):
+    client, enterprise_client = graphql_client
+
+    request.cls.client = client
+
+    request.cls.enterprise_client = enterprise_client

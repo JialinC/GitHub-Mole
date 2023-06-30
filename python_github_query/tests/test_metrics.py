@@ -4,9 +4,8 @@ from python_github_query.queries.metrics import UserMetrics
 
 @pytest.mark.usefixtures("graphql_client")
 class TestMetrics:
-    def test_user_metrics_public(self, graphql_client):
-        client = graphql_client[0]
-        response = client.execute(
+    def test_user_metrics_public(self):
+        response = self.client.execute(
             query=UserMetrics(), substitutions={"user": "JialinC"}
         )
 
@@ -43,9 +42,8 @@ class TestMetrics:
 
         assert response == expected_data
 
-    def test_user_metrics_enterprise(self, graphql_client):
-        client = graphql_client[1]
-        response = client.execute(
+    def test_user_metrics_enterprise(self):
+        response = self.enterprise_client.execute(
             query=UserMetrics(), substitutions={"user": "jcui9"}
         )
 
