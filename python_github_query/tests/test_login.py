@@ -7,7 +7,7 @@ class TestLogin:
     def test_user_login_viewer_public(self, graphql_client):
         client = graphql_client[0]
         response = client.execute(
-            query=UserLoginViewer.query, substitutions={}
+            query=UserLoginViewer(), substitutions={}
         )
 
         expected_data = {
@@ -20,7 +20,7 @@ class TestLogin:
     def test_user_login_viewer_enterprise(self, graphql_client):
         client = graphql_client[1]
         response = client.execute(
-            query=UserLoginViewer.query, substitutions={}
+            query=UserLoginViewer(), substitutions={}
         )
 
         expected_data = {
@@ -33,7 +33,7 @@ class TestLogin:
     def test_user_login_public(self, graphql_client):
         client = graphql_client[0]
         response = client.execute(
-            query=UserLogin.query, substitutions={"user": "JialinC"}
+            query=UserLogin(), substitutions={"user": "JialinC"}
         )
 
         expected_data = {
@@ -48,7 +48,7 @@ class TestLogin:
     def test_user_login_enterprise(self, graphql_client):
         client = graphql_client[1]
         response = client.execute(
-            query=UserLogin.query, substitutions={"user": "jcui9"}
+            query=UserLogin(), substitutions={"user": "jcui9"}
         )
 
         expected_data = {

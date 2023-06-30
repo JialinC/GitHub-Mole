@@ -10,14 +10,23 @@ class UserLoginViewer(Query):
         }
     }
     """
-    query = Query(
-        fields=[
-            QueryNode(
-                "viewer",
-                fields=["login"]
-            )
-        ]
-    )
+    def __init__(self):
+        super().__init__(
+            fields=[
+                QueryNode(
+                    "viewer",
+                    fields=["login"]
+                )
+            ]
+        )
+    # query = Query(
+    #     fields=[
+    #         QueryNode(
+    #             "viewer",
+    #             fields=["login"]
+    #         )
+    #     ]
+    # )
 
 
 class UserLogin(Query):
@@ -32,19 +41,22 @@ class UserLogin(Query):
         }
     }
     """
-    query = Query(
-        fields=[
-            QueryNode(
-                "user",
-                args={
-                    "login": "$user"
-                },
-                fields=[
-                    "login",
-                    "name",
-                    "email",
-                    "createdAt"
-                ]
-            )
-        ]
-    )
+    #query = Query(
+    def __init__(self):
+        super().__init__(
+            fields=[
+                QueryNode(
+                    "user",
+                    args={
+                        "login": "$user"
+                    },
+                    fields=[
+                        "login",
+                        "name",
+                        "email",
+                        "createdAt"
+                    ]
+                )
+            ]
+        )
+    #)
