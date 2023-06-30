@@ -7,7 +7,7 @@ class TestMetrics:
     def test_user_metrics_public(self, graphql_client):
         client = graphql_client[0]
         response = client.execute(
-            query=UserMetrics.query, substitutions={"user": "JialinC"}
+            query=UserMetrics(), substitutions={"user": "JialinC"}
         )
 
         expected_data = {
@@ -46,7 +46,7 @@ class TestMetrics:
     def test_user_metrics_enterprise(self, graphql_client):
         client = graphql_client[1]
         response = client.execute(
-            query=UserMetrics.query, substitutions={"user": "jcui9"}
+            query=UserMetrics(), substitutions={"user": "jcui9"}
         )
 
         expected_data = {
