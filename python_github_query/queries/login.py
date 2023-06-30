@@ -19,14 +19,6 @@ class UserLoginViewer(Query):
                 )
             ]
         )
-    # query = Query(
-    #     fields=[
-    #         QueryNode(
-    #             "viewer",
-    #             fields=["login"]
-    #         )
-    #     ]
-    # )
 
 
 class UserLogin(Query):
@@ -41,7 +33,6 @@ class UserLogin(Query):
         }
     }
     """
-    #query = Query(
     def __init__(self):
         super().__init__(
             fields=[
@@ -59,4 +50,3 @@ class UserLogin(Query):
                 )
             ]
         )
-    #)
