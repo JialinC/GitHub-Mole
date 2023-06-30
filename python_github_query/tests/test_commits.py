@@ -7,9 +7,9 @@ class TestCommits:
     def test_user_commits_public(self, graphql_client):
         client = graphql_client[0]
         response = client.execute(
-            query=UserCommits.query, substitutions={"user": "JialinC",
-                                                    "start": "2020-02-07T18:11:20Z",
-                                                    "end": "2021-02-07T18:11:20Z"}
+            query=UserCommits(), substitutions={"user": "JialinC",
+                                                "start": "2020-02-07T18:11:20Z",
+                                                "end": "2021-02-07T18:11:20Z"}
         )
 
         expected_data = {
@@ -39,9 +39,9 @@ class TestCommits:
     def test_user_commits_enterprise(self, graphql_client):
         client = graphql_client[1]
         response = client.execute(
-            query=UserCommits.query, substitutions={"user": "jcui9",
-                                                    "start": "2020-02-07T18:11:20Z",
-                                                    "end": "2021-02-07T18:11:20Z"}
+            query=UserCommits(), substitutions={"user": "jcui9",
+                                                "start": "2020-02-07T18:11:20Z",
+                                                "end": "2021-02-07T18:11:20Z"}
         )
 
         expected_data = {
