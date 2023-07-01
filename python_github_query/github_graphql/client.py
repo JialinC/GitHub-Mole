@@ -98,7 +98,6 @@ class Client:
         Returns:
             Response as a JSON
         """
-        # while True:
         response = requests.post(
             self._base_path(),
             json={
