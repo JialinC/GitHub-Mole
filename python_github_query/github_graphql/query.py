@@ -1,6 +1,8 @@
 from string import Template
 from typing import Union, List, Dict
+from datetime import datetime
 from collections import deque
+
 
 class InvalidQueryException(Exception):
     pass
@@ -10,6 +12,7 @@ class QueryNode:
     """
     Basic building block of a Query.
     """
+
     def __init__(self, name: str = "query", fields: List[Union[str, 'QueryNode']] = [], args: Dict = None):
         """
         Initializes a QueryNode.
@@ -32,16 +35,15 @@ class QueryNode:
             return ""
 
         args_list = []
-
         for key, value in self.args.items():
-            if value == "$pg_size":
-                args_list.append(f'{key}: {value}')
-            elif isinstance(value, str):
+            if value == "$user":
                 args_list.append(f'{key}: "{value}"')
+            elif isinstance(value, str):
+                args_list.append(f'{key}: {value}')
             elif isinstance(value, list):
                 args_list.append(f'{key}: [{", ".join(value)}]')
             elif isinstance(value, dict):
-                args_list.append(f'{key}: {{{", ".join([f"{_k}: {_v}" for _k, _v in value.items()])}}}')
+                args_list.append(f'{key}: ' + "{" + ", ".join(f"{key}: {v}" for key, v in value.items()) + "}")
             elif isinstance(value, bool):
                 args_list.append(f'{key}: {str(value).lower()}')
             else:
@@ -88,6 +90,28 @@ class Query(QueryNode):
     """
     Terminal QueryNode that can be executed.
     """
+    @staticmethod
+    def test_time_format(time_string):
+        try:
+            datetime.strptime(time_string, "%Y-%m-%dT%H:%M:%SZ")
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def convert_dict(data: Dict):
+        result = {}
+        for key, value in data.items():
+            if isinstance(value, bool):
+                result[key] = str(value).lower()
+            elif isinstance(value, dict):
+                result[key] = "{" + ", ".join(f"{key}: {value}" for key, value in value.items()) + "}"
+            elif isinstance(value, str) and Query.test_time_format(value):
+                result[key] = '"' + value + '"'
+            else:
+                result[key] = value
+        return result
+
     def substitute(self, **kwargs):
         """
         Substitutes Query with values.
@@ -97,13 +121,15 @@ class Query(QueryNode):
         Returns:
             Modified Query as a string
         """
-        return Template(self.__str__()).substitute(**kwargs)
+        converted_args = Query.convert_dict(kwargs)
+        return Template(self.__str__()).substitute(**converted_args)
 
 
 class QueryNodePaginator(QueryNode):
     """
     Specialized QueryNode for paginated requests.
     """
+
     def __init__(self, name: str = "query", fields: List[Union[str, 'QueryNode']] = [], args: Dict = None):
         """
         Initializes a QueryNodePaginator.
@@ -123,7 +149,9 @@ class QueryNodePaginator(QueryNode):
             end_cursor: the end cursor for pagination
         """
         self.has_next_page = has_next_page
-        self.args.update({"after": end_cursor})
+        if end_cursor is None:
+            end_cursor = ""
+        self.args.update({"after": '"'+end_cursor+'"'})
 
     def has_next(self):
         """
@@ -151,6 +179,7 @@ class PaginatedQuery(Query):
     """
     Terminal QueryNode that can be executed designed for paginated requests.
     """
+
     def __init__(self, name: str = "query", fields: List[Union[str, 'QueryNode']] = None, args: Dict = None):
         """
         Initializes a PaginatedQuery.
@@ -177,8 +206,5 @@ class PaginatedQuery(Query):
                 if isinstance(field, QueryNode):
                     if field.name == "pageInfo":
                         return current_path, previous_node
-                    paths.append((current_path+[field.name], field, field.fields))
+                    paths.append((current_path + [field.name], field, field.fields))
         raise InvalidQueryException("Paginator node not found")
-
-
-
