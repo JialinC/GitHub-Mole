@@ -1,18 +1,40 @@
+import pytest
 from python_github_query.github_graphql.query import QueryNode, Query, QueryNodePaginator, PaginatedQuery
 
 
 class TestQuery:
-    def test_query_node_format_args(self):
-        node = QueryNode(args={"arg1": "value1",
-                               "arg2": ["value2", "value3"],
-                               "arg3": {"nested": "value4"},
-                               "arg4": True,
-                               "arg5": 1,
-                               "arg6": "$pg_size"})
+    @pytest.fixture
+    def query_node(self):
+        return QueryNode()
 
-        formatted_args = node._format_args()
-        expected_args = '(arg1: "value1", arg2: [value2, value3], arg3: {nested: value4}, ' \
-                        'arg4: true, arg5: 1, arg6: $pg_size)'
+    def test_format_args_with_string_values(self, query_node):
+        query_node.args = {"key1": "value1", "key2": "value2"}
+        formatted_args = query_node._format_args()
+        expected_args = '(key1: value1, key2: value2)'
+        assert formatted_args == expected_args
+
+    def test_format_args_with_list_values(self, query_node):
+        query_node.args = {"key1": ["value1", "value2"], "key2": ["value3"]}
+        formatted_args = query_node._format_args()
+        expected_args = '(key1: [value1, value2], key2: [value3])'
+        assert formatted_args == expected_args
+
+    def test_format_args_with_dict_values(self, query_node):
+        query_node.args = {"key1": {"subkey1": "value1", "subkey2": "value2"}, "key2": {"subkey3": "value3"}}
+        formatted_args = query_node._format_args()
+        expected_args = '(key1: {subkey1: value1, subkey2: value2}, key2: {subkey3: value3})'
+        assert formatted_args == expected_args
+
+    def test_format_args_with_bool_values(self, query_node):
+        query_node.args = {"key1": True, "key2": False}
+        formatted_args = query_node._format_args()
+        expected_args = '(key1: true, key2: false)'
+        assert formatted_args == expected_args
+
+    def test_format_args_with_no_args(self, query_node):
+        query_node.args = None
+        formatted_args = query_node._format_args()
+        expected_args = ''
         assert formatted_args == expected_args
 
     def test_query_node_format_fields(self):
@@ -49,7 +71,7 @@ class TestQuery:
         assert node.name == "example_query"
         assert node.fields == ["field1", "field2"]
         assert node.args == {"arg1": "value1", "arg2": True, "arg3": 1}
-        expected_str = 'example_query(arg1: "value1", arg2: true, arg3: 1) { field1 field2 }'
+        expected_str = 'example_query(arg1: value1, arg2: true, arg3: 1) { field1 field2 }'
         assert str(node) == expected_str
 
     def test_query_substitute(self):
@@ -87,7 +109,7 @@ class TestQuery:
         paginator.update_paginator(has_next_page=False, end_cursor="abc123")
 
         assert paginator.has_next_page is False
-        assert paginator.args["after"] == "abc123"
+        assert paginator.args["after"] == '"abc123"'
 
     def test_query_node_paginator_has_next(self):
         paginator = QueryNodePaginator()
