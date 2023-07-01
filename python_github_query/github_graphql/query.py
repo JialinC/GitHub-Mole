@@ -91,7 +91,7 @@ class Query(QueryNode):
     Terminal QueryNode that can be executed.
     """
     @staticmethod
-    def test_time_format(time_string):
+    def test_time_format(time_string: str):
         try:
             datetime.strptime(time_string, "%Y-%m-%dT%H:%M:%SZ")
             return True
