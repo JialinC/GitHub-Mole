@@ -1,12 +1,12 @@
 import pytest
-from python_github_query.queries.commits import UserCommits
+from python_github_query.queries.user_contributions_collection import UserContributionsCollection
 
 
 @pytest.mark.usefixtures("graphql_client")
-class TestCommits:
+class TestUserContributionsCollection:
     def test_user_commits_public(self):
         response = self.client.execute(
-            query=UserCommits(), substitutions={"user": "JialinC",
+            query=UserContributionsCollection(), substitutions={"user": "JialinC",
                                                 "start": "2020-02-07T18:11:20Z",
                                                 "end": "2021-02-07T18:11:20Z"}
         )
@@ -37,7 +37,7 @@ class TestCommits:
 
     def test_user_commits_enterprise(self):
         response = self.enterprise_client.execute(
-            query=UserCommits(), substitutions={"user": "jcui9",
+            query=UserContributionsCollection(), substitutions={"user": "jcui9",
                                                 "start": "2020-02-07T18:11:20Z",
                                                 "end": "2021-02-07T18:11:20Z"}
         )

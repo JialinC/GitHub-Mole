@@ -1,12 +1,12 @@
 import pytest
-from python_github_query.queries.metrics import UserMetrics
+from python_github_query.queries.user_profile_stats import UserProfileStats
 
 
 @pytest.mark.usefixtures("graphql_client")
 class TestMetrics:
     def test_user_metrics_public(self):
         response = self.client.execute(
-            query=UserMetrics(), substitutions={"user": "JialinC"}
+            query=UserProfileStats(), substitutions={"user": "JialinC"}
         )
 
         expected_data = {
@@ -44,7 +44,7 @@ class TestMetrics:
 
     def test_user_metrics_enterprise(self):
         response = self.enterprise_client.execute(
-            query=UserMetrics(), substitutions={"user": "jcui9"}
+            query=UserProfileStats(), substitutions={"user": "jcui9"}
         )
 
         expected_data = {

@@ -1,7 +1,7 @@
 from python_github_query.github_graphql.query import QueryNode, Query
 
 
-class UserMetrics(Query):
+class UserProfileStats(Query):
     def __init__(self):
         super().__init__(
             fields=[
