@@ -709,7 +709,195 @@ def __init__(self):
 </table>
 
 ### repositories_graph —
-Source code: [queries/repositories_graph.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/repository_graph.py)
+Source code: [queries/repository_contributors.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/repository_contributors.py)
+
+<table>
+<tr>
+<th>GraphQL</th>
+<th>Python</th>
+</tr>
+<tr>
+<td>
+
+```
+query ($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    defaultBranchRef {
+      target {
+        ... on Commit {
+          history{
+            nodes {
+              author {
+                user {
+                  login
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+</td>
+<td>
+
+```python
+def __init__(self):
+    super().__init__(
+        fields=[
+            QueryNode(
+                "repository",
+                args={"owner": "$owner",
+                      "name": "$repo_name"},
+                fields=[
+                    QueryNode(
+                        "defaultBranchRef",
+                        fields=[
+                            QueryNode(
+                                "target",
+                                fields=[
+                                    QueryNode(
+                                        "... on Commit",
+                                        fields=[
+                                            QueryNode(
+                                                "history",
+                                                fields=[
+                                                    QueryNode(
+                                                        "nodes",
+                                                        fields=[
+                                                            QueryNode(
+                                                                "author",
+                                                                fields=[
+                                                                    QueryNode(
+                                                                        "user",
+                                                                        fields=[
+                                                                            "login"
+                                                                        ]
+                                                                    )
+                                                                ]
+                                                            )
+                                                        ]
+                                                    )
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+```
+</td>
+</tr>
+</table>
+
+
+
 
 ### repositories  — 
-Source code: [miners/repositories.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/miners/repositories.py)
+Source code: [queries/repository_contributors_contribution.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/repository_contributors_contribution.py)
+
+<table>
+<tr>
+<th>GraphQL</th>
+<th>Python</th>
+</tr>
+<tr>
+<td>
+
+```
+query ($owner: String!, $name: String!, $id: ID!){
+  repository(owner: $owner, name: $name) {
+    defaultBranchRef {
+      target {
+        ... on Commit {
+          history(author: { id: $id }) {
+            totalCount
+            nodes {
+              authoredDate
+              changedFilesIfAvailable
+              additions
+              deletions
+              author {
+                user {
+                  login
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+</td>
+<td>
+
+```python
+    def __init__(self):
+        super().__init__(
+            fields=[
+                QueryNode(
+                    "repository",
+                    args={"owner": "$owner",
+                          "name": "$repo_name"},
+                    fields=[
+                        QueryNode(
+                            "defaultBranchRef",
+                            fields=[
+                                QueryNode(
+                                    "target",
+                                    fields=[
+                                        QueryNode(
+                                            "... on Commit",
+                                            fields=[
+                                                QueryNode(
+                                                    "history",
+                                                    args={"author": "$id"},
+                                                    fields=[
+                                                        "totalCount",
+                                                        QueryNode(
+                                                            "nodes",
+                                                            fields=[
+                                                                "authoredDate",
+                                                                "changedFilesIfAvailable",
+                                                                "additions",
+                                                                "deletions",
+                                                                QueryNode(
+                                                                    "author",
+                                                                    fields=[
+                                                                        QueryNode(
+                                                                            "user",
+                                                                            fields=[
+                                                                                "login"
+                                                                            ]
+                                                                        )
+                                                                    ]
+                                                                )
+                                                            ]
+                                                        )
+                                                    ]
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            ]
+        )
+```
+</td>
+</tr>
+</table>
