@@ -25,6 +25,7 @@ class UserLogin(Query):
                     fields=[
                         "login",
                         "name",
+                        "id",
                         "email",
                         "createdAt"
                     ]

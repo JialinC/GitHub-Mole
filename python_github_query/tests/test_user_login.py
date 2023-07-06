@@ -37,6 +37,7 @@ class TestLogin:
             'user': {
                 'login': 'JialinC',
                 'name': 'Jialin Cui',
+                "id": 'MDQ6VXNlcjM4NTQ5Njg5',
                 'email': '',
                 'createdAt': '2018-04-20T04:37:16Z'}
         }
@@ -51,6 +52,7 @@ class TestLogin:
             'user': {
                 'login': 'jcui9',
                 'name': 'jcui9',
+                'id': 'MDQ6VXNlcjE1MTU1',
                 'email': 'jcui9@ncsu.edu',
                 'createdAt': '2019-09-11T17:08:06Z'
             }
