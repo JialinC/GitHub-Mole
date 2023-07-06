@@ -36,7 +36,11 @@ class QueryNode:
 
         args_list = []
         for key, value in self.args.items():
-            if value == "$user":
+            if key == "login":
+                args_list.append(f'{key}: "{value}"')
+            elif key == "owner":
+                args_list.append(f'{key}: "{value}"')
+            elif key == "name":
                 args_list.append(f'{key}: "{value}"')
             elif isinstance(value, str):
                 args_list.append(f'{key}: {value}')
@@ -105,7 +109,15 @@ class Query(QueryNode):
             if isinstance(value, bool):
                 result[key] = str(value).lower()
             elif isinstance(value, dict):
-                result[key] = "{" + ", ".join(f"{key}: {value}" for key, value in value.items()) + "}"
+                # result[key] = "{" + ", ".join(f"{key}: {value}" for key, value in value.items()) + "}"
+                result[key] = (
+                                "{"
+                                + ", ".join(
+                                    f"{key}: {value}" if key == "field" or key == "direction" else f"{key}: \"{value}\""
+                                    for key, value in value.items()
+                                )
+                                + "}"
+                              )
             elif isinstance(value, str) and Query.test_time_format(value):
                 result[key] = '"' + value + '"'
             else:
