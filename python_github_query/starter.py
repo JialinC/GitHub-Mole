@@ -4,11 +4,11 @@ from python_github_query.github_graphql.query import QueryNodePaginator, QueryNo
 from python_github_query.github_graphql.authentication import PersonalAccessTokenAuthenticator
 from python_github_query.github_graphql.client import Client
 from python_github_query.queries.user_login import UserLoginViewer, UserLogin
-from python_github_query.queries.user_profile_stats import UserMetrics
-from python_github_query.queries.user_contributions_collection import UserCommits
-from python_github_query.queries.old_user_comments import UserComments
-from python_github_query.queries.old_user_typed_contributions import UserContributions
+from python_github_query.queries.user_profile_stats import UserProfileStats
+from python_github_query.queries.user_contributions_collection import UserContributionsCollection
 from python_github_query.queries.user_repositories import UserRepositories
+from python_github_query.queries.repository_contributors import RepositoryContributors
+from python_github_query.queries.repository_contributors_contribution import RepositoryContributorsContribution
 
 if __name__ == '__main__':
     client = Client(
@@ -16,28 +16,64 @@ if __name__ == '__main__':
         authenticator=PersonalAccessTokenAuthenticator(token=os.environ.get("GITHUB_PERSONAL_ACCESS_TOKEN"))
     )
 
-    # enterprise_client = Client(
-    #     host="github.ncsu.edu", is_enterprise=True,
-    #     authenticator=PersonalAccessTokenAuthenticator(token=os.environ.get("GITHUB_ENTERPRISE_PERSONAL_ACCESS_TOKEN"))
-    # )
+    enterprise_client = Client(
+        host="github.ncsu.edu", is_enterprise=True,
+        authenticator=PersonalAccessTokenAuthenticator(token=os.environ.get("GITHUB_ENTERPRISE_PERSONAL_ACCESS_TOKEN"))
+    )
 
     path1 = "https://api.github.com/graphql"
     header1 = client._generate_headers()
-    # path2 = "https://github.ncsu.edu/api/graphql"
-    # header2 = enterprise_client._generate_headers()
+    path2 = "https://github.ncsu.edu/api/graphql"
+    header2 = enterprise_client._generate_headers()
 
-    # UserLoginViewer
-    response = client.execute(query=UserLoginViewer(), substitutions={})
+    print(RepositoryContributorsContribution().substitute(**{"owner": "JialinC", "repo_name": "se-hw2", "id": {"id": "MDQ6VXNlcjM4NTQ5Njg5"}}))
+
+    # RepositoryContributors
+    response = client.execute(query=RepositoryContributorsContribution(), substitutions={"owner": "JialinC",
+                                                                                         "repo_name": "se-hw2",
+                                                                                         "id": {"id": "MDQ6VXNlcjM4NTQ5Njg5"}})
+    print(response)
+    # jcui9 MDQ6VXNlcjE1MTU1
+    # jdjohns4 MDQ6VXNlcjE5Njk1
+    # anguyen9 MDQ6VXNlcjI4NjU5
+    response = enterprise_client.execute(query=RepositoryContributorsContribution(),
+                                         substitutions={"owner": "jcui9", "repo_name": "pyqt_UI",
+                                                        "id": {"id": "MDQ6VXNlcjE1MTU1"}})
     print(response)
 
-    # response = enterprise_client.execute(query=UserLoginViewer(), substitutions={})
+    response = enterprise_client.execute(query=RepositoryContributorsContribution(),
+                                         substitutions={"owner": "jcui9", "repo_name": "pyqt_UI",
+                                                        "id": {"id": "MDQ6VXNlcjE5Njk1"}})
+    print(response)
+
+    response = enterprise_client.execute(query=RepositoryContributorsContribution(),
+                                         substitutions={"owner": "jcui9", "repo_name": "pyqt_UI",
+                                                        "id": {"id": "MDQ6VXNlcjI4NjU5"}})
+    print(response)
+
+    # RepositoryContributors
+    # response = client.execute(query=RepositoryContributors(), substitutions={"owner": "JialinC", "repo_name": "se-hw2"})
+    # print(response)
+    #
+    # response = enterprise_client.execute(query=RepositoryContributors(), substitutions={"owner": "jcui9", "repo_name": "pyqt_UI"})
     # print(response)
 
-    # UserLogin
-    response = client.execute(query=UserLogin(), substitutions={"user": "JialinC"})
-    print(response)
+    # UserLoginViewer
+    # response = client.execute(query=UserLoginViewer(), substitutions={})
+    # print(response)
+    #
+    # # response = enterprise_client.execute(query=UserLoginViewer(), substitutions={})
+    # # print(response)
+    #
+    # # UserLogin
+    # response = client.execute(query=UserLogin(), substitutions={"user": "JialinC"})
+    # print(response)
 
     # response = enterprise_client.execute(query=UserLogin(), substitutions={"user": "jcui9"})
+    # print(response)
+    # response = enterprise_client.execute(query=UserLogin(), substitutions={"user": "jdjohns4"})
+    # print(response)
+    # response = enterprise_client.execute(query=UserLogin(), substitutions={"user": "anguyen9"})
     # print(response)
 
     # UserMetrics
