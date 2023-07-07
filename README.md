@@ -902,3 +902,36 @@ query ($owner: String!, $name: String!, $id: ID!){
 </tr>
 </table>
 
+
+### ratelimit  — 
+Source code: [queries/rate_limit.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/rate_limit.py)
+
+<table>
+<tr>
+<th>GraphQL</th>
+<th>Python</th>
+</tr>
+<tr>
+<td>
+
+```
+query ($dryrun: Boolean!){
+  rateLimit (dryRun: $dryrun){
+    cost
+    limit
+    remaining
+    resetAt
+    used
+  }
+}
+
+```
+
+</td>
+<td>
+
+```python
+```
+</td>
+</tr>
+</table>
