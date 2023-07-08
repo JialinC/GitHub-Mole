@@ -58,7 +58,7 @@ class RepositoryContributors(Query):
         Args:
             raw_data: the raw data returned by the query
         Returns:
-            list: a set of unique logins
+            set: a set of unique logins
         """
         unique_logins = set()
         nodes = raw_data['repository']['defaultBranchRef']['target']['history']['nodes']
