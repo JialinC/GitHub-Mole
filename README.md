@@ -205,6 +205,7 @@ query ($user: String!){
     user(login: $user){
         login
         name
+        id
         email
         createdAt
     }
