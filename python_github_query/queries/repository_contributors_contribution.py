@@ -31,6 +31,7 @@ class RepositoryContributorsContribution(Query):
                                                                 "changedFilesIfAvailable",
                                                                 "additions",
                                                                 "deletions",
+                                                                "message",
                                                                 QueryNode(
                                                                     "parents (first: 2)",
                                                                     fields=[
@@ -60,6 +61,7 @@ class RepositoryContributorsContribution(Query):
             raw_data: the raw data returned by the query
         Returns:
             list: a list of contributor's total additions, total deletions, and total number of commits.
+            [total_commits, total_additions, total_deletions]
         """
         nodes = raw_data['repository']['defaultBranchRef']['target']['history']['nodes']
         total_additions = 0
@@ -72,4 +74,27 @@ class RepositoryContributorsContribution(Query):
                 total_commits += 1
             else:
                 continue
-        return [total_commits, total_additions, total_deletions]
+        return {"commits": total_commits, "additions": total_additions, "deletions": total_deletions}
+
+    @staticmethod
+    def user_commit_contribution(raw_data: dict):
+        """
+        Return the regular commits excluding the merge commits
+        Args:
+            raw_data: the raw data returned by the query
+        Returns:
+            list: a list of contributor's regular commits.
+            [authoredDate, changedFilesIfAvailable, additions, deletions, message]
+        """
+        nodes = raw_data['repository']['defaultBranchRef']['target']['history']['nodes']
+        commit_contributions = []
+        for node in nodes:
+            if node['parents'] and node['parents']['totalCount'] < 2:
+                commit_contributions.append({'authoredDate': node['authoredDate'],
+                                             'changedFiles': node['changedFilesIfAvailable'],
+                                             'additions': node['additions'],
+                                             'deletions': node['deletions'],
+                                             'message': node['message']})
+            else:
+                continue
+        return commit_contributions
