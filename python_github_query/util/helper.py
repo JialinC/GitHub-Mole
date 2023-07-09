@@ -1,7 +1,7 @@
 import os
+import re
 import string
 import random
-from string import Template
 from datetime import datetime
 
 
@@ -97,3 +97,19 @@ def write_csv(file, data_row):
     with open(file=file, mode='a') as f:
         f.writelines(data_row + "\n")
         f.flush()
+
+
+def get_owner_and_name(link: str):
+    """
+    Parse the URL and identifies the author login and the repository name.
+    Args:
+        link: Link to parse
+    Returns:
+        Author login and repository name
+    """
+    pattern = r"https?://(?:www\.)?github\.(?:[^/]+\.[^/]+|[^/]+)/(?P<owner>[^/]+)/?(?P<repo>[^/]+)"
+    match = re.match(pattern, link)
+    assert match is not None, f"Link '{link}' is invalid"
+    return match.group("owner"), match.group("repo")
+
+
