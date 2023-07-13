@@ -1,9 +1,9 @@
 import pandas as pd
 import python_github_query.util.helper as helper
 from python_github_query.github_graphql.client import Client
-from python_github_query.queries.user_login import UserLogin
-from python_github_query.queries.repository_contributors import RepositoryContributors
-from python_github_query.queries.repository_contributors_contribution import RepositoryContributorsContribution
+from python_github_query.queries.profile.user_login import UserLogin
+from python_github_query.queries.repositories.repository_contributors import RepositoryContributors
+from python_github_query.queries.repositories.repository_contributors_contribution import RepositoryContributorsContribution
 
 
 class RepositoryContributorsContributionMiner:
