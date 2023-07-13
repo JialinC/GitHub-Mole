@@ -1,5 +1,5 @@
 import pytest
-from python_github_query.queries.user_contributions_collection import UserContributionsCollection
+from python_github_query.queries.time_range_contributions.user_contributions_collection import UserContributionsCollection
 
 
 @pytest.mark.usefixtures("graphql_client")

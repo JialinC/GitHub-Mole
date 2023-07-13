@@ -1,5 +1,5 @@
 import pytest
-from python_github_query.queries.user_pull_requests import UserPullRequests
+from python_github_query.queries.contributions.user_pull_requests import UserPullRequests
 
 
 @pytest.mark.usefixtures("graphql_client")

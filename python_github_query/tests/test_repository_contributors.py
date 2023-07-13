@@ -1,5 +1,5 @@
 import pytest
-from python_github_query.queries.repository_contributors import RepositoryContributors
+from python_github_query.queries.repositories.repository_contributors import RepositoryContributors
 
 
 @pytest.mark.usefixtures("graphql_client")
