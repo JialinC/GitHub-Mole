@@ -1,5 +1,5 @@
 import pytest
-from python_github_query.queries.user_profile_stats import UserProfileStats
+from python_github_query.queries.profile.user_profile_stats import UserProfileStats
 
 
 @pytest.mark.usefixtures("graphql_client")

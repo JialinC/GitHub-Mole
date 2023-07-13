@@ -1,5 +1,5 @@
 import pytest
-from python_github_query.queries.rate_limit import RateLimit
+from python_github_query.queries.utils.rate_limit import RateLimit
 
 
 @pytest.mark.usefixtures("graphql_client")

@@ -1,5 +1,5 @@
 import pytest
-from python_github_query.queries.user_issue_comments import UserIssueComments
+from python_github_query.queries.comments.user_issue_comments import UserIssueComments
 
 
 @pytest.mark.usefixtures("graphql_client")

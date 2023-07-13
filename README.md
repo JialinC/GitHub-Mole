@@ -205,6 +205,7 @@ query ($user: String!){
     user(login: $user){
         login
         name
+        id
         email
         createdAt
     }
@@ -383,8 +384,8 @@ By including these fields in the query, you can retrieve information about the u
 
 ```
 query ($user: String!, $start: DateTime!, $end: DateTime!) {
-    user(login: "$user"){
-        contributionsCollection(from:"$start",to:"$end"){
+    user(login: $user){
+        contributionsCollection(from: $start,to: $end){
             startedAt
             endedAt
             hasActivityInThePast

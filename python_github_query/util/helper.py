@@ -1,7 +1,7 @@
 import os
+import re
 import string
 import random
-from string import Template
 from datetime import datetime
 
 
@@ -36,7 +36,7 @@ def print_attr(obj):
 def get_abs_path(file_name):
     """
     Return the absolute path of the output file.
-    Keyword arguments:
+    Args:
         file_name: file name
     Returns:
         string: the absolute path of the output file
@@ -61,7 +61,7 @@ def generate_file_name():
 def add_a_year(time):
     """
     Add a year to the input time string.
-    Keyword arguments:
+    Args:
         time: time string
     Returns:
         string: time string
@@ -74,7 +74,7 @@ def add_a_year(time):
 def in_time_period(time, start, end):
     """
     Decide whether the given time is in the specified time period.
-    Keyword arguments:
+    Args:
         time: time string
         start: period starting time string
         end: period ending time string
@@ -87,13 +87,43 @@ def in_time_period(time, start, end):
     return end > time > start
 
 
+def created_before(created, time):
+    """
+    Decide whether the given time is in the specified time period.
+    Args:
+        time: time stamp to compare against
+        created: object created time
+    Returns:
+        bool: true if the given time is in the time period, false otherwise
+    """
+    time = datetime.strptime(time, '%Y-%m-%dT%H:%M:%SZ')
+    created = datetime.strptime(created, '%Y-%m-%dT%H:%M:%SZ')
+    return created < time
+
+
 def write_csv(file, data_row):
     """
     Write the given data row to given file.
-    Keyword arguments:
+    Args:
         file: path to file
         data_row: input line to write to the file
     """
     with open(file=file, mode='a') as f:
         f.writelines(data_row + "\n")
         f.flush()
+
+
+def get_owner_and_name(link: str):
+    """
+    Parse the URL and identifies the author login and the repository name.
+    Args:
+        link: Link to parse
+    Returns:
+        Author login and repository name
+    """
+    pattern = r"https?://(?:www\.)?github\.(?:[^/]+\.[^/]+|[^/]+)/(?P<owner>[^/]+)/?(?P<repo>[^/]+)"
+    match = re.match(pattern, link)
+    assert match is not None, f"Link '{link}' is invalid"
+    return match.group("owner"), match.group("repo")
+
+
