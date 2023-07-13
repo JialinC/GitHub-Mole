@@ -87,6 +87,20 @@ def in_time_period(time, start, end):
     return end > time > start
 
 
+def created_before(created, time):
+    """
+    Decide whether the given time is in the specified time period.
+    Args:
+        time: time stamp to compare against
+        created: object created time
+    Returns:
+        bool: true if the given time is in the time period, false otherwise
+    """
+    time = datetime.strptime(time, '%Y-%m-%dT%H:%M:%SZ')
+    created = datetime.strptime(created, '%Y-%m-%dT%H:%M:%SZ')
+    return created < time
+
+
 def write_csv(file, data_row):
     """
     Write the given data row to given file.
