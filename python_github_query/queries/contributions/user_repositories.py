@@ -1,4 +1,5 @@
 from python_github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
+import python_github_query.util.helper as helper
 
 
 class UserRepositories(PaginatedQuery):
@@ -34,7 +35,6 @@ class UserRepositories(PaginatedQuery):
                                                               "direction": "DESC"}},
                                             fields=[
                                                 "totalSize",
-                                                "totalCount",
                                                 QueryNode(
                                                     "edges",
                                                     fields=[
@@ -57,3 +57,34 @@ class UserRepositories(PaginatedQuery):
             ]
         )
 
+    @staticmethod
+    def user_repositories(raw_data: dict):
+        """
+        Return the contributors contribution collection
+        Args:
+            raw_data: the raw data returned by the query
+        Returns:
+        """
+        repositories = raw_data["user"]["repositories"]["nodes"]
+        return repositories
+
+    @staticmethod
+    def cumulated_repository_stats(repo_list: list, repo_stats: dict, lang_stats: dict, end: str):
+        for repo in repo_list:
+            if helper.created_before(repo["createdAt"], end):
+                if repo["languages"]["totalSize"] == 0:
+                    continue
+                repo_stats["total_count"] += 1
+                repo_stats["fork_count"] += repo["forkCount"]
+                repo_stats["stargazer_count"] += repo["stargazerCount"]
+                repo_stats["watchers_count"] += repo["watchers"]["totalCount"]
+                repo_stats["total_size"] += repo["languages"]["totalSize"]
+                language_list_sorted = sorted(repo["languages"]["edges"], key=lambda s: s["size"], reverse=True)
+                if language_list_sorted:
+                    for language in language_list_sorted:
+                        name = language["node"]["name"]
+                        size = language["size"]
+                        if name not in lang_stats:
+                            lang_stats[name] = int(size)
+                        else:
+                            lang_stats[name] += int(size)
