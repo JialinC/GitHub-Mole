@@ -145,8 +145,8 @@ def have_rate_limit(client: Client, query: Query, args: dict):
     rate_limit = client.execute(query=QueryCost(match.group('content')), substitutions={"dryrun": True})['rateLimit']
     cost = rate_limit['cost']
     remaining = rate_limit['remaining']
-    resetAt = rate_limit['resetAt']
+    reset_at = rate_limit['resetAt']
     if cost < remaining - 5:
-        return [True, resetAt]
+        return [True, reset_at]
     else:
-        return [False, resetAt]
+        return [False, reset_at]
