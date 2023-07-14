@@ -3,6 +3,9 @@ import re
 import string
 import random
 from datetime import datetime
+from python_github_query.github_graphql.query import Query
+from python_github_query.github_graphql.client import Client
+from python_github_query.queries.utils.query_cost import QueryCost
 
 
 def print_methods(obj):
@@ -127,3 +130,23 @@ def get_owner_and_name(link: str):
     return match.group("owner"), match.group("repo")
 
 
+def have_rate_limit(client: Client, query: Query, args: dict):
+    """
+    Test whether the user has enough rate limit to execute the given query
+    Args:
+        client: client to execute query
+        query: query to be executed
+        args: arguments of the query
+    Returns:
+        True or false user has enough rate limit to execute the given query
+    """
+    query_string = query.substitute(**args).__str__()
+    match = re.search(r'query\s*{(?P<content>.+)}', query_string)
+    rate_limit = client.execute(query=QueryCost(match.group('content')), substitutions={"dryrun": True})['rateLimit']
+    cost = rate_limit['cost']
+    remaining = rate_limit['remaining']
+    resetAt = rate_limit['resetAt']
+    if cost < remaining - 5:
+        return [True, resetAt]
+    else:
+        return [False, resetAt]
