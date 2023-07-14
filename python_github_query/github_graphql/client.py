@@ -1,14 +1,15 @@
+import re
 import time
 from datetime import datetime
 from random import randint
 from string import Template
 from typing import Union
-
 import requests
 from requests import Response
 from requests.exceptions import RequestException
 from .authentication import Authenticator
 from .query import PaginatedQuery, Query
+from python_github_query.queries.utils.query_cost import QueryCost
 
 
 class InvalidAuthenticationError(Exception):
@@ -32,6 +33,7 @@ class Client:
     """
     GitHub GraphQL Client.
     """
+
     def __init__(self,
                  protocol: str = "https",
                  host: str = "api.github.com",
@@ -98,6 +100,27 @@ class Client:
         Returns:
             Response as a JSON
         """
+        query_string = Template(query).substitute(**substitutions) if isinstance(query, str) else query.substitute(**substitutions)
+        match = re.search(r'query\s*{(?P<content>.+)}', query_string)
+        rate_query = QueryCost(match.group('content'))
+        rate_limit = requests.post(
+            self._base_path(),
+            json={
+                'query': Template(rate_query).substitute(**{"dryrun": True})
+                if isinstance(rate_query, str) else query.substitute(**{"dryrun": True})
+            },
+            headers=self._generate_headers()
+        )
+        rate_limit = rate_limit.json()["data"]["rateLimit"]
+        cost = rate_limit['cost']
+        remaining = rate_limit['remaining']
+        reset_at = rate_limit['resetAt']
+        if cost > remaining - 5:
+            current_time = datetime.utcnow()
+            seconds = (reset_at - current_time).total_seconds()
+            print(f"waiting for {seconds}s.")
+            time.sleep(seconds + 5)
+
         response = requests.post(
             self._base_path(),
             json={
@@ -107,13 +130,13 @@ class Client:
             headers=self._generate_headers()
         )
 
-            # if int(response.headers["X-RateLimit-Remaining"]) < 2:
-            #     reset_at = datetime.utcfromtimestamp(int(response.headers["X-RateLimit-Reset"]))
-            #     current_time = datetime.utcnow()
-            #
-            #     seconds = (reset_at - current_time).total_seconds()
-            #     print(f"waiting for {seconds}s.")
-            #     time.sleep(seconds + 5)
+        # if int(response.headers["X-RateLimit-Remaining"]) < 2:
+        #     reset_at = datetime.utcfromtimestamp(int(response.headers["X-RateLimit-Reset"]))
+        #     current_time = datetime.utcnow()
+        #
+        #     seconds = (reset_at - current_time).total_seconds()
+        #     print(f"waiting for {seconds}s.")
+        #     time.sleep(seconds + 5)
 
         try:
             json_response = response.json()
@@ -168,6 +191,7 @@ class RESTClient:
     """
     Client for GitHub REST API.
     """
+
     def __init__(self,
                  protocol: str = "https",
                  host: str = "api.github.com",
