@@ -88,3 +88,4 @@ class UserRepositories(PaginatedQuery):
                             lang_stats[name] = int(size)
                         else:
                             lang_stats[name] += int(size)
+
