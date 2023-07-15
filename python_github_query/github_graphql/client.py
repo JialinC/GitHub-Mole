@@ -107,7 +107,7 @@ class Client:
             self._base_path(),
             json={
                 'query': Template(rate_query).substitute(**{"dryrun": True})
-                if isinstance(rate_query, str) else query.substitute(**{"dryrun": True})
+                if isinstance(rate_query, str) else rate_query.substitute(**{"dryrun": True})
             },
             headers=self._generate_headers()
         )
