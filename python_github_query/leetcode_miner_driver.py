@@ -11,15 +11,11 @@ public_client = Client(
 
 public_miner = LeetcodeUserMiner(public_client)
 # path to the input file
-input_file = "path/to/your/input/file"
-
+input_file = "E:\Jialin Research\GitHub_GraphQL\GitHub_GraphQL\python_github_query\etc\data\input\leetcode_input\github_2_500.csv"
+output_file = "E:\Jialin Research\GitHub_GraphQL\GitHub_GraphQL\python_github_query\etc\data\output\leetcode_output\github_2_500.csv"
 csv_reader = csv.reader(open(input_file))
 for row in csv_reader:
     print(f"querying user: {row[0]}")
     public_miner.run(row[0])
 
-public_miner.total_contributions.to_csv("query_output.csv")
-with open("exceptions.csv", 'w', newline='') as csvfile:
-    writer = csv.writer(csvfile)
-    for element in public_miner.exceptions:
-        writer.writerow([element])
+public_miner.total_contributions.to_csv(output_file)
