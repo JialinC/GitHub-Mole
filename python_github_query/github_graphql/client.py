@@ -117,7 +117,10 @@ class Client:
         reset_at = rate_limit['resetAt']
         if cost > remaining - 5:
             current_time = datetime.utcnow()
-            seconds = (reset_at - current_time).total_seconds()
+            time_format = '%Y-%m-%dT%H:%M:%SZ'
+            reset_at = datetime.strptime(reset_at, time_format)
+            time_diff = reset_at - current_time
+            seconds = time_diff.total_seconds()
             print(f"stop at {current_time}s.")
             print(f"waiting for {seconds}s.")
             print(f"reset at {reset_at}s.")
