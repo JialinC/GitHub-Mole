@@ -149,6 +149,23 @@ class LeetcodeUserMiner:
                 [self.total_contributions, pd.DataFrame([cumulated_contributions_collection])], ignore_index=True)
 
         except QueryFailedException:
+            # Create an empty row DataFrame with the desired value
+            dne = pd.DataFrame([{'github': login, 'created_at': "Do Not Exist", 'end_at': pd.NA, 'lifetime': pd.NA,
+                                 'company': pd.NA, 'followers': pd.NA, 'gists': pd.NA, 'issues': pd.NA, 'projects': pd.NA,
+                                 'pull_requests': pd.NA, 'repositories': pd.NA, 'repository_discussions': pd.NA,
+                                 'res_con': pd.NA, 'commit': pd.NA, 'pr_review': pd.NA, 'commit_comments': pd.NA,
+                                 'issue_comments': pd.NA, 'gist_comments': pd.NA, 'repository_discussion_comments': pd.NA,
+                                 'Atotal_count': pd.NA, 'Afork_count': pd.NA, 'Astargazer_count': pd.NA,
+                                 'Awatchers_count': pd.NA, 'Atotal_size': pd.NA, 'type_A_lang': pd.NA,
+                                 'Btotal_count': pd.NA, 'Bfork_count': pd.NA, 'Bstargazer_count': pd.NA,
+                                 'Bwatchers_count': pd.NA, 'Btotal_size': pd.NA, 'type_B_lang': pd.NA,
+                                 'Ctotal_count': pd.NA, 'Cfork_count': pd.NA, 'Cstargazer_count': pd.NA,
+                                 'Cwatchers_count': pd.NA, 'Ctotal_size': pd.NA, 'type_C_lang': pd.NA,
+                                 'Dtotal_count': pd.NA, 'Dfork_count': pd.NA, 'Dstargazer_count': pd.NA,
+                                 'Dwatchers_count': pd.NA, 'Dtotal_size': pd.NA, 'type_D_lang': pd.NA}])
+
+            self.total_contributions = pd.concat(
+                [self.total_contributions, dne], ignore_index=True)
             self.exceptions.append(login)
 
         except Exception as e:
