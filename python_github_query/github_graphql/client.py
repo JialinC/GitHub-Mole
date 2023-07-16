@@ -118,7 +118,9 @@ class Client:
         if cost > remaining - 5:
             current_time = datetime.utcnow()
             seconds = (reset_at - current_time).total_seconds()
+            print(f"stop at {current_time}s.")
             print(f"waiting for {seconds}s.")
+            print(f"reset at {reset_at}s.")
             time.sleep(seconds + 5)
 
         response = requests.post(
