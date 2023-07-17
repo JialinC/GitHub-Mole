@@ -2,7 +2,7 @@ import os
 import re
 import string
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from python_github_query.github_graphql.query import Query
 from python_github_query.github_graphql.client import Client
 from python_github_query.queries.utils.query_cost import QueryCost
@@ -61,17 +61,25 @@ def generate_file_name():
     return file_name
 
 
-def add_a_year(time):
+def add_a_year(time_string):
     """
     Add a year to the input time string.
     Args:
-        time: time string
+        time_string: time string
     Returns:
         string: time string
     """
-    date_list = time.split("-")
-    date_list[0] = str(int(date_list[0]) + 1)
-    return "-".join(date_list)
+    time_format = "%Y-%m-%dT%H:%M:%SZ"
+
+    # Convert the string to a datetime object
+    time = datetime.strptime(time_string, time_format)
+
+    # Add a duration of 1 year
+    new_time = time + timedelta(days=365)
+
+    # Convert the new datetime object back to a string
+    new_time_string = new_time.strftime(time_format)
+    return new_time_string
 
 
 def in_time_period(time, start, end):
