@@ -40,8 +40,6 @@ public_client = Client(
     authenticator=PersonalAccessTokenAuthenticator(token=os.environ.get("GITHUB_PERSONAL_ACCESS_TOKEN"))
 )
 
-public_miner = UserMetricStatsMiner(public_client)
-
 directory = 'E:\Jialin Research\GitHub_GraphQL\GitHub_GraphQL\python_github_query\etc\data\input\students_input'  # Specify the directory path
 out_dir = 'E:\Jialin Research\GitHub_GraphQL\GitHub_GraphQL\python_github_query\etc\data\output\students_output'
 for filename in os.listdir(directory):
@@ -56,3 +54,6 @@ for filename in os.listdir(directory):
         public_miner.run(row[0], end=start)
     public_miner.total_contributions.to_csv(outfile)
 print("mission completed:)")
+
+# for filename in ['fall_2015.csv']:
+#     outfile += "leftover"

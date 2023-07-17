@@ -87,10 +87,12 @@ class UserMetricStatsMiner:
                                                 substitutions={"user": login,
                                                                "start": start,
                                                                "end": period_end})
+
                 cumulated_contributions_collection += UserContributionsCollection.user_contributions_collection(
                     response)
                 start = period_end
                 period_end = helper.add_a_year(start)
+
 
             cumulated_contributions_collection = Counter(
                 {key: cumulated_contributions_collection[key] + temp[key] for key in
@@ -127,7 +129,6 @@ class UserMetricStatsMiner:
                 counter += UserIssueComments.created_before_time(UserIssueComments.user_issue_comments(response),
                                                                  end)
             cumulated_contributions_collection["issue_comments"] = counter
-            # print(cumulated_contributions_collection)
 
             # gistComments
             counter = 0
@@ -206,7 +207,7 @@ class UserMetricStatsMiner:
 
         except QueryFailedException:
             dne = pd.DataFrame([{'github': login, 'created_at': "Do Not Exist", 'end_at': pd.NA, 'lifetime': pd.NA,
-                                 'res_con': pd.NA, 'commit': pd.NA, 'issues': pd.NA, 'pr': pd.NA, 'pr_review': pd.NA,
+                                 'res_con': pd.NA, 'commit': pd.NA, 'issue': pd.NA, 'pr': pd.NA, 'pr_review': pd.NA,
                                  'repository': pd.NA, 'gists': pd.NA, 'repository_discussions': pd.NA,
                                  'commit_comments': pd.NA, 'issue_comments': pd.NA, 'gist_comments': pd.NA,
                                  'repository_discussion_comments': pd.NA,
@@ -224,6 +225,21 @@ class UserMetricStatsMiner:
             self.exceptions.append(login)
 
         except Exception as e:
+            dne = pd.DataFrame([{'github': login, 'created_at': "Do Not Exist", 'end_at': "Unknown exception", 'lifetime': pd.NA,
+                                 'res_con': pd.NA, 'commit': pd.NA, 'issue': pd.NA, 'pr': pd.NA, 'pr_review': pd.NA,
+                                 'repository': pd.NA, 'gists': pd.NA, 'repository_discussions': pd.NA,
+                                 'commit_comments': pd.NA, 'issue_comments': pd.NA, 'gist_comments': pd.NA,
+                                 'repository_discussion_comments': pd.NA,
+                                 'Atotal_count': pd.NA, 'Afork_count': pd.NA, 'Astargazer_count': pd.NA,
+                                 'Awatchers_count': pd.NA, 'Atotal_size': pd.NA, 'type_A_lang': pd.NA,
+                                 'Btotal_count': pd.NA, 'Bfork_count': pd.NA, 'Bstargazer_count': pd.NA,
+                                 'Bwatchers_count': pd.NA, 'Btotal_size': pd.NA, 'type_B_lang': pd.NA,
+                                 'Ctotal_count': pd.NA, 'Cfork_count': pd.NA, 'Cstargazer_count': pd.NA,
+                                 'Cwatchers_count': pd.NA, 'Ctotal_size': pd.NA, 'type_C_lang': pd.NA,
+                                 'Dtotal_count': pd.NA, 'Dfork_count': pd.NA, 'Dstargazer_count': pd.NA,
+                                 'Dwatchers_count': pd.NA, 'Dtotal_size': pd.NA, 'type_D_lang': pd.NA}])
+            self.total_contributions = pd.concat(
+                [self.total_contributions, dne], ignore_index=True)
             self.exceptions.append(login)
 
 
