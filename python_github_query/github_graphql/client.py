@@ -5,6 +5,7 @@ from random import randint
 from string import Template
 from typing import Union
 import requests
+from requests.exceptions import Timeout
 from requests import Response
 from requests.exceptions import RequestException
 from .authentication import Authenticator
@@ -18,9 +19,11 @@ class InvalidAuthenticationError(Exception):
 
 class QueryFailedException(Exception):
     def __init__(self, response: Response, query: str = None):
+        self.response = response
+        self.query = query
         if query:
             super().__init__(
-                f"Query failed to run by returning code of {response.status_code}.\nQuery={query}\n{response.text}"
+                f"Query failed to run by returning code of {response.status_code}.\nQuery = {query}\n{response.text}"
             )
         else:
             super().__init__(
@@ -90,6 +93,34 @@ class Client:
 
         return headers
 
+    def _retry_request(self, retry_attempts: int, timeout_seconds: int, query: Union[str, Query], substitutions: dict):
+        """
+        wrapper for retrying requests.
+        Args:
+            retry_attempts: retry attempts
+            timeout_seconds: timeout seconds
+            query: Query to run
+            substitutions: Substitutions to make
+        Returns:
+            Response as a JSON
+        """
+        for _ in range(retry_attempts):
+            try:
+                response = requests.post(
+                    self._base_path(),
+                    json={
+                        'query': Template(query).substitute(**substitutions)
+                        if isinstance(query, str) else query.substitute(**substitutions)
+                    },
+                    headers=self._generate_headers(),
+                    timeout=timeout_seconds
+                )
+                # Process the response
+                if response.status_code == 200:
+                    return response
+            except Timeout:
+                print("Request timed out. Retrying...")
+
     def _execute(self, query: Union[str, Query], substitutions: dict):
         """
         Executes a query after substituting values.
@@ -103,14 +134,15 @@ class Client:
         query_string = Template(query).substitute(**substitutions) if isinstance(query, str) else query.substitute(**substitutions)
         match = re.search(r'query\s*{(?P<content>.+)}', query_string)
         rate_query = QueryCost(match.group('content'))
-        rate_limit = requests.post(
-            self._base_path(),
-            json={
-                'query': Template(rate_query).substitute(**{"dryrun": True})
-                if isinstance(rate_query, str) else rate_query.substitute(**{"dryrun": True})
-            },
-            headers=self._generate_headers()
-        )
+        rate_limit = self._retry_request(3, 10, rate_query, {"dryrun": True})
+        # rate_limit = requests.post(
+        #     self._base_path(),
+        #     json={
+        #         'query': Template(rate_query).substitute(**{"dryrun": True})
+        #         if isinstance(rate_query, str) else rate_query.substitute(**{"dryrun": True})
+        #     },
+        #     headers=self._generate_headers()
+        # )
         rate_limit = rate_limit.json()["data"]["rateLimit"]
         cost = rate_limit['cost']
         remaining = rate_limit['remaining']
@@ -126,22 +158,15 @@ class Client:
             print(f"reset at {reset_at}s.")
             time.sleep(seconds + 5)
 
-        response = requests.post(
-            self._base_path(),
-            json={
-                'query': Template(query).substitute(**substitutions)
-                if isinstance(query, str) else query.substitute(**substitutions)
-            },
-            headers=self._generate_headers()
-        )
-
-        # if int(response.headers["X-RateLimit-Remaining"]) < 2:
-        #     reset_at = datetime.utcfromtimestamp(int(response.headers["X-RateLimit-Reset"]))
-        #     current_time = datetime.utcnow()
-        #
-        #     seconds = (reset_at - current_time).total_seconds()
-        #     print(f"waiting for {seconds}s.")
-        #     time.sleep(seconds + 5)
+        response = self._retry_request(3, 10, query, substitutions)
+        # response = requests.post(
+        #     self._base_path(),
+        #     json={
+        #         'query': Template(query).substitute(**substitutions)
+        #         if isinstance(query, str) else query.substitute(**substitutions)
+        #     },
+        #     headers=self._generate_headers()
+        # )
 
         try:
             json_response = response.json()
