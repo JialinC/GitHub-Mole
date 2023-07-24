@@ -218,5 +218,8 @@ class PaginatedQuery(Query):
                 if isinstance(field, QueryNode):
                     if field.name == "pageInfo":
                         return current_path, previous_node
-                    paths.append((current_path + [field.name], field, field.fields))
+                    if '...' in field.name:
+                        paths.append((current_path, field, field.fields))
+                    else:
+                        paths.append((current_path + [field.name], field, field.fields))
         raise InvalidQueryException("Paginator node not found")
