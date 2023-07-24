@@ -135,14 +135,6 @@ class Client:
         match = re.search(r'query\s*{(?P<content>.+)}', query_string)
         rate_query = QueryCost(match.group('content'))
         rate_limit = self._retry_request(3, 10, rate_query, {"dryrun": True})
-        # rate_limit = requests.post(
-        #     self._base_path(),
-        #     json={
-        #         'query': Template(rate_query).substitute(**{"dryrun": True})
-        #         if isinstance(rate_query, str) else rate_query.substitute(**{"dryrun": True})
-        #     },
-        #     headers=self._generate_headers()
-        # )
         rate_limit = rate_limit.json()["data"]["rateLimit"]
         cost = rate_limit['cost']
         remaining = rate_limit['remaining']
@@ -159,14 +151,6 @@ class Client:
             time.sleep(seconds + 5)
 
         response = self._retry_request(3, 10, query, substitutions)
-        # response = requests.post(
-        #     self._base_path(),
-        #     json={
-        #         'query': Template(query).substitute(**substitutions)
-        #         if isinstance(query, str) else query.substitute(**substitutions)
-        #     },
-        #     headers=self._generate_headers()
-        # )
 
         try:
             json_response = response.json()
