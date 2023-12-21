@@ -10,7 +10,29 @@ Because we use the [dotenv](https://pypi.org/project/python-dotenv/) package to 
 i.e. GITHUB_TOKEN  = 'yourGitHubPAT'
 
 ## Installation
+
+We recommend using virtual environment. 
+```shell
+cd path/to/your/project/directory
+python -m venv venv
+```
+On macOS and Linux:
+```shell
+source venv/bin/activate
+```
+On Windows (Command Prompt):
+```shell
+.\venv\Scripts\activate
+```
+On Windows (PowerShell):
+```shell
+.\venv\Scripts\Activate.ps1
+```
+then you can
+```shell
 pip -r requirements.txt
+```
+
 ## Execution
 TBD
 
@@ -146,10 +168,38 @@ Instance methods:
 ### client  — 
 Source code: [github_graphql/client.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/github_graphql/client.py)
 
-To be finished
+This class represents the main GitHub GraphQL client.
 
-### login  — Query for user basic login info
-Source code: [queries/login.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/login.py)
+`class Client(protocol, host, is_enterprise, authenticator)`
+*`protocol`: Protocol used for server communication.
+*`host`: Host server domain or IP.
+*`is_enterprise`: Boolean to check if the host is running on GitHub Enterprise.
+*`authenticator`: The authentication handler for the client.
+
+Private methods:
+
+`_base_path(self)`:
+* Returns the base path for a GraphQL request based on whether the client is connected to GitHub Enterprise.
+
+`_generate_headers(self, **kwargs)`:
+* Generates headers for an HTTP request, including authentication headers and other additional headers passed as keyword arguments.
+
+`_retry_request(self, retry_attempts, timeout_seconds, query, substitutions)`:
+* Wrapper method to retry requests. Takes in the number of attempts, timeout duration, the query, and the substitutions for the query.
+
+`_execute(self, query, substitutions)`:
+* Executes a GraphQL query after performing the required substitutions. Handles possible request errors and rate limiting.
+
+`_execution_generator(self, query, substitutions)`:
+* Executes a PaginatedQuery by repeatedly querying until all pages have been fetched. Yields each response.
+
+Instance methods:
+
+`execute(self, query, substitutions):`
+* Executes a query, which can be a simple Query or a PaginatedQuery. Utilizes the _execute method or the _execution_generator method based on the type of query.
+
+### user_login  — Query for user basic login info
+Source code: [queries/login.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/profile/user_login.py)
 
 The `UserLoginViewer` class represents a GraphQL query that retrieves the login information of the currently authenticated user.
 The query is defined using the Query class, and the viewer field is requested with the login field nested inside it. 
@@ -174,15 +224,16 @@ query {
 <td>
 
 ```python
-def __init__(self):
-    super().__init__(
-        fields=[
-            QueryNode(
-                "viewer",
-                fields=["login"]
-            )
-        ]
-    )
+class UserLoginViewer(Query):
+    def __init__(self):
+        super().__init__(
+            fields=[
+                QueryNode(
+                    "viewer",
+                    fields=["login"]
+                )
+            ]
+        )
 ```
 
 </td>
@@ -216,28 +267,105 @@ query ($user: String!){
 <td>
 
 ```python
-def __init__(self):
-    super().__init__(
-        fields=[
-            QueryNode(
-                "user",
-                args={
-                    "login": "$user"
-                },
-                fields=[
-                    "login",
-                    "name",
-                    "email",
-                    "createdAt"
-                ]
-            )
-        ]
-    )
+class UserLogin(Query):
+    def __init__(self):
+        super().__init__(
+            fields=[
+                QueryNode(
+                    "user",
+                    args={
+                        "login": "$user"
+                    },
+                    fields=[
+                        "login",
+                        "name",
+                        "id",
+                        "email",
+                        "createdAt"
+                    ]
+                )
+            ]
+        )
 ```
 
 </td>
 </tr>
 </table>
+
+### user_profile_stats  — Query for user detailed profile info
+Source code: [queries/login.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/profile/user_profile_stats.py)
+
+<table>
+<tr>
+<th>GraphQL</th>
+<th>Python</th>
+</tr>
+<tr>
+<td>
+
+```
+query ($user: String!){
+    user(login: $user){
+        login
+        name
+        id
+        email
+        createdAt
+    }
+}
+```
+
+</td>
+<td>
+
+```python
+class UserProfileStats(Query):
+    def __init__(self):
+        super().__init__(
+            fields=[
+                QueryNode(
+                    "user",
+                    args={"login": "$user"},
+                    fields=[
+                        "login",
+                        "name",
+                        "email",
+                        "createdAt",
+                        "bio",
+                        "company",
+                        "isBountyHunter",
+                        "isCampusExpert",
+                        "isDeveloperProgramMember",
+                        "isEmployee",
+                        "isGitHubStar",
+                        "isHireable",
+                        "isSiteAdmin",
+                        QueryNode("watching", fields=["totalCount"]),
+                        QueryNode("starredRepositories", fields=["totalCount"]),
+                        QueryNode("following", fields=["totalCount"]),
+                        QueryNode("followers", fields=["totalCount"]),
+                        QueryNode("gists", fields=["totalCount"]),
+                        QueryNode("issues", fields=["totalCount"]),
+                        QueryNode("projects", fields=["totalCount"]),
+                        QueryNode("pullRequests", fields=["totalCount"]),
+                        QueryNode("repositories", fields=["totalCount"]),
+                        QueryNode("repositoryDiscussions", fields=["totalCount"]),
+                        QueryNode("gistComments", fields=["totalCount"]),
+                        QueryNode("issueComments", fields=["totalCount"]),
+                        QueryNode("commitComments", fields=["totalCount"]),
+                        QueryNode("repositoryDiscussionComments", fields=["totalCount"]),
+                    ]
+                )
+            ]
+        )
+```
+
+</td>
+</tr>
+</table>
+
+
+
 
 ### metrics  — Query for user's total contribution metrics
 Source code: [queries/metrics.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/metrics.py)
@@ -709,8 +837,11 @@ def __init__(self):
 </tr>
 </table>
 
-### repositories_graph —
+### repository_contributors — Query for retrieving contributors of a repository
 Source code: [queries/repository_contributors.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/repository_contributors.py)
+
+This  GraphQL query aims to retrieve the default branch reference of a specified repository. 
+Specifically, it extracts the login names of authors from the commit history of the default branch.
 
 <table>
 <tr>
@@ -799,11 +930,13 @@ def __init__(self):
 </tr>
 </table>
 
-
-
-
-### repositories  — 
+### repository_contributors_contribution — Query for retrieving contributions of a contributor made to a repository
 Source code: [queries/repository_contributors_contribution.py](https://github.com/JialinC/GitHub_GraphQL/blob/main/python_github_query/queries/repository_contributors_contribution.py)
+
+This GraphQL query is designed to retrieve the commit history of a specified author ($id) 
+in the default branch of a specified repository ($owner and $name). 
+It returns key metrics like the total count of commits, the date each commit was authored, the number of changed files, 
+additions, and deletions for each commit, along with the author's login name.
 
 <table>
 <tr>
@@ -885,6 +1018,132 @@ query ($owner: String!, $name: String!, $id: ID!){
                                                                     ]
                                                                 )
                                                             ]
+                                                        )
+                                                    ]
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            ]
+        )
+```
+</td>
+</tr>
+</table>
+
+### repositories — Query for retrieving commits af a contributor made to a repository
+Source code: [queries/repository_commits.py]()
+
+This GraphQL query is structured to retrieve commits from the default branch of a specified repository. For each commit, it fetches the authored date, the number of changed files (if available), the number of additions and deletions, the commit message, and details about the commit's author.
+
+<table>
+<tr>
+<th>GraphQL</th>
+<th>Python</th>
+</tr>
+<tr>
+<td>
+
+```
+query ($owner: String!, $repo_name: String!, $pg_size: Int!) {
+  repository(owner: $owner, name: $repo_name) {
+    defaultBranchRef {
+      target {
+        ... on Commit {
+          history(first: $pg_size) {
+            totalCount
+            nodes {
+              authoredDate
+              changedFilesIfAvailable
+              additions
+              deletions
+              message
+              parents (first: 2) {
+                totalCount
+              }
+              author {
+                name
+                email
+                user {
+                  login
+                }
+              }
+            }
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+</td>
+<td>
+
+```python
+    def __init__(self):
+        super().__init__(
+            fields=[
+                QueryNode(
+                    "repository",
+                    args={"owner": "$owner",
+                          "name": "$repo_name"},
+                    fields=[
+                        QueryNode(
+                            "defaultBranchRef",
+                            fields=[
+                                QueryNode(
+                                    "target",
+                                    fields=[
+                                        QueryNode(
+                                            "... on Commit",
+                                            fields=[
+                                                QueryNodePaginator(
+                                                    "history",
+                                                    args={"first": "$pg_size"},
+                                                    fields=[
+                                                        'totalCount',
+                                                        QueryNode(
+                                                            "nodes",
+                                                            fields=[
+                                                                "authoredDate",
+                                                                "changedFilesIfAvailable",
+                                                                "additions",
+                                                                "deletions",
+                                                                "message",
+                                                                QueryNode(
+                                                                    "parents (first: 2)",
+                                                                    fields=[
+                                                                        "totalCount"
+                                                                    ]
+                                                                ),
+                                                                QueryNode(
+                                                                    "author",
+                                                                    fields=[
+                                                                        'name',
+                                                                        'email',
+                                                                        QueryNode(
+                                                                            "user",
+                                                                            fields=[
+                                                                                "login"
+                                                                            ]
+                                                                        )
+                                                                    ]
+                                                                )
+                                                            ]
+                                                        ),
+                                                        QueryNode(
+                                                            "pageInfo",
+                                                            fields=["endCursor", "hasNextPage"]
                                                         )
                                                     ]
                                                 )

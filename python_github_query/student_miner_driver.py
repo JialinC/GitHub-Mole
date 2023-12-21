@@ -42,7 +42,8 @@ public_client = Client(
 
 directory = 'E:\Jialin Research\GitHub_GraphQL\GitHub_GraphQL\python_github_query\etc\data\input\students_input'  # Specify the directory path
 out_dir = 'E:\Jialin Research\GitHub_GraphQL\GitHub_GraphQL\python_github_query\etc\data\output\students_output'
-for filename in os.listdir(directory):
+# for filename in os.listdir(directory):
+for filename in ['fall_2017.csv']:
     semester = filename[:-4]
     outfile = os.path.join(out_dir, filename)
     start = semester_start[semester]

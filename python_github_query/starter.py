@@ -1,14 +1,8 @@
 import os
-import json
-from python_github_query.github_graphql.query import QueryNodePaginator, QueryNode, Query, PaginatedQuery
 from python_github_query.github_graphql.authentication import PersonalAccessTokenAuthenticator
 from python_github_query.github_graphql.client import Client
-from python_github_query.queries.user_login import UserLoginViewer, UserLogin
-from python_github_query.queries.user_profile_stats import UserProfileStats
-from python_github_query.queries.user_contributions_collection import UserContributionsCollection
-from python_github_query.queries.user_repositories import UserRepositories
-from python_github_query.queries.repository_contributors import RepositoryContributors
-from python_github_query.queries.repository_contributors_contribution import RepositoryContributorsContribution
+from python_github_query.queries.repositories.repository_contributors_contribution import RepositoryContributorsContribution
+from python_github_query.util.helper import get_abs_path
 
 if __name__ == '__main__':
     client = Client(
@@ -28,28 +22,36 @@ if __name__ == '__main__':
 
     print(RepositoryContributorsContribution().substitute(**{"owner": "JialinC", "repo_name": "se-hw2", "id": {"id": "MDQ6VXNlcjM4NTQ5Njg5"}}))
 
+    print(get_abs_path("test"))
+    # response = client.execute(query=RateLimit(), substitutions={"dryrun": True})
+    # print(response)
+    #
+    # response = enterprise_client.execute(query=RateLimit(), substitutions={"dryrun": True})
+    # print(response)
+
+
     # RepositoryContributors
-    response = client.execute(query=RepositoryContributorsContribution(), substitutions={"owner": "JialinC",
-                                                                                         "repo_name": "se-hw2",
-                                                                                         "id": {"id": "MDQ6VXNlcjM4NTQ5Njg5"}})
-    print(response)
-    # jcui9 MDQ6VXNlcjE1MTU1
-    # jdjohns4 MDQ6VXNlcjE5Njk1
-    # anguyen9 MDQ6VXNlcjI4NjU5
-    response = enterprise_client.execute(query=RepositoryContributorsContribution(),
-                                         substitutions={"owner": "jcui9", "repo_name": "pyqt_UI",
-                                                        "id": {"id": "MDQ6VXNlcjE1MTU1"}})
-    print(response)
-
-    response = enterprise_client.execute(query=RepositoryContributorsContribution(),
-                                         substitutions={"owner": "jcui9", "repo_name": "pyqt_UI",
-                                                        "id": {"id": "MDQ6VXNlcjE5Njk1"}})
-    print(response)
-
-    response = enterprise_client.execute(query=RepositoryContributorsContribution(),
-                                         substitutions={"owner": "jcui9", "repo_name": "pyqt_UI",
-                                                        "id": {"id": "MDQ6VXNlcjI4NjU5"}})
-    print(response)
+    # response = client.execute(query=RepositoryContributorsContribution(), substitutions={"owner": "JialinC",
+    #                                                                                      "repo_name": "se-hw2",
+    #                                                                                      "id": {"id": "MDQ6VXNlcjM4NTQ5Njg5"}})
+    # print(response)
+    # # jcui9 MDQ6VXNlcjE1MTU1
+    # # jdjohns4 MDQ6VXNlcjE5Njk1
+    # # anguyen9 MDQ6VXNlcjI4NjU5
+    # response = enterprise_client.execute(query=RepositoryContributorsContribution(),
+    #                                      substitutions={"owner": "jcui9", "repo_name": "pyqt_UI",
+    #                                                     "id": {"id": "MDQ6VXNlcjE1MTU1"}})
+    # print(response)
+    #
+    # response = enterprise_client.execute(query=RepositoryContributorsContribution(),
+    #                                      substitutions={"owner": "jcui9", "repo_name": "pyqt_UI",
+    #                                                     "id": {"id": "MDQ6VXNlcjE5Njk1"}})
+    # print(response)
+    #
+    # response = enterprise_client.execute(query=RepositoryContributorsContribution(),
+    #                                      substitutions={"owner": "jcui9", "repo_name": "pyqt_UI",
+    #                                                     "id": {"id": "MDQ6VXNlcjI4NjU5"}})
+    # print(response)
 
     # RepositoryContributors
     # response = client.execute(query=RepositoryContributors(), substitutions={"owner": "JialinC", "repo_name": "se-hw2"})
