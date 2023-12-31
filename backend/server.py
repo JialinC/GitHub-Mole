@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import os
-
+# G2370
 from github_query.github_graphql.authentication import PersonalAccessTokenAuthenticator
 from github_query.github_graphql.client import Client
 from github_query.queries.comments.user_commit_comments import UserCommitComments
@@ -11,6 +11,20 @@ from github_query.queries.comments.user_repository_discussion_comments import Us
 from github_query.queries.profile.user_login import UserLogin
 from github_query.queries.profile.user_profile_stats import UserProfileStats
 from github_query.queries.time_range_contributions.user_contributions_collection import UserContributionsCollection
+# G2371
+from github_query.model.authentication import PersonalAccessTokenAuthenticator
+from github_query.github_graphql.github_client import GitHubClient
+from github_query.queries.contributions.user_login import UserLogin
+from flask_server.service.paginated_service import PaginatedService
+# G2372
+from github_query.github_graphql.authentication import PersonalAccessTokenAuthenticator
+from github_query.github_graphql.client import Client
+from github_query.queries.repositories.user_login import UserLogin
+from github_query.queries.repositories.repository_commits import RepositoryCommits
+from github_query.queries.repositories.repository_contributors_contribution import RepositoryContributorsContribution
+from github_query.queries.repositories.repository_contributors import RepositoryContributors
+
+
 
 app = Flask(__name__)
 
@@ -24,7 +38,6 @@ client = Client(
     host="api.github.com", is_enterprise=False,
     authenticator=PersonalAccessTokenAuthenticator(token=auth_token)
 )
-
 
 @app.route('/api/github/userlogin')
 def fetch_github_data():
