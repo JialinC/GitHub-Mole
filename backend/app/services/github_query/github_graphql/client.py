@@ -10,7 +10,7 @@ from requests import Response
 from requests.exceptions import RequestException
 from .authentication import Authenticator
 from .query import PaginatedQuery, Query
-from github_query.queries.utils.query_cost import QueryCost
+from github_query.queries.costs.query_cost import QueryCost
 
 
 class InvalidAuthenticationError(Exception):

@@ -3,10 +3,8 @@ from typing import Union, List, Dict
 from datetime import datetime
 from collections import deque
 
-
 class InvalidQueryException(Exception):
     pass
-
 
 class QueryNode:
     """
