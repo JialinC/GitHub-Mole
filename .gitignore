@@ -287,10 +287,10 @@ dist-ssr
 *.sln
 *.sw?
 
-/backend/github_query/etc/*
+/backend/app/services/github_query/etc/*
 
-/backend/github_query/driver.py
-/backend/github_query/rate_limit_test.py
-/backend/github_query/repository_miner_driver.py
-/backend/github_query/student_miner_driver.py
+/backend/app/services/github_query/driver.py
+/backend/app/services/github_query/rate_limit_test.py
+/backend/app/services/github_query/repository_miner_driver.py
+/backend/app/services/github_query/student_miner_driver.py
 /debug.py
