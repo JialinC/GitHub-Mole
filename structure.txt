@@ -1,36 +1,73 @@
-/YourApp
-    /backend
-        /app
-            __init__.py
-            /api
-                __init__.py
-                routes.py
-                utilities.py
-            /services
-                __init__.py
-                third_party_service.py
-            /models
-                __init__.py
-                model.py
-            /tests
-                __init__.py
-                test_api.py
-            config.py
-        run.py
-        requirements.txt
-        .flaskenv
-        .env
-    /frontend
-        /public
-            index.html
-        /src
-            /components
-                App.js
-                AnotherComponent.js
-            /styles
-                App.css
-            index.js
-        package.json
-        package-lock.json
-        vite.config.js
-    .gitignore
+GITHUB_GRAPHQL/
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   └── github_routes.py
+│   │   └── services/
+│   │       ├── github_query/
+│   │       │   ├── github_graphql/
+│   │       │   │   ├── __init__.py
+│   │       │   │   ├── authentication.py
+│   │       │   │   ├── client.py
+│   │       │   │   └── query.py
+│   │       │   ├── queries/
+│   │       │   │   ├── comments/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   ├── user_commit_comments.py
+│   │       │   │   │   ├── user_gist_comments.py
+│   │       │   │   │   ├── user_issue_comments.py
+│   │       │   │   │   └── user_repository_discussion_comments.py
+│   │       │   │   ├── contributions/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   ├── user_gists.py
+│   │       │   │   │   ├── user_issues.py
+│   │       │   │   │   ├── user_pull_requests.py
+│   │       │   │   │   ├── user_repositories.py
+│   │       │   │   │   └── user_repository_discussions.py
+│   │       │   │   ├── costs/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   ├── query_cost.py
+│   │       │   │   │   └── rate_limit.py
+│   │       │   │   ├── profiles/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   ├── user_login.py
+│   │       │   │   │   └── user_profile_stats.py
+│   │       │   │   ├── repositories/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   ├── repository_commits.py
+│   │       │   │   │   ├── repository_contributors_contribution.py
+│   │       │   │   │   └── repository_contributors.py
+│   │       │   │   ├── time_range_contributions/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   └── user_contributions_collection.py
+│   │       │   │   └── __init__.py
+│   │       │   ├── utils/
+│   │       │   │   ├── __init__.py
+│   │       │   │   └── helper.py
+│   │       │   └── __init__.py
+│   │       ├── __init__.py
+│   │       └── github_services.py
+│   ├── tests/
+│   ├── .env
+│   ├── .flaskenv
+│   ├── requirements.txt
+│   └── run.py
+├── frontend/
+│   ├── public/
+│   │   ├──
+│   │   └──
+│   ├── src/
+│   │   ├──
+│   │   └──
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+├── .gitignore
+├── LICENSE
+├── README.md
+└── structure.txt
+
+
