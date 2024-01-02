@@ -288,9 +288,5 @@ dist-ssr
 *.sw?
 
 /backend/app/services/github_query/etc/*
-
-/backend/app/services/github_query/driver.py
-/backend/app/services/github_query/rate_limit_test.py
-/backend/app/services/github_query/repository_miner_driver.py
-/backend/app/services/github_query/student_miner_driver.py
+/backend/app/services/terminal_log/*
 /debug.py

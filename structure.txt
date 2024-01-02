@@ -49,6 +49,53 @@ GITHUB_GRAPHQL/
 │   │       ├── __init__.py
 │   │       └── github_services.py
 │   ├── tests/
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   └── github_routes.py
+│   │   └── services/
+│   │       ├── github_query/
+│   │       │   ├── github_graphql/
+│   │       │   │   ├── __init__.py
+│   │       │   │   ├── test_authentication.py
+│   │       │   │   ├── test_client.py
+│   │       │   │   └── test_query.py
+│   │       │   ├── queries/
+│   │       │   │   ├── comments/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   ├── test_user_commit_comments.py
+│   │       │   │   │   ├── test_user_gist_comments.py
+│   │       │   │   │   ├── test_user_issue_comments.py
+│   │       │   │   │   └── test_user_repository_discussion_comments.py
+│   │       │   │   ├── contributions/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   ├── test_user_gists.py
+│   │       │   │   │   ├── test_user_issues.py
+│   │       │   │   │   ├── test_user_pull_requests.py
+│   │       │   │   │   ├── test_user_repositories.py
+│   │       │   │   │   └── test_user_repository_discussions.py
+│   │       │   │   ├── costs/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   ├── test_query_cost.py
+│   │       │   │   │   └── test_rate_limit.py
+│   │       │   │   ├── profiles/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   ├── test_user_login.py
+│   │       │   │   │   └── test_user_profile_stats.py
+│   │       │   │   ├── repositories/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   ├── test_repository_commits.py
+│   │       │   │   │   ├── test_repository_contributors_contribution.py
+│   │       │   │   │   └── test_repository_contributors.py
+│   │       │   │   ├── time_range_contributions/
+│   │       │   │   │   ├── __init__.py
+│   │       │   │   │   └── test_user_contributions_collection.py
+│   │       │   │   └── __init__.py
+│   │       │   ├── utils/
+│   │       │   │   ├── __init__.py
+│   │       │   │   └── test_helper.py
+│   │       │   └── __init__.py
+│   │       ├── __init__.py
+│   │       └── github_services.py
 │   ├── .env
 │   ├── .flaskenv
 │   ├── requirements.txt
@@ -67,7 +114,15 @@ GITHUB_GRAPHQL/
 │   └── vite.config.ts
 ├── .gitignore
 ├── LICENSE
+├── pytest.ini
 ├── README.md
 └── structure.txt
+
+
+
+
+
+
+
 
 
