@@ -1,7 +1,6 @@
 import pytest
 from github_query.github_graphql.query import QueryNode, Query, QueryNodePaginator, PaginatedQuery
 
-
 class TestQuery:
     @pytest.fixture
     def query_node(self):
