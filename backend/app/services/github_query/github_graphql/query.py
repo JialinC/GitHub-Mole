@@ -4,7 +4,18 @@ from datetime import datetime
 from collections import deque
 
 class InvalidQueryException(Exception):
-    pass
+    """Exception raised for errors in the query.
+
+    Attributes:
+        message -- explanation of the error
+    """
+
+    def __init__(self, message="Invalid query structure or execution parameters"):
+        self.message = message
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f'{self.__class__.__name__}: {self.message}'
 
 class QueryNode:
     """
@@ -40,8 +51,6 @@ class QueryNode:
                 args_list.append(f'{key}: "{value}"')
             elif key == "name":
                 args_list.append(f'{key}: "{value}"')
-            elif isinstance(value, str):
-                args_list.append(f'{key}: {value}')
             elif isinstance(value, list):
                 args_list.append(f'{key}: [{", ".join(value)}]')
             elif isinstance(value, dict):
@@ -107,7 +116,6 @@ class Query(QueryNode):
             if isinstance(value, bool):
                 result[key] = str(value).lower()
             elif isinstance(value, dict):
-                # result[key] = "{" + ", ".join(f"{key}: {value}" for key, value in value.items()) + "}"
                 result[key] = (
                                 "{"
                                 + ", ".join(
@@ -140,7 +148,7 @@ class QueryNodePaginator(QueryNode):
     Specialized QueryNode for paginated requests.
     """
 
-    def __init__(self, name: str = "query", fields: List[Union[str, 'QueryNode']] = [], args: Dict = None):
+    def __init__(self, name: str = "query", fields: List[Union[str, 'QueryNode']] = [], args: Dict = {}):
         """
         Initializes a QueryNodePaginator.
         Args:
