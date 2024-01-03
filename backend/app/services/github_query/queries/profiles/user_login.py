@@ -1,4 +1,4 @@
-from backend.app.services.github_query.github_graphql.query import Query, QueryNode
+from backend.app.services.github_query.github_graphql.query import QueryNode, Query
 
 class UserLoginViewer(Query):
     def __init__(self):

@@ -1,5 +1,4 @@
-from github_query.github_graphql.query import QueryNode, Query
-
+from backend.app.services.github_query.github_graphql.query import QueryNode, Query
 
 class UserProfileStats(Query):
     def __init__(self):
@@ -44,25 +43,39 @@ class UserProfileStats(Query):
     @staticmethod
     def profile_stats(profile_stats: dict):
         """
-        Return the contributors contribution collection
+        Processes the raw data returned from a GraphQL query about a user's profile 
+        and extracts specific statistics. It formats the data into a more 
+        accessible and simplified dictionary structure.
+
         Args:
-            profile_stats: the raw data returned by the query
+            profile_stats (dict): The raw data returned by the query, 
+                                expected to contain a 'user' key with nested user information.
+
         Returns:
+            dict: A dictionary containing key statistics and information about the user, such as
+                their login, creation date, company, number of followers, etc.
+                Each piece of information is extracted from the nested structure of the 
+                input and presented as a flat dictionary for easier access.
         """
         raw_data = profile_stats["user"]
-        profile_stats = {"github": raw_data["login"],
-                         "created_at": raw_data["createdAt"],
-                         "company": raw_data["company"],
-                         "followers": raw_data["followers"]["totalCount"],
-                         "gists": raw_data["gists"]["totalCount"],
-                         "issues": raw_data["issues"]["totalCount"],
-                         "projects": raw_data["projects"]["totalCount"],
-                         "pull_requests": raw_data["pullRequests"]["totalCount"],
-                         "repositories": raw_data["repositories"]["totalCount"],
-                         "repository_discussions": raw_data["repositoryDiscussions"]["totalCount"],
-                         "gist_comments": raw_data["gistComments"]["totalCount"],
-                         "issue_comments": raw_data["issueComments"]["totalCount"],
-                         "commit_comments": raw_data["commitComments"]["totalCount"],
-                         "repository_discussion_comments": raw_data["repositoryDiscussionComments"]["totalCount"]}
-        return profile_stats
+        processed_stats = {
+            "github": raw_data["login"],
+            "created_at": raw_data["createdAt"],
+            "company": raw_data["company"],
+            "followers": raw_data["followers"]["totalCount"],
+            "gists": raw_data["gists"]["totalCount"],
+            "issues": raw_data["issues"]["totalCount"],
+            "projects": raw_data["projects"]["totalCount"],
+            "pull_requests": raw_data["pullRequests"]["totalCount"],
+            "repositories": raw_data["repositories"]["totalCount"],
+            "repository_discussions": raw_data["repositoryDiscussions"]["totalCount"],
+            "gist_comments": raw_data["gistComments"]["totalCount"],
+            "issue_comments": raw_data["issueComments"]["totalCount"],
+            "commit_comments": raw_data["commitComments"]["totalCount"],
+            "repository_discussion_comments": raw_data["repositoryDiscussionComments"]["totalCount"],
+            "watching": raw_data["watching"]["totalCount"],
+            "starred_repositories": raw_data["starredRepositories"]["totalCount"],
+            "following": raw_data["following"]["totalCount"]
+        }
+        return processed_stats
 
