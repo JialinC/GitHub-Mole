@@ -290,3 +290,4 @@ dist-ssr
 /backend/app/services/github_query/etc/*
 /backend/app/services/terminal_log/*
 /debug.py
+/backend/old_tests_temp_backup/
