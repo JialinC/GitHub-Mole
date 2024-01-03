@@ -5,45 +5,41 @@ from random import randint
 from string import Template
 from typing import Union
 import requests
-from requests.exceptions import Timeout
+from requests.exceptions import Timeout, RequestException
 from requests import Response
-from requests.exceptions import RequestException
-from .authentication import Authenticator
-from .query import PaginatedQuery, Query
-from github_query.queries.costs.query_cost import QueryCost
-
+from backend.app.services.github_query.github_graphql.authentication import Authenticator
+from backend.app.services.github_query.github_graphql.query import Query, PaginatedQuery
+from backend.app.services.github_query.queries.costs.query_cost import QueryCost
 
 class InvalidAuthenticationError(Exception):
+    """Exception raised when an authentication object is invalid or not provided."""
     pass
 
-
 class QueryFailedException(Exception):
+    """
+    Exception raised when a GraphQL query fails to execute properly.
+    This can be due to various reasons including network issues or logical errors in query construction.
+    """
     def __init__(self, response: Response, query: str = None):
+        # Initializing the exception with the response and query that caused the failure
         self.response = response
         self.query = query
+        # Constructing a detailed error message
         if query:
-            super().__init__(
-                f"Query failed to run by returning code of {response.status_code}.\nQuery = {query}\n{response.text}"
-            )
+            message = f"Query failed with code {response.status_code}. Query: {query}. Response: {response.text}"
         else:
-            super().__init__(
-                f"Query failed to run by returning code of {response.status_code}.\n"
-                f"Path={response.request.path_url}\n{response.text}"
-            )
-
+            message = f"Query failed with code {response.status_code}. Path: {response.request.path_url}. Response: {response.text}"
+        super().__init__(message)
 
 class Client:
     """
-    GitHub GraphQL Client.
+    GitHub GraphQL Client for making GraphQL queries.
+    Handles the construction and execution of queries with provided authentication.
     """
-
-    def __init__(self,
-                 protocol: str = "https",
-                 host: str = "api.github.com",
-                 is_enterprise: bool = False,
-                 authenticator: Authenticator = None):
+    def __init__(self, protocol: str = "https", host: str = "api.github.com", is_enterprise: bool = False, authenticator: Authenticator = None):
         """
-        Initializes the client.
+        Initialization with protocol, host, and whether the GitHub instance is Enterprise.
+        Requires an Authenticator to be provided for handling authentication.
         Args:
             protocol: Protocol for the server
             host: Host for the server
@@ -52,22 +48,17 @@ class Client:
         """
         self._protocol = protocol
         self._host = host
-
         self._is_enterprise = is_enterprise
 
         if authenticator is None:
             raise InvalidAuthenticationError("Authentication needs to be specified")
-
         self._authenticator = authenticator
-
-        self.rest = RESTClient(
-            protocol=self._protocol, host=self._host, is_enterprise=self._is_enterprise,
-            authenticator=self._authenticator
-        )
-
+        # Instantiating the RESTClient with the same configuration for REST API operations
+        self.rest = RESTClient(protocol=self._protocol, host=self._host, is_enterprise=self._is_enterprise, authenticator=self._authenticator)
+        
     def _base_path(self):
         """
-        Returns base path for a GraphQL Request.
+        Constructs the base path for GraphQL requests, differing based on whether it's an enterprise instance
         Returns:
             Base path for requests
         """
@@ -79,23 +70,20 @@ class Client:
 
     def _generate_headers(self, **kwargs):
         """
-        Generates headers for a request including authentication headers.
+        Generates headers for the request including authorization and any additional provided headers
         Args:
             **kwargs: Headers
-
         Returns:
             Headers required for requests
         """
-        headers = {}
-
-        headers.update(self._authenticator.get_authorization_header())
+        headers = self._authenticator.get_authorization_header()
         headers.update(kwargs)
-
         return headers
 
     def _retry_request(self, retry_attempts: int, timeout_seconds: int, query: Union[str, Query], substitutions: dict):
         """
-        wrapper for retrying requests.
+        Attempts a request with specified retries and timeout, making substitutions into the query as needed
+        If successful, returns the response, otherwise continues retrying until attempts are exhausted
         Args:
             retry_attempts: retry attempts
             timeout_seconds: timeout seconds
@@ -104,41 +92,47 @@ class Client:
         Returns:
             Response as a JSON
         """
+        last_exception = None
+        response = None
         for _ in range(retry_attempts):
             try:
                 response = requests.post(
                     self._base_path(),
                     json={
-                        'query': Template(query).substitute(**substitutions)
-                        if isinstance(query, str) else query.substitute(**substitutions)
+                        'query': Template(query).substitute(**substitutions) if isinstance(query, str) else query.substitute(**substitutions)
                     },
                     headers=self._generate_headers(),
                     timeout=timeout_seconds
                 )
-                # Process the response
                 if response.status_code == 200:
                     return response
-            except Timeout:
+            except Timeout as e:
+                last_exception = e
                 print("Request timed out. Retrying...")
+        # If this point is reached, all retries have been exhausted
+        if not last_exception:
+            raise QueryFailedException(query=query, response=response)
+        raise Timeout("All retry attempts exhausted.")
 
     def _execute(self, query: Union[str, Query], substitutions: dict):
         """
-        Executes a query after substituting values.
+        Executes a query after performing necessary substitutions
+        Checks rate limits and waits if necessary before executing
+        If successful, returns the data, otherwise raises QueryFailedException
         Args:
             query: Query to run
             substitutions: Substitutions to make
-
         Returns:
             Response as a JSON
         """
         query_string = Template(query).substitute(**substitutions) if isinstance(query, str) else query.substitute(**substitutions)
         match = re.search(r'query\s*{(?P<content>.+)}', query_string)
+        # pre-calculate the cost of the upcoming graphql query
         rate_query = QueryCost(match.group('content'))
         rate_limit = self._retry_request(3, 10, rate_query, {"dryrun": True})
         rate_limit = rate_limit.json()["data"]["rateLimit"]
-        cost = rate_limit['cost']
-        remaining = rate_limit['remaining']
-        reset_at = rate_limit['resetAt']
+        cost, remaining, reset_at = rate_limit['cost'], rate_limit['remaining'], rate_limit['resetAt']
+        # if the cost of the upcoming graphql query larger than avaliable ratelimit, wait till ratelimit reset
         if cost > remaining - 5:
             current_time = datetime.utcnow()
             time_format = '%Y-%m-%dT%H:%M:%SZ'
@@ -151,10 +145,8 @@ class Client:
             time.sleep(seconds + 5)
 
         response = self._retry_request(3, 10, query, substitutions)
-
         try:
             json_response = response.json()
-
         except RequestException:
             raise QueryFailedException(query=query, response=response)
 
@@ -165,11 +157,10 @@ class Client:
 
     def execute(self, query: Union[str, Query, PaginatedQuery], substitutions: dict):
         """
-        Executes a query after substituting values. The query could be a Query or a PaginatedQuery.
+        Public method to execute a given query, handling pagination if necessary
         Args:
             query: Query to run
             substitutions: Substitutions to make
-
         Returns:
             Response as a JSON
         """
@@ -180,17 +171,17 @@ class Client:
 
     def _execution_generator(self, query, substitutions: dict):
         """
-        Executes a PaginatedQuery after substituting values.
+        Handles execution of paginated queries, yielding results as they are available
         Args:
             query: Query to run
             substitutions: Substitutions to make
-
         Returns:
             Response as a JSON
         """
         while query.paginator.has_next():
             response = self._execute(query, substitutions)
             curr_node = response
+            print(curr_node)
 
             for field_name in query.path:
                 curr_node = curr_node[Template(field_name).substitute(**substitutions)]
@@ -200,19 +191,16 @@ class Client:
             query.paginator.update_paginator(has_next_page, end_cursor)
             yield response
 
-
+# future work
 class RESTClient:
     """
-    Client for GitHub REST API.
+    A client for interacting with the GitHub REST API.
+    Handles the construction and execution of RESTful requests with provided authentication.
     """
-
-    def __init__(self,
-                 protocol: str = "https",
-                 host: str = "api.github.com",
-                 is_enterprise: bool = False,
-                 authenticator: Authenticator = None):
+    def __init__(self, protocol: str = "https", host: str = "api.github.com", is_enterprise: bool = False, authenticator: Authenticator = None):
         """
-        Initializes the client.
+        Initialization with protocol, host, and whether the GitHub instance is Enterprise
+        Requires an Authenticator to be provided for handling authentication
         Args:
             protocol: Protocol for the server
             host: Host for the server
@@ -221,7 +209,6 @@ class RESTClient:
         """
         self._protocol = protocol
         self._host = host
-
         self._is_enterprise = is_enterprise
 
         if authenticator is None:
@@ -231,7 +218,7 @@ class RESTClient:
 
     def _base_path(self):
         """
-        Returns base path for a GraphQL Request.
+        Constructs the base path for REST API requests, differing based on whether it's an enterprise instance
         Returns:
             Base path for requests
         """
@@ -243,7 +230,7 @@ class RESTClient:
 
     def _generate_headers(self, **kwargs):
         """
-        Generates headers for a request including authentication headers.
+        Generates headers for the request including authorization and any additional provided headers
         Args:
             **kwargs: Headers
 
@@ -259,7 +246,7 @@ class RESTClient:
 
     def get(self, path: str, **kwargs):
         """
-        Runs a GET request and returns a response.
+        Makes a GET request to the specified path, handling rate limits and retrying as needed
         Args:
             path: API path to hit
             **kwargs: Arguments for the GET request
