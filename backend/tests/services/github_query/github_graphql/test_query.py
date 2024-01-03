@@ -1,4 +1,4 @@
-from backend.app.services.github_query.github_graphql.query import InvalidQueryException, QueryNode, Query, QueryNodePaginator, PaginatedQuery
+from backend.app.services.github_query.github_graphql.query import QueryNode, Query, QueryNodePaginator, PaginatedQuery
 
 class TestQueryNode:
     def test_initialization(self):
