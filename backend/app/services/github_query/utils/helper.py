@@ -3,9 +3,9 @@ import re
 import string
 import random
 from datetime import datetime, timedelta
-from github_query.github_graphql.query import Query
-from github_query.github_graphql.client import Client
-from github_query.queries.utils.query_cost import QueryCost
+from backend.app.services.github_query.github_graphql.query import Query
+from backend.app.services.github_query.github_graphql.client import Client
+from backend.app.services.github_query.queries.costs.query_cost import QueryCost
 
 
 def print_methods(obj):
@@ -46,7 +46,7 @@ def get_abs_path(file_name):
     """
     script_path = os.path.abspath(__file__)
     script_dir = os.path.split(script_path)[0]
-    rel_file_path = "query_result/" + file_name
+    rel_file_path = "query_result\\" + file_name
     abs_file_path = os.path.join(script_dir, rel_file_path)
     return abs_file_path
 
