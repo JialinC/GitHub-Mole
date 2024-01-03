@@ -1,7 +1,7 @@
 import pytest
 import requests_mock
 from unittest.mock import MagicMock
-from datetime import datetime, timedelta
+from datetime import datetime
 from requests.exceptions import Timeout
 from backend.app.services.github_query.github_graphql.client import Client, InvalidAuthenticationError, QueryFailedException, RESTClient
 from backend.app.services.github_query.github_graphql.authentication import PersonalAccessTokenAuthenticator 
