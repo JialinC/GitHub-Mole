@@ -1,26 +1,27 @@
 from backend.app.services.github_query.github_graphql.query import QueryNode, Query
 
 class UserProfileStats(Query):
-    def __init__(self):
+    """
+    UserProfileStats is a subclass of Query specifically designed to fetch detailed statistical information
+    about a GitHub user's profile using the 'user' field in a GraphQL query.
+    """
+    
+    def __init__(self) -> None:
+        """
+        Initializes a UserProfileStats query object to fetch a comprehensive set of information
+        about a user, including their activities, contributions, and public profile details.
+        """
         super().__init__(
             fields=[
                 QueryNode(
                     "user",
                     args={"login": "$user"},
                     fields=[
-                        "login",
-                        "name",
-                        "email",
-                        "createdAt",
-                        "bio",
-                        "company",
-                        "isBountyHunter",
-                        "isCampusExpert",
-                        "isDeveloperProgramMember",
-                        "isEmployee",
-                        "isGitHubStar",
-                        "isHireable",
-                        "isSiteAdmin",
+                        "login", "name", "email", "createdAt", "bio", "company",
+                        # Various boolean fields indicating the user's status or roles:
+                        "isBountyHunter", "isCampusExpert", "isDeveloperProgramMember",
+                        "isEmployee", "isGitHubStar", "isHireable", "isSiteAdmin",
+                        # Nodes representing counts of various items related to the user:
                         QueryNode("watching", fields=["totalCount"]),
                         QueryNode("starredRepositories", fields=["totalCount"]),
                         QueryNode("following", fields=["totalCount"]),
