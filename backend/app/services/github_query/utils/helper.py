@@ -8,41 +8,39 @@ from backend.app.services.github_query.github_graphql.client import Client
 from backend.app.services.github_query.queries.costs.query_cost import QueryCost
 
 
-def print_methods(obj):
+def print_methods(obj: object) -> None:
     """
-    debug method.
+    Prints all callable methods of the given object. Useful for debugging and introspection.
+    
     Args:
-        obj: object to investigate
+        obj (object): The object to investigate.
     """
-    # Get a list of all methods
     methods = [method for method in dir(obj) if callable(getattr(obj, method))]
-
-    # Print the list of methods
     for method in methods:
         print(method)
 
 
-def print_attr(obj):
+def print_attr(obj: object) -> None:
     """
-    debug method.
+    Prints all non-callable attributes of the given object. Useful for debugging and introspection.
+    
     Args:
-        obj: object to investigate
+        obj (object): The object to investigate.
     """
-    # Get a list of all attributes
     attributes = [attr for attr in dir(obj) if not callable(getattr(obj, attr))]
-
-    # Print the list of attributes
     for attribute in attributes:
         print(attribute)
 
 
-def get_abs_path(file_name):
+def get_abs_path(file_name: str) -> str:
     """
-    Return the absolute path of the output file.
+    Constructs and returns the absolute path for a given file name, assuming the file is in the 'query_result' directory.
+    
     Args:
-        file_name: file name
+        file_name (str): The name of the file.
+    
     Returns:
-        string: the absolute path of the output file
+        str: The absolute path of the file.
     """
     script_path = os.path.abspath(__file__)
     script_dir = os.path.split(script_path)[0]
@@ -51,23 +49,26 @@ def get_abs_path(file_name):
     return abs_file_path
 
 
-def generate_file_name():
+def generate_file_name() -> str:
     """
-    Generate a random string as file name.
+    Generates a random string of 6 characters, consisting of uppercase letters and digits, to be used as a file name.
+    
     Returns:
-        string: random string of length 6
+        str: A randomly generated file name.
     """
     file_name = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     return file_name
 
 
-def add_a_year(time_string):
+def add_a_year(time_string: str) -> str:
     """
-    Add a year to the input time string.
+    Adds one year to the given time string formatted as "%Y-%m-%dT%H:%M:%SZ".
+    
     Args:
-        time_string: time string
+        time_string (str): The initial time string.
+    
     Returns:
-        string: time string
+        str: A new time string one year later than the input.
     """
     time_format = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -82,15 +83,17 @@ def add_a_year(time_string):
     return new_time_string
 
 
-def in_time_period(time, start, end):
+def in_time_period(time: str, start: str, end: str) -> bool:
     """
-    Decide whether the given time is in the specified time period.
+    Determines if a given time is within a specified time period.
+    
     Args:
-        time: time string
-        start: period starting time string
-        end: period ending time string
+        time (str): The time to check.
+        start (str): The start of the period.
+        end (str): The end of the period.
+    
     Returns:
-        bool: true if the given time is in the time period, false otherwise
+        bool: True if the time is within the period; False otherwise.
     """
     time = datetime.strptime(time, '%Y-%m-%dT%H:%M:%SZ')
     start = datetime.strptime(start, '%Y-%m-%dT%H:%M:%SZ')
@@ -98,39 +101,44 @@ def in_time_period(time, start, end):
     return end > time > start
 
 
-def created_before(created, time):
+def created_before(created: str, time: str) -> bool:
     """
-    Decide whether the given time is in the specified time period.
+    Determines if an object was created before a certain time.
+    
     Args:
-        time: time stamp to compare against
-        created: object created time
+        created (str): The creation time of the object.
+        time (str): The time to compare against.
+    
     Returns:
-        bool: true if the given time is in the time period, false otherwise
+        bool: True if created before the specified time; False otherwise.
     """
     time = datetime.strptime(time, '%Y-%m-%dT%H:%M:%SZ')
     created = datetime.strptime(created, '%Y-%m-%dT%H:%M:%SZ')
     return created < time
 
 
-def write_csv(file, data_row):
+def write_csv(file: str, data_row: str) -> None:
     """
-    Write the given data row to given file.
+    Appends a single line of data to a CSV file.
+    
     Args:
-        file: path to file
-        data_row: input line to write to the file
+        file (str): The file to write to.
+        data_row (str): The data to write as a single line.
     """
     with open(file=file, mode='a') as f:
         f.writelines(data_row + "\n")
         f.flush()
 
 
-def get_owner_and_name(link: str):
+def get_owner_and_name(link: str) -> tuple:
     """
-    Parse the URL and identifies the author login and the repository name.
+    Extracts the repository owner's login and repository name from a GitHub URL.
+    
     Args:
-        link: Link to parse
+        link (str): The URL to parse.
+    
     Returns:
-        Author login and repository name
+        tuple: A tuple containing the owner's login and the repository name.
     """
     pattern = r"https?://(?:www\.)?github\.(?:[^/]+\.[^/]+|[^/]+)/(?P<owner>[^/]+)/?(?P<repo>[^/]+)"
     match = re.match(pattern, link)
@@ -138,15 +146,17 @@ def get_owner_and_name(link: str):
     return match.group("owner"), match.group("repo")
 
 
-def have_rate_limit(client: Client, query: Query, args: dict):
+def have_rate_limit(client: Client, query: Query, args: dict) -> list:
     """
-    Test whether the user has enough rate limit to execute the given query
+    Determines whether enough rate limit remains to execute a given query.
+    
     Args:
-        client: client to execute query
-        query: query to be executed
-        args: arguments of the query
+        client (Client): The client to use for execution.
+        query (Query): The query to execute.
+        args (dict): Arguments for the query.
+    
     Returns:
-        True or false user has enough rate limit to execute the given query
+        list: A list containing a boolean indicating whether the rate limit is sufficient and the reset time.
     """
     query_string = query.substitute(**args).__str__()
     match = re.search(r'query\s*{(?P<content>.+)}', query_string)
