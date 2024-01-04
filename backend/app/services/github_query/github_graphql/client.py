@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 from random import randint
 from string import Template
-from typing import Union
+from typing import Union, Optional, Dict, Any, Generator
 import requests
 from requests.exceptions import Timeout, RequestException
 from requests import Response
@@ -20,7 +20,7 @@ class QueryFailedException(Exception):
     Exception raised when a GraphQL query fails to execute properly.
     This can be due to various reasons including network issues or logical errors in query construction.
     """
-    def __init__(self, response: Response, query: str = None):
+    def __init__(self, response: Response, query: Optional[str] = None) -> None:
         # Initializing the exception with the response and query that caused the failure
         self.response = response
         self.query = query
@@ -33,18 +33,21 @@ class QueryFailedException(Exception):
 
 class Client:
     """
-    GitHub GraphQL Client for making GraphQL queries.
-    Handles the construction and execution of queries with provided authentication.
+    Client is a class that handles making GraphQL queries to a GitHub instance using the provided authentication.
+    It manages request construction, execution, and error handling, along with support for pagination.
     """
-    def __init__(self, protocol: str = "https", host: str = "api.github.com", is_enterprise: bool = False, authenticator: Authenticator = None):
+    def __init__(self, protocol: str = "https", host: str = "api.github.com", is_enterprise: bool = False, authenticator: Optional[Authenticator] = None) -> None:
         """
-        Initialization with protocol, host, and whether the GitHub instance is Enterprise.
-        Requires an Authenticator to be provided for handling authentication.
+        Initializes the client with the necessary configuration and authentication.
+
         Args:
-            protocol: Protocol for the server
-            host: Host for the server
-            is_enterprise: Is the host running on Enterprise Version?
-            authenticator: Authenticator for the client
+            protocol (str): The protocol to use for connecting to the GitHub server (usually https).
+            host (str): The host address of the GitHub server.
+            is_enterprise (bool): Indicates whether the client is connecting to a GitHub Enterprise instance.
+            authenticator (Optional[Authenticator]): The authenticator instance for handling authentication.
+
+        Raises:
+            InvalidAuthenticationError: If no authenticator is provided or if the provided authenticator is invalid.
         """
         self._protocol = protocol
         self._host = host
@@ -56,11 +59,12 @@ class Client:
         # Instantiating the RESTClient with the same configuration for REST API operations
         self.rest = RESTClient(protocol=self._protocol, host=self._host, is_enterprise=self._is_enterprise, authenticator=self._authenticator)
         
-    def _base_path(self):
+    def _base_path(self) -> str:
         """
-        Constructs the base path for GraphQL requests, differing based on whether it's an enterprise instance
+        Constructs the base URL path for the GitHub GraphQL API.
+
         Returns:
-            Base path for requests
+            str: The base URL path for the GitHub GraphQL API.
         """
         return (
             f"{self._protocol}://{self._host}/api/graphql"
@@ -68,29 +72,35 @@ class Client:
             f"{self._protocol}://{self._host}/graphql"
         )
 
-    def _generate_headers(self, **kwargs):
+    def _generate_headers(self, **kwargs) -> Dict[str, str]:
         """
-        Generates headers for the request including authorization and any additional provided headers
+        Generates the necessary headers for making a GraphQL request, including authentication headers.
+
         Args:
-            **kwargs: Headers
+            **kwargs: Additional headers to include in the request.
+
         Returns:
-            Headers required for requests
+            Dict[str, str]: A dictionary of headers for the request.
         """
         headers = self._authenticator.get_authorization_header()
         headers.update(kwargs)
         return headers
 
-    def _retry_request(self, retry_attempts: int, timeout_seconds: int, query: Union[str, Query], substitutions: dict):
+    def _retry_request(self, retry_attempts: int, timeout_seconds: int, query: Union[str, Query], substitutions: Dict[str, Any]) -> Response:
         """
-        Attempts a request with specified retries and timeout, making substitutions into the query as needed
-        If successful, returns the response, otherwise continues retrying until attempts are exhausted
+        Tries to send a request multiple times until it succeeds or the retry limit is reached.
+
         Args:
-            retry_attempts: retry attempts
-            timeout_seconds: timeout seconds
-            query: Query to run
-            substitutions: Substitutions to make
+            retry_attempts (int): The number of times to retry the request before giving up.
+            timeout_seconds (int): The number of seconds to wait for a response before timing out.
+            query (Union[str, Query]): The GraphQL query to execute.
+            substitutions (Dict[str, Any]): Substitutions to apply to the query template.
+
         Returns:
-            Response as a JSON
+            Response: The server's response to the HTTP request.
+
+        Raises:
+            Timeout: If all retry attempts are exhausted and the request keeps timing out.
         """
         last_exception = None
         response = None
@@ -114,16 +124,19 @@ class Client:
             raise QueryFailedException(query=query, response=response)
         raise Timeout("All retry attempts exhausted.")
 
-    def _execute(self, query: Union[str, Query], substitutions: dict):
+    def _execute(self, query: Union[str, Query], substitutions: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Executes a query after performing necessary substitutions
-        Checks rate limits and waits if necessary before executing
-        If successful, returns the data, otherwise raises QueryFailedException
+        Executes a query with the given substitutions and handles response processing and error checking.
+
         Args:
-            query: Query to run
-            substitutions: Substitutions to make
+            query (Union[str, Query]): The GraphQL query to execute.
+            substitutions (Dict[str, Any]): Substitutions to apply to the query template.
+
         Returns:
-            Response as a JSON
+            Dict[str, Any]: The parsed JSON response from the server.
+
+        Raises:
+            QueryFailedException: If the query execution fails or returns errors.
         """
         query_string = Template(query).substitute(**substitutions) if isinstance(query, str) else query.substitute(**substitutions)
         match = re.search(r'query\s*{(?P<content>.+)}', query_string)
@@ -155,28 +168,32 @@ class Client:
         else:
             raise QueryFailedException(query=query, response=response)
 
-    def execute(self, query: Union[str, Query, PaginatedQuery], substitutions: dict):
+    def execute(self, query: Union[str, Query, PaginatedQuery], substitutions: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Public method to execute a given query, handling pagination if necessary
+        Public method to execute a non-paginated or paginated query.
+
         Args:
-            query: Query to run
-            substitutions: Substitutions to make
+            query (Union[str, Query, PaginatedQuery]): The GraphQL query to execute.
+            substitutions (Dict[str, Any]): Substitutions to apply to the query template.
+
         Returns:
-            Response as a JSON
+            Dict[str, Any]: The parsed JSON response from the server.
         """
         if isinstance(query, PaginatedQuery):
             return self._execution_generator(query, substitutions)
 
         return self._execute(query, substitutions)
 
-    def _execution_generator(self, query, substitutions: dict):
+    def _execution_generator(self, query: Union[Query, PaginatedQuery], substitutions: Dict[str, Any]) -> Generator[Dict[str, Any], None, None]:
         """
-        Handles execution of paginated queries, yielding results as they are available
+        Handles the iteration over paginated query results, yielding each page's data as it's fetched.
+
         Args:
-            query: Query to run
-            substitutions: Substitutions to make
+            query (Union[Query, PaginatedQuery]): The paginated GraphQL query to execute.
+            substitutions (Dict[str, Any]): Substitutions to apply to the query template.
+
         Returns:
-            Response as a JSON
+            Generator[Dict[str, Any], None, None]: A generator yielding each page's data as a dictionary.
         """
         while query.paginator.has_next():
             response = self._execute(query, substitutions)
