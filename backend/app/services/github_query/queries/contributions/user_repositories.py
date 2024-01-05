@@ -1,9 +1,17 @@
-from github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
-import github_query.util.helper as helper
-
+from typing import List, Dict
+from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
+import backend.app.services.github_query.utils.helper as helper
 
 class UserRepositories(PaginatedQuery):
-    def __init__(self):
+    """
+    UserRepositories is a class for querying a user's repositories including details like language statistics,
+    fork count, stargazer count, etc. It extends PaginatedQuery to handle potentially large numbers of repositories.
+    """
+    
+    def __init__(self) -> None:
+        """
+        Initializes a query for a user's repositories with various filtering and ordering options.
+        """
         super().__init__(
             fields=[
                 QueryNode(
@@ -17,6 +25,7 @@ class UserRepositories(PaginatedQuery):
                                   "ownerAffiliations": "$ownership",
                                   "orderBy": "$order_by"},
                             fields=[
+                                "totalCount",
                                 QueryNode(
                                     "nodes",
                                     fields=[
@@ -58,18 +67,33 @@ class UserRepositories(PaginatedQuery):
         )
 
     @staticmethod
-    def user_repositories(raw_data: dict):
+    def user_repositories(raw_data: Dict) -> List[Dict]:
         """
-        Return the contributors contribution collection
+        Extracts and returns the list of repositories from the raw GraphQL query response data.
+
         Args:
-            raw_data: the raw data returned by the query
+            raw_data: The raw data returned by the GraphQL query.
+
         Returns:
+            A list of dictionaries, each containing data about a single repository.
         """
-        repositories = raw_data["user"]["repositories"]["nodes"]
+        repositories = raw_data.get("user", {}).get("repositories", {}).get("nodes", [])
         return repositories
 
     @staticmethod
-    def cumulated_repository_stats(repo_list: list, repo_stats: dict, lang_stats: dict, end: str):
+    def cumulated_repository_stats(repo_list: List[Dict], repo_stats: Dict, lang_stats: Dict, end: str) -> None:
+        """
+        Aggregates statistics for repositories created before a certain time.
+
+        Args:
+            repo_list: List of repositories to be analyzed.
+            repo_stats: Dictionary accumulating various statistics like total count, fork count, etc.
+            lang_stats: Dictionary accumulating language usage statistics.
+            end: String representing the end time for consideration of repositories.
+
+        Returns:
+            None: Modifies the repo_stats and lang_stats dictionaries in place.
+        """
         for repo in repo_list:
             if helper.created_before(repo["createdAt"], end):
                 if repo["languages"]["totalSize"] == 0:
