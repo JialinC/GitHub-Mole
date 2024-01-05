@@ -1,52 +1,52 @@
-from github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
-
+from typing import Dict, List, Optional
+from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 
 class RepositoryCommits(PaginatedQuery):
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initializes a paginated query for repository commits with specific fields and pagination controls."""
         super().__init__(
             fields=[
                 QueryNode(
                     "repository",
-                    args={"owner": "$owner",
-                          "name": "$repo_name"},
+                    args={"owner": "$owner", "name": "$repo_name"},  # Query arguments for specifying the repository
                     fields=[
                         QueryNode(
-                            "defaultBranchRef",
+                            "defaultBranchRef",  # Points to the default branch of the repository
                             fields=[
                                 QueryNode(
                                     "target",
                                     fields=[
                                         QueryNode(
-                                            "... on Commit",
+                                            "... on Commit",  # Inline fragment on Commit type
                                             fields=[
                                                 QueryNodePaginator(
-                                                    "history",
-                                                    args={"first": "$pg_size"},
+                                                    "history",  # Paginated history of commits
+                                                    args={"first": "$pg_size"},  # Pagination control arguments
                                                     fields=[
-                                                        'totalCount',
+                                                        'totalCount',  # Total number of commits in the history
                                                         QueryNode(
-                                                            "nodes",
+                                                            "nodes",  # List of commit nodes
                                                             fields=[
-                                                                "authoredDate",
-                                                                "changedFilesIfAvailable",
-                                                                "additions",
-                                                                "deletions",
-                                                                "message",
+                                                                "authoredDate",  # Date when the commit was authored
+                                                                "changedFilesIfAvailable",  # Number of files changed, if available
+                                                                "additions",  # Number of additions made in the commit
+                                                                "deletions",  # Number of deletions made in the commit
+                                                                "message",  # Commit message
                                                                 QueryNode(
-                                                                    "parents (first: 2)",
+                                                                    "parents (first: 2)",  # Parent commits of the commit, limited to 2
                                                                     fields=[
-                                                                        "totalCount"
+                                                                        "totalCount"  # Total number of parent commits
                                                                     ]
                                                                 ),
                                                                 QueryNode(
-                                                                    "author",
+                                                                    "author",  # Author of the commit
                                                                     fields=[
-                                                                        'name',
-                                                                        'email',
+                                                                        'name',  # Name of the author
+                                                                        'email',  # Email of the author
                                                                         QueryNode(
-                                                                            "user",
+                                                                            "user",  # User associated with the author
                                                                             fields=[
-                                                                                "login"
+                                                                                "login"  # Login of the user
                                                                             ]
                                                                         )
                                                                     ]
@@ -54,7 +54,7 @@ class RepositoryCommits(PaginatedQuery):
                                                             ]
                                                         ),
                                                         QueryNode(
-                                                            "pageInfo",
+                                                            "pageInfo",  # Information about pagination
                                                             fields=["endCursor", "hasNextPage"]
                                                         )
                                                     ]
@@ -71,20 +71,24 @@ class RepositoryCommits(PaginatedQuery):
         )
 
     @staticmethod
-    def commits_list(raw_data: dict, cumulative_commits: dict = None):
+    def commits_list(raw_data: Dict[str, Dict], cumulative_commits: Optional[Dict[str, Dict]] = None) -> Dict[str, Dict]:
         """
-        Return the cumulated contribution of the contributor
+        Processes the raw data from the GraphQL query to accumulate commit data per author.
+
         Args:
-            raw_data: the raw data returned by the query
-            cumulative_commits: cumulative commits dict
+            raw_data: The raw data returned from the GraphQL query.
+            cumulative_commits: Optional cumulative commits dictionary to accumulate results.
+
         Returns:
-            list: a list of contributor's total additions, total deletions, and total number of commits.
-            [total_commits, total_additions, total_deletions]
+            A dictionary of cumulative commit data per author, with details like total additions, deletions, file changes, and commits.
         """
         nodes = raw_data['repository']['defaultBranchRef']['target']['history']['nodes']
         if cumulative_commits is None:
             cumulative_commits = {}
+        
+        # Process each commit node to accumulate data
         for node in nodes:
+            # Consider only commits with less than 2 parents (usually mainline commits)
             if node['parents'] and node['parents']['totalCount'] < 2:
                 name = node['author']['name']
                 login = node['author']['user']
@@ -124,7 +128,7 @@ class RepositoryCommits(PaginatedQuery):
                                 'total_files': files,
                                 'total_commits': 1
                             }
-                    else:  # no login
+                    else: # no login
                         if 'total_additions' in cumulative_commits[name]:
                             cumulative_commits[name]['total_additions'] += additions
                             cumulative_commits[name]['total_deletions'] += deletions
