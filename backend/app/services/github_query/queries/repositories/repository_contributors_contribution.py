@@ -1,14 +1,17 @@
-from github_query.github_graphql.query import QueryNode, Query
+from typing import Dict, List, Optional, Any
+from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 
-
-class RepositoryContributorsContribution(Query):
-    def __init__(self):
+class RepositoryContributorsContribution(PaginatedQuery):
+    def __init__(self) -> None:
+        """
+        Initializes a paginated query to extract contributions made by contributors in a specific repository.
+        Focuses on the commit history of the repository's default branch, targeting individual contributions.
+        """
         super().__init__(
             fields=[
                 QueryNode(
                     "repository",
-                    args={"owner": "$owner",
-                          "name": "$repo_name"},
+                    args={"owner": "$owner", "name": "$repo_name"},
                     fields=[
                         QueryNode(
                             "defaultBranchRef",
@@ -19,9 +22,9 @@ class RepositoryContributorsContribution(Query):
                                         QueryNode(
                                             "... on Commit",
                                             fields=[
-                                                QueryNode(
+                                                QueryNodePaginator(
                                                     "history",
-                                                    args={"author": "$id"},
+                                                    args={"author": "$id", "first": "$pg_size"},
                                                     fields=[
                                                         "totalCount",
                                                         QueryNode(
@@ -34,11 +37,13 @@ class RepositoryContributorsContribution(Query):
                                                                 "message",
                                                                 QueryNode(
                                                                     "parents (first: 2)",
-                                                                    fields=[
-                                                                        "totalCount"
-                                                                    ]
+                                                                    fields=["totalCount"]
                                                                 )
                                                             ]
+                                                        ),
+                                                        QueryNode(
+                                                            "pageInfo",
+                                                            fields=["endCursor", "hasNextPage"]
                                                         )
                                                     ]
                                                 )
@@ -54,47 +59,54 @@ class RepositoryContributorsContribution(Query):
         )
 
     @staticmethod
-    def user_cumulated_contribution(raw_data: dict):
+    def user_cumulated_contribution(raw_data: Dict[str, Any], cumulative_contribution: Optional[Dict[str, int]] = None) -> Dict[str, int]:
         """
-        Return the cumulated contribution of the contributor
+        Calculates cumulative contribution statistics of a user from the provided raw data.
+
         Args:
-            raw_data: the raw data returned by the query
+            raw_data (Dict): Raw data returned by the GraphQL query.
+            cumulative_contribution (Optional[Dict[str, int]]): A dictionary to accumulate contributions. 
+                                                               If None, a new dictionary is initialized.
+
         Returns:
-            list: a list of contributor's total additions, total deletions, and total number of commits.
-            [total_commits, total_additions, total_deletions]
+            Dict[str, int]: A dictionary containing the cumulative statistics: total additions, deletions, and commits.
         """
         nodes = raw_data['repository']['defaultBranchRef']['target']['history']['nodes']
-        total_additions = 0
-        total_deletions = 0
-        total_commits = 0
+        if cumulative_contribution is None:
+            cumulative_contribution = {'total_additions': 0, 'total_deletions': 0, 'total_commits': 0}
+        
         for node in nodes:
             if node['parents'] and node['parents']['totalCount'] < 2:
-                total_additions += node['additions']
-                total_deletions += node['deletions']
-                total_commits += 1
-            else:
-                continue
-        return {"commits": total_commits, "additions": total_additions, "deletions": total_deletions}
+                cumulative_contribution['total_additions'] += node['additions']
+                cumulative_contribution['total_deletions'] += node['deletions']
+                cumulative_contribution['total_commits'] += 1
+        
+        return cumulative_contribution
 
     @staticmethod
-    def user_commit_contribution(raw_data: dict):
+    def user_commit_contribution(raw_data: Dict[str, Any], commit_contributions: Optional[List[Dict[str, int]]] = None) -> List[Dict[str, int]]:
         """
-        Return the regular commits excluding the merge commits
+        Extracts and compiles individual commit contributions from the raw data.
+
         Args:
-            raw_data: the raw data returned by the query
+            raw_data (Dict): Raw data returned by the GraphQL query.
+            commit_contributions (Optional[List[Dict[str, int]]]): A list to accumulate individual commit contributions.
+
         Returns:
-            list: a list of contributor's regular commits.
-            [authoredDate, changedFilesIfAvailable, additions, deletions, message]
+            List[Dict[str, int]]: A list of dictionaries, each representing details of an individual commit.
         """
         nodes = raw_data['repository']['defaultBranchRef']['target']['history']['nodes']
-        commit_contributions = []
+        if commit_contributions is None:
+            commit_contributions = []
+        
         for node in nodes:
             if node['parents'] and node['parents']['totalCount'] < 2:
-                commit_contributions.append({'authoredDate': node['authoredDate'],
-                                             'changedFiles': node['changedFilesIfAvailable'],
-                                             'additions': node['additions'],
-                                             'deletions': node['deletions'],
-                                             'message': node['message']})
-            else:
-                continue
+                commit_contributions.append({
+                    'authoredDate': node['authoredDate'],
+                    'changedFiles': node['changedFilesIfAvailable'],
+                    'additions': node['additions'],
+                    'deletions': node['deletions'],
+                    'message': node['message']
+                })
+        
         return commit_contributions
