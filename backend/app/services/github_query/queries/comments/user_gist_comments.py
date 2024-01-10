@@ -1,3 +1,4 @@
+from typing import Dict, Any, List
 from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 import backend.app.services.github_query.utils.helper as helper
 
@@ -7,7 +8,7 @@ class UserGistComments(PaginatedQuery):
     retrieving user gist comments. It extends the PaginatedQuery class to handle
     queries that expect a large amount of data that might be delivered in multiple pages.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the UserGistComments query with specific fields and arguments
         to retrieve user gist comments including pagination handling.
@@ -40,7 +41,7 @@ class UserGistComments(PaginatedQuery):
         )
 
     @staticmethod
-    def user_gist_comments(raw_data: dict):
+    def user_gist_comments(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Extracts and returns the gist comments from the raw query data.
 
@@ -55,7 +56,7 @@ class UserGistComments(PaginatedQuery):
         return gist_comments
 
     @staticmethod
-    def created_before_time(gist_comments: list, time: str):
+    def created_before_time(gist_comments: List[Dict[str, Any]], time: str) -> int:
         """
         Counts how many gist comments were created before a specific time.
 

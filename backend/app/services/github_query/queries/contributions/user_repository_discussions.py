@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 import backend.app.services.github_query.utils.helper as helper
 
@@ -33,7 +33,7 @@ class UserRepositoryDiscussions(PaginatedQuery):
         )
 
     @staticmethod
-    def user_repository_discussions(raw_data: Dict) -> List[Dict]:
+    def user_repository_discussions(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Extracts repository discussions from the raw data returned by a GraphQL query.
 
@@ -47,7 +47,7 @@ class UserRepositoryDiscussions(PaginatedQuery):
         return repository_discussions
 
     @staticmethod
-    def created_before_time(repository_discussions: List[Dict], time: str) -> int:
+    def created_before_time(repository_discussions: Dict[str, Any], time: str) -> int:
         """
         Counts the number of repository discussions created before a specified time.
 

@@ -1,3 +1,4 @@
+from typing import Dict, Any, List
 from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 import backend.app.services.github_query.utils.helper as helper
 
@@ -8,7 +9,7 @@ class UserCommitComments(PaginatedQuery):
     retrieving user commit comments. It extends the PaginatedQuery class to handle
     queries that expect a large amount of data that might be delivered in multiple pages.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the UserCommitComments query with specific fields and arguments 
         to retrieve user commit comments including pagination handling.
@@ -39,9 +40,9 @@ class UserCommitComments(PaginatedQuery):
                 )
             ]
         )
-
+# def _execution_generator(self, query: Union[Query, PaginatedQuery], substitutions: Dict[str, Any]) -> Generator[Dict[str, Any], None, None]:
     @staticmethod
-    def user_commit_comments(raw_data: dict):
+    def user_commit_comments(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Extracts and returns the commit comments from the raw query data.
 
@@ -56,7 +57,7 @@ class UserCommitComments(PaginatedQuery):
         return commit_comments
 
     @staticmethod
-    def created_before_time(commit_comments: list, time: str):
+    def created_before_time(commit_comments: List[Dict[str, Any]], time: str) -> int:
         """
         Counts how many commit comments were created before a specific time.
 

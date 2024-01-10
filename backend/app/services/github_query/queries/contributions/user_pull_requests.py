@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 import backend.app.services.github_query.utils.helper as helper
 
@@ -40,7 +40,7 @@ class UserPullRequests(PaginatedQuery):
         )
 
     @staticmethod
-    def user_pull_requests(raw_data: Dict) -> List[Dict]:
+    def user_pull_requests(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Extracts pull requests from the raw data returned by a GraphQL query.
 
@@ -54,7 +54,7 @@ class UserPullRequests(PaginatedQuery):
         return pull_requests
 
     @staticmethod
-    def created_before_time(pull_requests: List[Dict], time: str) -> int:
+    def created_before_time(pull_requests: Dict[str, Any], time: str) -> int:
         """
         Counts the number of pull requests created before a specified time.
 

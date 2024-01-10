@@ -1,3 +1,4 @@
+from typing import Dict, Any, List
 from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 import backend.app.services.github_query.utils.helper as helper
 
@@ -8,7 +9,7 @@ class UserIssueComments(PaginatedQuery):
     queries that expect a large amount of data that might be delivered in multiple pages.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the UserIssueComments query with specific fields and arguments
         to retrieve user issue comments, including pagination handling. The query is constructed
@@ -42,7 +43,7 @@ class UserIssueComments(PaginatedQuery):
         )
 
     @staticmethod
-    def user_issue_comments(raw_data: dict):
+    def user_issue_comments(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Extracts and returns the issue comments from the raw query data.
 
@@ -57,7 +58,7 @@ class UserIssueComments(PaginatedQuery):
         return issue_comments
 
     @staticmethod
-    def created_before_time(issue_comments: list, time: str):
+    def created_before_time(issue_comments: List[Dict[str, Any]], time: str) -> int:
         """
         Counts how many issue comments were created before a specific time.
 

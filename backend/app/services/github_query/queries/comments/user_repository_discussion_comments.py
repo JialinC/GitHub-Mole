@@ -1,3 +1,4 @@
+from typing import Dict, Any, List
 from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 import backend.app.services.github_query.utils.helper as helper
 
@@ -7,7 +8,7 @@ class UserRepositoryDiscussionComments(PaginatedQuery):
     retrieving user repository discussion comments. It extends the PaginatedQuery class to handle
     queries that expect a large amount of data that might be delivered in multiple pages.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the UserRepositoryDiscussionComments query with specific fields and arguments
         to retrieve user repository discussion comments, including pagination handling. The query is constructed
@@ -41,7 +42,7 @@ class UserRepositoryDiscussionComments(PaginatedQuery):
         )
 
     @staticmethod
-    def user_repository_discussion_comments(raw_data: dict):
+    def user_repository_discussion_comments(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Extracts and returns the repository discussion comments from the raw query data.
 
@@ -56,7 +57,7 @@ class UserRepositoryDiscussionComments(PaginatedQuery):
         return repository_discussion_comments
 
     @staticmethod
-    def created_before_time(repository_discussion_comments: list, time: str):
+    def created_before_time(repository_discussion_comments: List[Dict[str, Any]], time: str) -> int:
         """
         Counts how many repository discussion comments were created before a specific time.
 

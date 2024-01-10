@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 import backend.app.services.github_query.utils.helper as helper
 
@@ -38,7 +38,7 @@ class UserGists(PaginatedQuery):
 
 
     @staticmethod
-    def user_gists(raw_data: Dict) -> List[Dict]:
+    def user_gists(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Processes raw data to extract user gists information.
 
         Args:
@@ -51,7 +51,7 @@ class UserGists(PaginatedQuery):
         return gists
 
     @staticmethod
-    def created_before_time(gists: List[Dict], time: str) -> int:
+    def created_before_time(gists: Dict[str, Any], time: str) -> int:
         """Counts the gists created before a specified time.
 
         Args:

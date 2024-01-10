@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 import backend.app.services.github_query.utils.helper as helper
 
@@ -67,7 +67,7 @@ class UserRepositories(PaginatedQuery):
         )
 
     @staticmethod
-    def user_repositories(raw_data: Dict) -> List[Dict]:
+    def user_repositories(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Extracts and returns the list of repositories from the raw GraphQL query response data.
 
@@ -81,7 +81,7 @@ class UserRepositories(PaginatedQuery):
         return repositories
 
     @staticmethod
-    def cumulated_repository_stats(repo_list: List[Dict], repo_stats: Dict, lang_stats: Dict, end: str) -> None:
+    def cumulated_repository_stats(repo_list: List[Dict[str, Any]], repo_stats: Dict[str, int], lang_stats: Dict[str, int], end: str) -> None:
         """
         Aggregates statistics for repositories created before a certain time.
 

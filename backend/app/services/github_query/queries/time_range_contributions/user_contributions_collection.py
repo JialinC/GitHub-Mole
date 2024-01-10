@@ -1,3 +1,4 @@
+from typing import Dict, Any
 from collections import Counter
 from backend.app.services.github_query.github_graphql.query import QueryNode, Query
 
@@ -39,19 +40,19 @@ class UserContributionsCollection(Query):
         )
 
     @staticmethod
-    def user_contributions_collection(cumulated_contributions_collection: dict) -> Counter:
+    def user_contributions_collection(raw_data: Dict[str, Any]) -> Counter:
         """
         Processes the raw data returned from a GraphQL query about a user's contributions collection
         and aggregates the various types of contributions into a countable collection.
 
         Args:
-            cumulated_contributions_collection (dict): The raw data returned by the query, 
-                                                      expected to contain nested contribution counts.
+            raw_data (dict): The raw data returned by the query, 
+                            expected to contain nested contribution counts.
 
         Returns:
             Counter: A collection counter aggregating the various types of contributions made by the user.
         """
-        raw_data = cumulated_contributions_collection["user"]["contributionsCollection"]
+        raw_data = raw_data["user"]["contributionsCollection"]
         contribution_collection = Counter({
             "res_con": raw_data["restrictedContributionsCount"],  # Restricted contributions count.
             "commit": raw_data["totalCommitContributions"],  # Total commit contributions.

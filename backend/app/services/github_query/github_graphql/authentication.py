@@ -23,7 +23,7 @@ class PersonalAccessTokenAuthenticator(Authenticator):
     PersonalAccessTokenAuthenticator is a concrete implementation of the Authenticator class,
     providing authentication functionality specifically using a personal access token for GitHub.
     """
-    def __init__(self, token: str):
+    def __init__(self, token: str) -> None:
         """
         Initializes the authenticator with a personal access token.
 

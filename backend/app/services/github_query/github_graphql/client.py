@@ -214,7 +214,7 @@ class RESTClient:
     A client for interacting with the GitHub REST API.
     Handles the construction and execution of RESTful requests with provided authentication.
     """
-    def __init__(self, protocol: str = "https", host: str = "api.github.com", is_enterprise: bool = False, authenticator: Authenticator = None):
+    def __init__(self, protocol: str = "https", host: str = "api.github.com", is_enterprise: bool = False, authenticator: Authenticator = None) -> None:
         """
         Initialization with protocol, host, and whether the GitHub instance is Enterprise
         Requires an Authenticator to be provided for handling authentication
@@ -233,7 +233,7 @@ class RESTClient:
 
         self._authenticator = authenticator
 
-    def _base_path(self):
+    def _base_path(self) -> str:
         """
         Constructs the base path for REST API requests, differing based on whether it's an enterprise instance
         Returns:

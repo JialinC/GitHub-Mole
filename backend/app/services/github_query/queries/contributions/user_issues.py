@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import List, Dict, Any
 from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
 import backend.app.services.github_query.utils.helper as helper
 
@@ -40,7 +40,7 @@ class UserIssues(PaginatedQuery):
         )
     
     @staticmethod
-    def user_issues(raw_data: Dict) -> List[Dict]:
+    def user_issues(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Extracts issues from the raw data returned by a GraphQL query.
 
@@ -53,7 +53,7 @@ class UserIssues(PaginatedQuery):
         return raw_data.get("user", {}).get("issues", {}).get("nodes", [])
 
     @staticmethod
-    def created_before_time(issues: List[Dict], time: str) -> int:
+    def created_before_time(issues: Dict[str, Any], time: str) -> int:
         """
         Counts the number of issues created before a specified time.
 
