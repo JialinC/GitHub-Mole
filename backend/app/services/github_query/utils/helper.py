@@ -60,7 +60,7 @@ def generate_file_name() -> str:
     return file_name
 
 
-def add_a_year(time_string: str) -> str:
+def add_by_days(time_string: str, days: int) -> str:
     """
     Adds one year to the given time string formatted as "%Y-%m-%dT%H:%M:%SZ".
     
@@ -76,7 +76,7 @@ def add_a_year(time_string: str) -> str:
     time = datetime.strptime(time_string, time_format)
 
     # Add a duration of 1 year
-    new_time = time + timedelta(days=365)
+    new_time = time + timedelta(days=days)
 
     # Convert the new datetime object back to a string
     new_time_string = new_time.strftime(time_format)

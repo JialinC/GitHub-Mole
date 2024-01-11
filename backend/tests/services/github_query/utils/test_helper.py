@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 from backend.app.services.github_query.github_graphql.client import Client
 from backend.app.services.github_query.github_graphql.query import Query
-from backend.app.services.github_query.utils.helper import print_methods, print_attr, get_abs_path, generate_file_name, add_a_year, in_time_period, created_before, write_csv, get_owner_and_name, have_rate_limit
+from backend.app.services.github_query.utils.helper import print_methods, print_attr, get_abs_path, generate_file_name, add_by_days, in_time_period, created_before, write_csv, get_owner_and_name, have_rate_limit
 
 class TestUtilityFunctions:
     def test_get_abs_path(mock_file_path):
@@ -22,11 +22,10 @@ class TestUtilityFunctions:
         assert len(file_name) == 6, "File name should be 6 characters long."
         assert file_name.isalnum(), "File name should be alphanumeric."
 
-    def test_add_a_year(self):
-        
+    def test_add_by_days(self):
         original_time = "2021-01-01T00:00:00Z"
         expected_time = (datetime.strptime(original_time, "%Y-%m-%dT%H:%M:%SZ") + timedelta(days=365)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        assert add_a_year(original_time) == expected_time, "Should add one year to the input time string."
+        assert add_by_days(original_time,365) == expected_time, "Should add one year to the input time string."
 
     def test_in_time_period(self):
         start = "2021-01-01T00:00:00Z"
