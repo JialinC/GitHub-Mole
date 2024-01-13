@@ -143,6 +143,7 @@ class Client:
         # pre-calculate the cost of the upcoming graphql query
         rate_query = QueryCost(match.group('content'))
         rate_limit = self._retry_request(3, 10, rate_query, {"dryrun": True})
+        # print(query_string, rate_query, rate_limit.json())
         rate_limit = rate_limit.json()["data"]["rateLimit"]
         cost, remaining, reset_at = rate_limit['cost'], rate_limit['remaining'], rate_limit['resetAt']
         # if the cost of the upcoming graphql query larger than avaliable ratelimit, wait till ratelimit reset
@@ -198,7 +199,6 @@ class Client:
         while query.paginator.has_next():
             response = self._execute(query, substitutions)
             curr_node = response
-            print(curr_node)
 
             for field_name in query.path:
                 curr_node = curr_node[Template(field_name).substitute(**substitutions)]
