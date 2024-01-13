@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 from backend.app.services.github_query.github_graphql.client import Client
 from backend.app.services.github_query.github_graphql.query import Query
-from backend.app.services.github_query.utils.helper import print_methods, print_attr, get_abs_path, generate_file_name, add_by_days, in_time_period, created_before, write_csv, get_owner_and_name, have_rate_limit
+from backend.app.services.github_query.utils.helper import print_methods, print_attr, get_abs_path, generate_file_name, add_by_days, minus_by_days, in_time_period, created_before, created_after, write_csv, get_owner_and_name, have_rate_limit
 
 class TestUtilityFunctions:
     def test_get_abs_path(mock_file_path):
@@ -26,6 +26,11 @@ class TestUtilityFunctions:
         original_time = "2021-01-01T00:00:00Z"
         expected_time = (datetime.strptime(original_time, "%Y-%m-%dT%H:%M:%SZ") + timedelta(days=365)).strftime("%Y-%m-%dT%H:%M:%SZ")
         assert add_by_days(original_time,365) == expected_time, "Should add one year to the input time string."
+    
+    def test_minus_by_days(self):
+        original_time = "2021-01-01T00:00:00Z"
+        expected_time = (datetime.strptime(original_time, "%Y-%m-%dT%H:%M:%SZ") - timedelta(days=365)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert minus_by_days(original_time,365) == expected_time, "Should minus one year to the input time string."
 
     def test_in_time_period(self):
         start = "2021-01-01T00:00:00Z"
@@ -36,6 +41,10 @@ class TestUtilityFunctions:
     def test_created_before(self):
         assert created_before("2021-01-01T00:00:00Z", "2022-01-01T00:00:00Z") is True, "Created should be before the time."
         assert created_before("2023-01-01T00:00:00Z", "2022-01-01T00:00:00Z") is False, "Created should not be before the time."
+    
+    def test_created_after(self):
+        assert created_after("2022-01-01T00:00:00Z", "2021-01-01T00:00:00Z") is True, "Created should be after the time."
+        assert created_after("2022-01-01T00:00:00Z", "2023-01-01T00:00:00Z") is False, "Created should not be after the time."
 
     def test_write_csv(self):
         with tempfile.NamedTemporaryFile("w+", delete=False) as tmp:

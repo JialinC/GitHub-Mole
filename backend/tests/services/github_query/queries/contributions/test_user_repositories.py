@@ -131,7 +131,7 @@ class TestUserRepositories:
         repositories = UserRepositories.user_repositories(raw_data)
         assert repositories == expected_repositories, "The processed repositories do not match the expected structure."
 
-    def test_cumulated_repository_stats_method(self):
+    def test_cumulated_repository_stats_method_before(self):
         repo_list = [
             {
                 "name": "Repo1",
@@ -151,7 +151,64 @@ class TestUserRepositories:
         repo_stats = {"total_count": 0, "fork_count": 0, "stargazer_count": 0, "watchers_count": 0, "total_size": 0}
         lang_stats = {}
         end = "2022-01-01T00:00:00Z"
-        UserRepositories.cumulated_repository_stats(repo_list, repo_stats, lang_stats, end)
+        UserRepositories.cumulated_repository_stats(repo_list, repo_stats, lang_stats, end, None, 'before')
+
+        assert repo_stats["total_count"] == 1, "Total count of repositories should be 1."
+        assert repo_stats["fork_count"] == 5, "Fork count should be 5."
+        assert repo_stats["stargazer_count"] == 10, "Stargazer count should be 10."
+        assert lang_stats["Python"] == 600, "Python size should be 600."
+        assert lang_stats["JavaScript"] == 400, "JavaScript size should be 400."
+
+    def test_cumulated_repository_stats_method_after(self):
+        repo_list = [
+            {
+                "name": "Repo1",
+                "createdAt": "2020-01-01T00:00:00Z",
+                "forkCount": 5,
+                "stargazerCount": 10,
+                "watchers": {"totalCount": 3},
+                "languages": {
+                    "totalSize": 1000,
+                    "edges": [
+                        {"size": 600, "node": {"name": "Python"}},
+                        {"size": 400, "node": {"name": "JavaScript"}}
+                    ]
+                }
+            }
+        ]
+        repo_stats = {"total_count": 0, "fork_count": 0, "stargazer_count": 0, "watchers_count": 0, "total_size": 0}
+        lang_stats = {}
+        end = "2019-01-01T00:00:00Z"
+        UserRepositories.cumulated_repository_stats(repo_list, repo_stats, lang_stats, end, None, 'after')
+
+        assert repo_stats["total_count"] == 1, "Total count of repositories should be 1."
+        assert repo_stats["fork_count"] == 5, "Fork count should be 5."
+        assert repo_stats["stargazer_count"] == 10, "Stargazer count should be 10."
+        assert lang_stats["Python"] == 600, "Python size should be 600."
+        assert lang_stats["JavaScript"] == 400, "JavaScript size should be 400."
+
+    def test_cumulated_repository_stats_method_between(self):
+        repo_list = [
+            {
+                "name": "Repo1",
+                "createdAt": "2020-01-01T00:00:00Z",
+                "forkCount": 5,
+                "stargazerCount": 10,
+                "watchers": {"totalCount": 3},
+                "languages": {
+                    "totalSize": 1000,
+                    "edges": [
+                        {"size": 600, "node": {"name": "Python"}},
+                        {"size": 400, "node": {"name": "JavaScript"}}
+                    ]
+                }
+            }
+        ]
+        repo_stats = {"total_count": 0, "fork_count": 0, "stargazer_count": 0, "watchers_count": 0, "total_size": 0}
+        lang_stats = {}
+        start = "2019-01-01T00:00:00Z"
+        end = "2021-01-01T00:00:00Z"
+        UserRepositories.cumulated_repository_stats(repo_list, repo_stats, lang_stats, start, end, 'between')
 
         assert repo_stats["total_count"] == 1, "Total count of repositories should be 1."
         assert repo_stats["fork_count"] == 5, "Fork count should be 5."

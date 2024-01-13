@@ -62,10 +62,11 @@ def generate_file_name() -> str:
 
 def add_by_days(time_string: str, days: int) -> str:
     """
-    Adds one year to the given time string formatted as "%Y-%m-%dT%H:%M:%SZ".
+    Adds the given number of days to the given time string formatted as "%Y-%m-%dT%H:%M:%SZ".
     
     Args:
         time_string (str): The initial time string.
+        days (int): The number of days to add.
     
     Returns:
         str: A new time string one year later than the input.
@@ -75,8 +76,31 @@ def add_by_days(time_string: str, days: int) -> str:
     # Convert the string to a datetime object
     time = datetime.strptime(time_string, time_format)
 
-    # Add a duration of 1 year
+    # Add a duration of given number of days
     new_time = time + timedelta(days=days)
+
+    # Convert the new datetime object back to a string
+    new_time_string = new_time.strftime(time_format)
+    return new_time_string
+
+def minus_by_days(time_string: str, days: int) -> str:
+    """
+    Minus the given number of days to the given time string formatted as "%Y-%m-%dT%H:%M:%SZ".
+    
+    Args:
+        time_string (str): The initial time string.
+        days (int): The number of days to minus.
+    
+    Returns:
+        str: A new time string one year later than the input.
+    """
+    time_format = "%Y-%m-%dT%H:%M:%SZ"
+
+    # Convert the string to a datetime object
+    time = datetime.strptime(time_string, time_format)
+
+    # Minus a duration of given number of days
+    new_time = time - timedelta(days=days)
 
     # Convert the new datetime object back to a string
     new_time_string = new_time.strftime(time_format)
@@ -98,7 +122,7 @@ def in_time_period(time: str, start: str, end: str) -> bool:
     time = datetime.strptime(time, '%Y-%m-%dT%H:%M:%SZ')
     start = datetime.strptime(start, '%Y-%m-%dT%H:%M:%SZ')
     end = datetime.strptime(end, '%Y-%m-%dT%H:%M:%SZ')
-    return end > time > start
+    return end >= time >= start
 
 
 def created_before(created: str, time: str) -> bool:
@@ -115,6 +139,21 @@ def created_before(created: str, time: str) -> bool:
     time = datetime.strptime(time, '%Y-%m-%dT%H:%M:%SZ')
     created = datetime.strptime(created, '%Y-%m-%dT%H:%M:%SZ')
     return created < time
+
+def created_after(created: str, time: str) -> bool:
+    """
+    Determines if an object was created after a certain time.
+    
+    Args:
+        created (str): The creation time of the object.
+        time (str): The time to compare against.
+    
+    Returns:
+        bool: True if created after the specified time; False otherwise.
+    """
+    time = datetime.strptime(time, '%Y-%m-%dT%H:%M:%SZ')
+    created = datetime.strptime(created, '%Y-%m-%dT%H:%M:%SZ')
+    return created > time
 
 
 def write_csv(file: str, data_row: str) -> None:
