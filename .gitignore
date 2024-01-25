@@ -289,9 +289,7 @@ dist-ssr
 
 
 /backend/app/services/github_query/etc/*
-/backend/app/services/terminal_log/*
-/debug.py
-/backend/old_tests_temp_backup/
+/legacy_code/*
 /backend/ITiCSE2024.py
 /backend/iticse2024runner.py
 /backend/app/services/github_query/miners/ITiCSE2024.py
