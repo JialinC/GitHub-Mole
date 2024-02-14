@@ -17,7 +17,7 @@ def config_oauth(app):
         access_token_url='https://github.com/login/oauth/access_token',
         authorize_url='https://github.com/login/oauth/authorize',
         api_base_url='https://api.github.com/',
-        client_kwargs={'scope': 'user:email'},
+        client_kwargs={'scope': 'user:email'}, # extend this to meet project requirements
         # Pass the function get_redirect_uri as the redirect_uri argument
         redirect_uri=get_redirect_uri
     )

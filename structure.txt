@@ -1,9 +1,25 @@
 GITHUB_GRAPHQL/
 ├── backend/
 │   ├── app/
+│   │   ├── __init__.py
+│   │   ├── database.py
+│   │   ├── auth/
+│   │   │   ├── __init__.py
+│   │   │   ├── config.py
+│   │   │   ├── oauth_routes.py
+│   │   │   └── oauth.py
 │   │   ├── api/
 │   │   │   ├── __init__.py
+│   │   │   ├── 
+│   │   │   ├── 
+│   │   │   ├── 
+│   │   │   ├── 
+│   │   │   ├── 
 │   │   │   └── github_routes.py
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   ├── github_user_data.py
+│   │   │   └── user.py
 │   │   └── services/
 │   │       ├── github_query/
 │   │       │   ├── github_graphql/
@@ -126,3 +142,20 @@ GITHUB_GRAPHQL/
 
 
 
+GITHUB_GRAPHQL/
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── database.py
+│   │   ├── auth/
+│   │   ├── api/
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   ├── github_user_data.py
+│   │   │   └── user.py
+│   │   └── services/
+│   ├── tests/
+│   │   ├── api/
+│   │   └── services/
+│   └── run.py
+├── frontend/
