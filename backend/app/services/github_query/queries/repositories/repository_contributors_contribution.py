@@ -24,7 +24,7 @@ class RepositoryContributorsContribution(PaginatedQuery):
                                             fields=[
                                                 QueryNodePaginator(
                                                     "history",
-                                                    args={"author": "$id", "first": "$pg_size"},
+                                                    args={"author": "{ id: $id }", "first": "$pg_size"},
                                                     fields=[
                                                         "totalCount",
                                                         QueryNode(
