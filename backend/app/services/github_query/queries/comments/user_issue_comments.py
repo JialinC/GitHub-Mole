@@ -1,5 +1,5 @@
 """The module defines the UserIssueComments class, which formulates the GraphQL query string
-to extract user issue comments based on a given user ID."""
+to extract issue comments created by the user based on a given user ID."""
 
 from typing import Dict, Any, List
 from backend.app.services.github_query.utils.helper import created_before
