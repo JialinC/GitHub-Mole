@@ -1,13 +1,21 @@
+"""The module defines the UserIssues class, which formulates the GraphQL query string
+to extract issues created by the user based on a given user ID."""
+
 from typing import List, Dict, Any
-from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
-import backend.app.services.github_query.utils.helper as helper
+from backend.app.services.github_query.utils.helper import created_before
+from backend.app.services.github_query.github_graphql.query import (
+    QueryNode,
+    PaginatedQuery,
+    QueryNodePaginator,
+)
+
 
 class UserIssues(PaginatedQuery):
     """
     UserIssues extends PaginatedQuery to fetch issues associated with a specific user.
     It is designed to navigate through potentially large sets of issues data.
     """
-    
+
     def __init__(self) -> None:
         """
         Initializes the UserIssues query with necessary fields and pagination support.
@@ -24,21 +32,17 @@ class UserIssues(PaginatedQuery):
                             args={"first": "$pg_size"},
                             fields=[
                                 "totalCount",
+                                QueryNode("nodes", fields=["createdAt"]),
                                 QueryNode(
-                                    "nodes",
-                                    fields=["createdAt"]
+                                    "pageInfo", fields=["endCursor", "hasNextPage"]
                                 ),
-                                QueryNode(
-                                    "pageInfo",
-                                    fields=["endCursor", "hasNextPage"]
-                                )
-                            ]
-                        )
-                    ]
+                            ],
+                        ),
+                    ],
                 )
             ]
         )
-    
+
     @staticmethod
     def user_issues(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
@@ -66,7 +70,7 @@ class UserIssues(PaginatedQuery):
         """
         counter = 0
         for issue in issues:
-            if helper.created_before(issue.get("createdAt", ""), time):
+            if created_before(issue.get("createdAt", ""), time):
                 counter += 1
             else:
                 break

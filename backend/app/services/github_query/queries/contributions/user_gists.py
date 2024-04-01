@@ -1,8 +1,22 @@
+"""The module defines the UserGists class, which formulates the GraphQL query string
+to extract gists created by the user based on a given user ID."""
+
 from typing import List, Dict, Any
-from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
-import backend.app.services.github_query.utils.helper as helper
+from backend.app.services.github_query.utils.helper import created_before
+from backend.app.services.github_query.github_graphql.query import (
+    QueryNode,
+    PaginatedQuery,
+    QueryNodePaginator,
+)
+
 
 class UserGists(PaginatedQuery):
+    """
+    UserGists constructs a paginated GraphQL query specifically for retrieving user user gists.
+    It extends the PaginatedQuery class to handle queries that expect a large amount of data that might be delivered in
+    multiple pages.
+    """
+
     def __init__(self) -> None:
         """Initializes a query for User Gists as a paginated query.
 
@@ -21,21 +35,16 @@ class UserGists(PaginatedQuery):
                             args={"first": "$pg_size"},
                             fields=[
                                 "totalCount",
+                                QueryNode("nodes", fields=["createdAt"]),
                                 QueryNode(
-                                    "nodes",
-                                    fields=["createdAt"]
+                                    "pageInfo", fields=["endCursor", "hasNextPage"]
                                 ),
-                                QueryNode(
-                                    "pageInfo",
-                                    fields=["endCursor", "hasNextPage"]
-                                )
-                            ]
-                        )
-                    ]
+                            ],
+                        ),
+                    ],
                 )
             ]
         )
-
 
     @staticmethod
     def user_gists(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -63,7 +72,7 @@ class UserGists(PaginatedQuery):
         """
         counter = 0
         for gist in gists:
-            if helper.created_before(gist.get("createdAt", ""), time):
+            if created_before(gist.get("createdAt", ""), time):
                 counter += 1
             else:
                 break

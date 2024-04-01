@@ -1,13 +1,25 @@
+"""The module defines the UserRepositories class, which formulates the GraphQL query string
+to extract repositories created by the user based on a given user ID."""
+
 from typing import List, Dict, Any
-from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
-import backend.app.services.github_query.utils.helper as helper
+from backend.app.services.github_query.utils.helper import (
+    created_before,
+    created_after,
+    in_time_period,
+)
+from backend.app.services.github_query.github_graphql.query import (
+    QueryNode,
+    PaginatedQuery,
+    QueryNodePaginator,
+)
+
 
 class UserRepositories(PaginatedQuery):
     """
     UserRepositories is a class for querying a user's repositories including details like language statistics,
     fork count, stargazer count, etc. It extends PaginatedQuery to handle potentially large numbers of repositories.
     """
-    
+
     def __init__(self) -> None:
         """
         Initializes a query for a user's repositories with various filtering and ordering options.
@@ -20,10 +32,12 @@ class UserRepositories(PaginatedQuery):
                     fields=[
                         QueryNodePaginator(
                             "repositories",
-                            args={"first": "$pg_size",
-                                  "isFork": "$is_fork",
-                                  "ownerAffiliations": "$ownership",
-                                  "orderBy": "$order_by"},
+                            args={
+                                "first": "$pg_size",
+                                "isFork": "$is_fork",
+                                "ownerAffiliations": "$ownership",
+                                "orderBy": "$order_by",
+                            },
                             fields=[
                                 "totalCount",
                                 QueryNode(
@@ -39,29 +53,34 @@ class UserRepositories(PaginatedQuery):
                                         QueryNode("primaryLanguage", fields=["name"]),
                                         QueryNode(
                                             "languages",
-                                            args={"first": 100,
-                                                  "orderBy": {"field": "SIZE",
-                                                              "direction": "DESC"}},
+                                            args={
+                                                "first": 100,
+                                                "orderBy": {
+                                                    "field": "SIZE",
+                                                    "direction": "DESC",
+                                                },
+                                            },
                                             fields=[
                                                 "totalSize",
                                                 QueryNode(
                                                     "edges",
                                                     fields=[
                                                         "size",
-                                                        QueryNode("node", fields=["name"])
-                                                    ]
-                                                )
-                                            ]
-                                        )
-                                    ]
+                                                        QueryNode(
+                                                            "node", fields=["name"]
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ],
                                 ),
                                 QueryNode(
-                                    "pageInfo",
-                                    fields=["endCursor", "hasNextPage"]
-                                )
-                            ]
+                                    "pageInfo", fields=["endCursor", "hasNextPage"]
+                                ),
+                            ],
                         ),
-                    ]
+                    ],
                 )
             ]
         )
@@ -81,7 +100,14 @@ class UserRepositories(PaginatedQuery):
         return repositories
 
     @staticmethod
-    def cumulated_repository_stats(repo_list: List[Dict[str, Any]], repo_stats: Dict[str, int], lang_stats: Dict[str, int], start: str, end: str, direction: str) -> None:
+    def cumulated_repository_stats(
+        repo_list: List[Dict[str, Any]],
+        repo_stats: Dict[str, int],
+        lang_stats: Dict[str, int],
+        start: str,
+        end: str,
+        direction: str,
+    ) -> None:
         """
         Aggregates statistics for repositories created before, after a certain time or in between a time range.
 
@@ -91,17 +117,20 @@ class UserRepositories(PaginatedQuery):
             lang_stats: Dictionary accumulating language usage statistics.
             start: String representing the start time for consideration of repositories.
             end: String representing the end time for consideration of repositories.
-            direction: Specify whether to aggregates statistics for repositories created before, after a certain time or in between a time range.
+            direction: Specify whether to aggregates statistics for repositories created before,
+            after a certain time or in between a time range.
 
         Returns:
             None: Modifies the repo_stats and lang_stats dictionaries in place.
         """
         for repo in repo_list:
-            if direction == 'before' and not helper.created_before(repo["createdAt"], start):
+            if direction == "before" and not created_before(repo["createdAt"], start):
                 continue
-            elif direction == 'after' and not helper.created_after(repo["createdAt"], start):
+            elif direction == "after" and not created_after(repo["createdAt"], start):
                 continue
-            elif direction == 'between' and not helper.in_time_period(repo["createdAt"], start, end):
+            elif direction == "between" and not in_time_period(
+                repo["createdAt"], start, end
+            ):
                 continue
 
             if repo["languages"]["totalSize"] == 0:
@@ -111,7 +140,9 @@ class UserRepositories(PaginatedQuery):
             repo_stats["stargazer_count"] += repo["stargazerCount"]
             repo_stats["watchers_count"] += repo["watchers"]["totalCount"]
             repo_stats["total_size"] += repo["languages"]["totalSize"]
-            language_list_sorted = sorted(repo["languages"]["edges"], key=lambda s: s["size"], reverse=True)
+            language_list_sorted = sorted(
+                repo["languages"]["edges"], key=lambda s: s["size"], reverse=True
+            )
             if language_list_sorted:
                 for language in language_list_sorted:
                     name = language["node"]["name"]
@@ -120,7 +151,3 @@ class UserRepositories(PaginatedQuery):
                         lang_stats[name] = int(size)
                     else:
                         lang_stats[name] += int(size)
-
-
-            
-                

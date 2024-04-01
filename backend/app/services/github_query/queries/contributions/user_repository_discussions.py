@@ -1,8 +1,21 @@
+"""The module defines the UserRepositoryDiscussions class, which formulates the GraphQL query string
+to extract repository discussions created by the user based on a given user ID."""
+
 from typing import List, Dict, Any
-from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
-import backend.app.services.github_query.utils.helper as helper
+from backend.app.services.github_query.utils.helper import created_before
+from backend.app.services.github_query.github_graphql.query import (
+    QueryNode,
+    PaginatedQuery,
+    QueryNodePaginator,
+)
+
 
 class UserRepositoryDiscussions(PaginatedQuery):
+    """
+    UserRepositoryDiscussions is a class for querying a user's repository discussions.
+    It extends PaginatedQuery to handle potentially large numbers of repositories.
+    """
+
     def __init__(self) -> None:
         """Initializes a paginated query for GitHub user repository discussions."""
         super().__init__(
@@ -17,17 +30,13 @@ class UserRepositoryDiscussions(PaginatedQuery):
                             args={"first": "$pg_size"},
                             fields=[
                                 "totalCount",
+                                QueryNode("nodes", fields=["createdAt"]),
                                 QueryNode(
-                                    "nodes",
-                                    fields=["createdAt"]
+                                    "pageInfo", fields=["endCursor", "hasNextPage"]
                                 ),
-                                QueryNode(
-                                    "pageInfo",
-                                    fields=["endCursor", "hasNextPage"]
-                                )
-                            ]
-                        )
-                    ]
+                            ],
+                        ),
+                    ],
                 )
             ]
         )
@@ -43,7 +52,9 @@ class UserRepositoryDiscussions(PaginatedQuery):
         Returns:
             List[Dict]: A list of dictionaries, each containing data about a single repository discussion.
         """
-        repository_discussions = raw_data.get("user", {}).get("repositoryDiscussions", {}).get("nodes", [])
+        repository_discussions = (
+            raw_data.get("user", {}).get("repositoryDiscussions", {}).get("nodes", [])
+        )
         return repository_discussions
 
     @staticmethod
@@ -60,9 +71,8 @@ class UserRepositoryDiscussions(PaginatedQuery):
         """
         counter = 0
         for repository_discussion in repository_discussions:
-            if helper.created_before(repository_discussion.get("createdAt", ""), time):
+            if created_before(repository_discussion.get("createdAt", ""), time):
                 counter += 1
             else:
                 break
         return counter
-
