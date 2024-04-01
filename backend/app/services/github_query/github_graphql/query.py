@@ -1,25 +1,31 @@
+"""The module defines four query-related classes that are used to generate GraphQL query strings
+in an object-oriented way."""
+
 from string import Template
 from typing import Union, List, Dict, Tuple, Any, Optional
 from datetime import datetime
 from collections import deque
 
+
 class InvalidQueryException(Exception):
     """
-    Exception raised for errors in the GraphQL query. This can be due to an invalid query structure, 
+    Exception raised for errors in the GraphQL query. This can be due to an invalid query structure,
     incorrect execution parameters, or other issues that make the query invalid.
 
     Attributes:
-        message (str): Explanation of the error. Provides more details about what part of the 
-                       query or its execution is considered invalid.
+        message (str): Explanation of the error.
+        Provides more details about what part of the query or its execution is considered invalid.
     """
 
-    def __init__(self, message: str = "Invalid query structure or execution parameters") -> None:
+    def __init__(
+        self, message: str = "Invalid query structure or execution parameters"
+    ) -> None:
         """
         Initializes the InvalidQueryException with an error message.
 
         Args:
-            message (str): A human-readable string explaining the error. Defaults to a 
-                           general message about invalid query structure or parameters.
+            message (str): A human-readable string explaining the error. Defaults to a general message about invalid
+            query structure or parameters.
         """
         self.message = message
         super().__init__(self.message)
@@ -31,33 +37,42 @@ class InvalidQueryException(Exception):
         Returns:
             str: The string representation of the exception.
         """
-        return f'{self.__class__.__name__}: {self.message}'
+        return f"{self.__class__.__name__}: {self.message}"
+
 
 class QueryNode:
     """
-    QueryNode is the fundamental building block of a GraphQL query. It represents a field or a set of fields,
-    along with any associated arguments, that can be requested from the GraphQL API. QueryNodes can be nested,
-    allowing for the representation of complex queries.
+    QueryNode is the fundamental building block of a GraphQL query.It represents a field or a set of fields,
+    along with any associated arguments, that can be requested from the GraphQL API.
+    QueryNodes can be nested, allowing for the representation of complex queries.
     """
 
-    def __init__(self, name: str = "query", fields: List[Union[str, 'QueryNode']] = [], args: Dict = None) -> None:
+    def __init__(
+        self,
+        name: str = "query",
+        fields: List[Union[str, "QueryNode"]] = None,
+        args: Dict = None,
+    ) -> None:
         """
         Initializes a QueryNode with a name, a list of fields, and optional arguments.
 
         Args:
             name (str): The name of the QueryNode, typically representing a field or operation in the GraphQL query.
-            fields (List[Union[str, 'QueryNode']]): A list of fields to include in the QueryNode. These can be strings 
-                                                    representing field names or other nested QueryNodes.
-            args (Dict): A dictionary of arguments to include with the QueryNode. These are used to parameterize the query 
-                         and provide variables for the fields requested.
+            fields (List[Union[str, 'QueryNode']]): A list of fields to include in the QueryNode.
+            These can be strings representing field names or other nested QueryNodes.
+            args (Dict): A dictionary of arguments to include with the QueryNode.
+            These are used to parameterize the query and provide variables for the fields requested.
         """
         self.name = name
-        self.fields = fields
+        if fields is None:
+            self.fields = []
+        else:
+            self.fields = fields
         self.args = args
 
     def _format_args(self) -> str:
         """
-        Formats the arguments of the QueryNode into a string suitable for inclusion in a GraphQL query. 
+        Formats the arguments of the QueryNode into a string suitable for inclusion in a GraphQL query.
         This involves converting each argument into the appropriate query syntax.
 
         Returns:
@@ -77,17 +92,22 @@ class QueryNode:
             elif isinstance(value, list):
                 args_list.append(f'{key}: [{", ".join(value)}]')
             elif isinstance(value, dict):
-                args_list.append(f'{key}: ' + "{" + ", ".join(f"{key}: {v}" for key, v in value.items()) + "}")
+                args_list.append(
+                    f"{key}: "
+                    + "{"
+                    + ", ".join(f"{key}: {v}" for key, v in value.items())
+                    + "}"
+                )
             elif isinstance(value, bool):
-                args_list.append(f'{key}: {str(value).lower()}')
+                args_list.append(f"{key}: {str(value).lower()}")
             else:
-                args_list.append(f'{key}: {value}')
+                args_list.append(f"{key}: {value}")
 
         return "(" + ", ".join(args_list) + ")"
 
     def _format_fields(self) -> str:
         """
-        Formats the fields of the QueryNode into a string suitable for inclusion in a GraphQL query. 
+        Formats the fields of the QueryNode into a string suitable for inclusion in a GraphQL query.
         This involves converting each field and any nested QueryNodes into the appropriate query syntax.
 
         Returns:
@@ -97,10 +117,10 @@ class QueryNode:
 
         return " ".join(fields_list)
 
-    def get_connected_nodes(self) -> List['QueryNode']:
+    def get_connected_nodes(self) -> List["QueryNode"]:
         """
-        Retrieves all connected QueryNodes within this QueryNode. This method is useful for traversing 
-        and analyzing a complex query structure.
+        Retrieves all connected QueryNodes within this QueryNode.
+        This method is useful for traversing analyzing a complex query structure.
 
         Returns:
             List[QueryNode]: A list of all directly connected QueryNodes within this QueryNode.
@@ -113,19 +133,21 @@ class QueryNode:
     def __repr__(self) -> str:
         return self.__str__()
 
-    def __eq__(self, other: 'QueryNode') -> bool:
+    def __eq__(self, other: "QueryNode") -> bool:
         """
         Compares this QueryNode with another to determine if they are equivalent.
         """
-        return isinstance(other, QueryNode) and \
-               self.name == other.name and \
-               self.fields == other.fields and \
-               self.args == other.args
+        return (
+            isinstance(other, QueryNode)
+            and self.name == other.name
+            and self.fields == other.fields
+            and self.args == other.args
+        )
 
 
 class Query(QueryNode):
     """
-    Query is a subclass of QueryNode specifically designed to represent a complete, executable GraphQL query. 
+    Query is a subclass of QueryNode specifically designed to represent a complete, executable GraphQL query.
     It provides additional functionality for formatting and substituting values in preparation for execution.
     """
 
@@ -149,7 +171,7 @@ class Query(QueryNode):
     @staticmethod
     def convert_dict(data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Converts a dictionary of data into a format suitable for GraphQL query substitution, 
+        Converts a dictionary of data into a format suitable for GraphQL query substitution,
         especially handling different data types like boolean, dictionary, or string with a specific format.
 
         Args:
@@ -164,13 +186,17 @@ class Query(QueryNode):
                 result[key] = str(value).lower()
             elif isinstance(value, dict):
                 result[key] = (
-                                "{"
-                                + ", ".join(
-                                    f"{key}: {value}" if key == "field" or key == "direction" else f"{key}: \"{value}\""
-                                    for key, value in value.items()
-                                )
-                                + "}"
-                              )
+                    "{"
+                    + ", ".join(
+                        (
+                            f"{key}: {value}"
+                            if key == "field" or key == "direction"
+                            else f'{key}: "{value}"'
+                        )
+                        for key, value in value.items()
+                    )
+                    + "}"
+                )
             elif isinstance(value, str) and Query.test_time_format(value):
                 result[key] = '"' + value + '"'
             else:
@@ -179,7 +205,7 @@ class Query(QueryNode):
 
     def substitute(self, **kwargs: Any) -> str:
         """
-        Substitutes placeholders in the query with actual values provided in kwargs. 
+        Substitutes placeholders in the query with actual values provided in kwargs.
         This method is particularly useful for dynamically inserting values into the query before execution.
 
         Args:
@@ -189,7 +215,7 @@ class Query(QueryNode):
             str: The query string with placeholders substituted with actual values.
         """
         converted_args = Query.convert_dict(kwargs)
-        return Template(self.__str__()).substitute(**converted_args)
+        return Template(str(self)).substitute(**converted_args)
 
 
 class QueryNodePaginator(QueryNode):
@@ -198,19 +224,31 @@ class QueryNodePaginator(QueryNode):
     It includes functionality to manage and track the state of pagination through GraphQL queries.
     """
 
-    def __init__(self, name: str = "query", fields: List[Union[str, 'QueryNode']] = [], args: Dict[str, str] = {}) -> None:
+    def __init__(
+        self,
+        name: str = "query",
+        fields: List[Union[str, "QueryNode"]] = None,
+        args: Dict[str, str] = None,
+    ) -> None:
         """
         Initializes a QueryNodePaginator with name, fields, and arguments, setting up the initial state for pagination.
 
         Args:
             name (str): Name of the QueryNodePaginator, typically representing a field in the GraphQL query.
-            fields (List[Union[str, 'QueryNode']]): A list of fields or nested QueryNodes that the paginator will handle.
+            fields (List[Union[str, 'QueryNode']]): A list of fields or nested QueryNodes that the paginator
+            will handle.
             args (Dict): A dictionary of arguments relevant to pagination, such as 'first', 'after', etc.
         """
+        if fields is None:
+            fields = []
+        if args is None:
+            args = {}
         super().__init__(name=name, fields=fields, args=args)
         self.has_next_page = True
 
-    def update_paginator(self, has_next_page: bool, end_cursor: Optional[str] = None) -> None:
+    def update_paginator(
+        self, has_next_page: bool, end_cursor: Optional[str] = None
+    ) -> None:
         """
         Updates the pagination state with information about the next page and the end cursor.
 
@@ -221,7 +259,7 @@ class QueryNodePaginator(QueryNode):
         self.has_next_page = has_next_page
         if end_cursor is None:
             end_cursor = ""
-        self.args.update({"after": '"'+end_cursor+'"'})
+        self.args.update({"after": '"' + end_cursor + '"'})
 
     def has_next(self) -> bool:
         """
@@ -239,10 +277,10 @@ class QueryNodePaginator(QueryNode):
         self.args.pop("after")
         self.has_next_page = None
 
-    def __eq__(self, other: 'QueryNodePaginator') -> bool:
+    def __eq__(self, other: "QueryNodePaginator") -> bool:
         """
-        Compares this QueryNodePaginator with another to determine if they are equivalent in terms of their
-        name, fields, arguments, and pagination state.
+        Compares this QueryNodePaginator with another to determine if they are equivalent in terms of their name,
+        fields, arguments, and pagination state.
 
         Args:
             other: Another QueryNodePaginator object to compare against.
@@ -256,14 +294,19 @@ class QueryNodePaginator(QueryNode):
 class PaginatedQuery(Query):
     """
     PaginatedQuery is a subclass of Query specifically designed to handle paginated GraphQL queries.
-    It provides methods to manage and extract information related to pagination, 
-    such as pageInfo and navigation through pages.
+    It provides methods to manage and extract information related to pagination, such as pageInfo
+    and navigation through pages.
     """
 
-    def __init__(self, name: str = "query", fields: Optional[List[Union[str, 'QueryNode']]] = None, args: Optional[Dict[str, str]] = None) -> None:
+    def __init__(
+        self,
+        name: str = "query",
+        fields: Optional[List[Union[str, "QueryNode"]]] = None,
+        args: Optional[Dict[str, str]] = None,
+    ) -> None:
         """
-        Initializes a PaginatedQuery with a name, a list of fields, and optional arguments, setting up for 
-        handling paginated data.
+        Initializes a PaginatedQuery with a name, a list of fields, and optional arguments,
+        setting up for handling paginated data.
 
         Args:
             name (str): Name of the PaginatedQuery, typically representing the operation in the GraphQL query.
@@ -274,18 +317,21 @@ class PaginatedQuery(Query):
         self.path, self.paginator = PaginatedQuery.extract_path_to_pageinfo_node(self)
 
     @staticmethod
-    def extract_path_to_pageinfo_node(paginated_query: 'PaginatedQuery') -> Tuple[List[str], Optional['QueryNodePaginator']]:
+    def extract_path_to_pageinfo_node(
+        paginated_query: "PaginatedQuery",
+    ) -> Tuple[List[str], Optional["QueryNodePaginator"]]:
         """
-        Extracts the path to the pageInfo node within the structure of the paginated query. 
-        This path is used to navigate through the nested structure of the query's response 
-        to find and update pagination-related information.
+        Extracts the path to the pageInfo node within the structure of the paginated query.
+        This path is used to navigate through the nested structure of the query's response to find and
+        update pagination-related information.
 
         Args:
             paginated_query (PaginatedQuery): The PaginatedQuery object from which to extract the path.
 
         Returns:
-            Tuple[List[str], QueryNode]: A tuple containing the path (as a list of strings indicating field names) 
-                                         to the pageInfo node and the QueryNodePaginator instance associated with it.
+            Tuple[List[str], QueryNode]: A tuple containing the path (as a list of strings indicating field names)
+            to the pageInfo node and the
+            QueryNodePaginator instance associated with it.
 
         Raises:
             InvalidQueryException: If a paginator node or pageInfo field cannot be found in the query structure.
@@ -297,7 +343,7 @@ class PaginatedQuery(Query):
                 if isinstance(field, QueryNode):
                     if field.name == "pageInfo":
                         return current_path, previous_node
-                    if '...' in field.name:
+                    if "..." in field.name:
                         paths.append((current_path, field, field.fields))
                     else:
                         paths.append((current_path + [field.name], field, field.fields))
