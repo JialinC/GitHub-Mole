@@ -1,6 +1,14 @@
+"""The module defines the UserIssueComments class, which formulates the GraphQL query string
+to extract user issue comments based on a given user ID."""
+
 from typing import Dict, Any, List
-from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
-import backend.app.services.github_query.utils.helper as helper
+from backend.app.services.github_query.utils.helper import created_before
+from backend.app.services.github_query.github_graphql.query import (
+    QueryNode,
+    PaginatedQuery,
+    QueryNodePaginator,
+)
+
 
 class UserIssueComments(PaginatedQuery):
     """
@@ -27,17 +35,13 @@ class UserIssueComments(PaginatedQuery):
                             args={"first": "$pg_size"},
                             fields=[
                                 "totalCount",
+                                QueryNode("nodes", fields=["createdAt"]),
                                 QueryNode(
-                                    "nodes",
-                                    fields=["createdAt"]
+                                    "pageInfo", fields=["endCursor", "hasNextPage"]
                                 ),
-                                QueryNode(
-                                    "pageInfo",
-                                    fields=["endCursor", "hasNextPage"]
-                                )
-                            ]
-                        )
-                    ]
+                            ],
+                        ),
+                    ],
                 )
             ]
         )
@@ -50,9 +54,10 @@ class UserIssueComments(PaginatedQuery):
         Args:
             raw_data (dict): The raw data returned by the GraphQL query. It's expected
                              to follow the structure: {user: {issueComments: {nodes: [{createdAt: ""}, ...]}}}.
-        
+
         Returns:
-            list: A list of dictionaries, each representing an issue comment and its associated data, particularly the creation date.
+            list: A list of dictionaries, each representing an issue comment and its associated data,
+            particularly the creation date.
         """
         issue_comments = raw_data["user"]["issueComments"]["nodes"]
         return issue_comments
@@ -71,10 +76,8 @@ class UserIssueComments(PaginatedQuery):
         """
         counter = 0
         for issue_comment in issue_comments:
-            if helper.created_before(issue_comment["createdAt"], time):
+            if created_before(issue_comment["createdAt"], time):
                 counter += 1
             else:
                 break
         return counter
-
-

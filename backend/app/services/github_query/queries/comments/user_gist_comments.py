@@ -1,6 +1,14 @@
+"""The module defines the UserGistComments class, which formulates the GraphQL query string
+to extract user gist comments based on a given user ID."""
+
 from typing import Dict, Any, List
-from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
-import backend.app.services.github_query.utils.helper as helper
+from backend.app.services.github_query.utils.helper import created_before
+from backend.app.services.github_query.github_graphql.query import (
+    QueryNode,
+    PaginatedQuery,
+    QueryNodePaginator,
+)
+
 
 class UserGistComments(PaginatedQuery):
     """
@@ -8,6 +16,7 @@ class UserGistComments(PaginatedQuery):
     retrieving user gist comments. It extends the PaginatedQuery class to handle
     queries that expect a large amount of data that might be delivered in multiple pages.
     """
+
     def __init__(self) -> None:
         """
         Initializes the UserGistComments query with specific fields and arguments
@@ -25,17 +34,13 @@ class UserGistComments(PaginatedQuery):
                             args={"first": "$pg_size"},
                             fields=[
                                 "totalCount",
+                                QueryNode("nodes", fields=["createdAt"]),
                                 QueryNode(
-                                    "nodes",
-                                    fields=["createdAt"]
+                                    "pageInfo", fields=["endCursor", "hasNextPage"]
                                 ),
-                                QueryNode(
-                                    "pageInfo",
-                                    fields=["endCursor", "hasNextPage"]
-                                )
-                            ]
-                        )
-                    ]
+                            ],
+                        ),
+                    ],
                 )
             ]
         )
@@ -48,9 +53,10 @@ class UserGistComments(PaginatedQuery):
         Args:
             raw_data (dict): The raw data returned by the GraphQL query, expected
                              to follow the structure: {user: {gistComments: {nodes: [{createdAt: ""}, ...]}}}.
-        
+
         Returns:
-            list: A list of dictionaries, each representing a gist comment and its associated data, particularly the creation date.
+            list: A list of dictionaries, each representing a gist comment and its associated data,
+            particularly the creation date.
         """
         gist_comments = raw_data["user"]["gistComments"]["nodes"]
         return gist_comments
@@ -69,9 +75,8 @@ class UserGistComments(PaginatedQuery):
         """
         counter = 0
         for gist_comment in gist_comments:
-            if helper.created_before(gist_comment["createdAt"], time):
+            if created_before(gist_comment["createdAt"], time):
                 counter += 1
             else:
                 break
         return counter
-

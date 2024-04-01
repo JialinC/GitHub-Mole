@@ -1,17 +1,25 @@
+"""The module defines the UserCommitComments class, which formulates the GraphQL query string
+to extract user commit comments based on a given user ID."""
+
 from typing import Dict, Any, List
-from backend.app.services.github_query.github_graphql.query import QueryNode, PaginatedQuery, QueryNodePaginator
-import backend.app.services.github_query.utils.helper as helper
+from backend.app.services.github_query.utils.helper import created_before
+from backend.app.services.github_query.github_graphql.query import (
+    QueryNode,
+    PaginatedQuery,
+    QueryNodePaginator,
+)
 
 
 class UserCommitComments(PaginatedQuery):
     """
-    UserCommitComments constructs a paginated GraphQL query specifically for 
+    UserCommitComments constructs a paginated GraphQL query specifically for
     retrieving user commit comments. It extends the PaginatedQuery class to handle
     queries that expect a large amount of data that might be delivered in multiple pages.
     """
+
     def __init__(self) -> None:
         """
-        Initializes the UserCommitComments query with specific fields and arguments 
+        Initializes the UserCommitComments query with specific fields and arguments
         to retrieve user commit comments including pagination handling.
         """
         super().__init__(
@@ -26,21 +34,17 @@ class UserCommitComments(PaginatedQuery):
                             args={"first": "$pg_size"},
                             fields=[
                                 "totalCount",
+                                QueryNode("nodes", fields=["createdAt"]),
                                 QueryNode(
-                                    "nodes",
-                                    fields=["createdAt"]
+                                    "pageInfo", fields=["endCursor", "hasNextPage"]
                                 ),
-                                QueryNode(
-                                    "pageInfo",
-                                    fields=["endCursor", "hasNextPage"]
-                                )
-                            ]
-                        )
-                    ]
+                            ],
+                        ),
+                    ],
                 )
             ]
         )
-# def _execution_generator(self, query: Union[Query, PaginatedQuery], substitutions: Dict[str, Any]) -> Generator[Dict[str, Any], None, None]:
+
     @staticmethod
     def user_commit_comments(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
@@ -49,7 +53,7 @@ class UserCommitComments(PaginatedQuery):
         Args:
             raw_data (dict): The raw data returned by the GraphQL query. It's expected
                              to follow the structure: {user: {commitComments: {nodes: [{createdAt: ""}, ...]}}}.
-        
+
         Returns:
             list: A list of dictionaries, each representing a commit comment and its associated data.
         """
@@ -70,7 +74,7 @@ class UserCommitComments(PaginatedQuery):
         """
         counter = 0
         for commit_comment in commit_comments:
-            if helper.created_before(commit_comment["createdAt"], time):
+            if created_before(commit_comment["createdAt"], time):
                 counter += 1
             else:
                 break
