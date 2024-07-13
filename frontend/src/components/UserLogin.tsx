@@ -18,7 +18,7 @@ const UserLogin: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch("/api/github/userlogin");
+      const response = await fetch("/api/graphql/current-user-login");
       const result: ApiResponse = await response.json();
       setData(result);
     };
