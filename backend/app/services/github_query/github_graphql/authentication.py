@@ -33,6 +33,8 @@ class PersonalAccessTokenAuthenticator(Authenticator):
         Args:
             token (str): The personal access token used for authentication.
         """
+        if not token:
+            raise ValueError("Token must not be empty")
         self._token = token
 
     def get_authorization_header(self) -> Dict[str, str]:
