@@ -3,7 +3,6 @@
 import re
 import time
 from datetime import datetime, timezone
-from string import Template
 from typing import Union, Optional, Dict, Any, Generator, Tuple
 import requests
 from requests.exceptions import Timeout, RequestException
@@ -96,7 +95,7 @@ class Client:
             str: The base URL path for the GitHub GraphQL API.
         """
         return (
-            f"{self._protocol}://{self._host}/api/graphql"
+            f"{self._protocol}://{self._host}/graphql"
             if self._is_enterprise
             else f"{self._protocol}://{self._host}/graphql"
         )
@@ -115,37 +114,27 @@ class Client:
         headers.update(kwargs)
         return headers
 
-    def _retry_request(
-        self,
-        query: Union[str, Query],
-        substitutions: Dict[str, Any],
-    ) -> Response:
+    def _retry_request(self, query: str) -> Response:
         """
         Tries to send a request multiple times until it succeeds or the retry limit is reached.
 
         Args:
             query (Union[str, Query]): The GraphQL query to execute.
-            substitutions (Dict[str, Any]): Substitutions to apply to the query template.
-
         Returns:
             Response: The server's response to the HTTP request.
 
         Raises:
             Timeout: If all retry attempts are exhausted and the request keeps timing out.
         """
+        if isinstance(query, Query):
+            query = query.get_query()
         last_exception = None
         response = None
         for _ in range(self._retry_attempts):
             try:
                 response = requests.post(
                     self._base_path(),
-                    json={
-                        "query": (
-                            Template(query).substitute(**substitutions)
-                            if isinstance(query, str)
-                            else query.substitute(**substitutions)
-                        )
-                    },
+                    json={"query": query},
                     headers=self._generate_headers(),
                     timeout=self._timeout_seconds,
                 )
@@ -159,23 +148,14 @@ class Client:
             raise QueryFailedException(query=query, response=response)
         raise Timeout("All retry attempts exhausted.")
 
-    def _have_limit(
-        self, query: Union[str, Query], substitutions: Dict[str, Any]
-    ) -> Tuple[bool, str]:
-
-        query_string = (
-            Template(query).substitute(**substitutions)
-            if isinstance(query, str)
-            else query.substitute(**substitutions)
-        )
-
-        match = re.search(r"query\s*{(?P<content>.+)}", query_string)
+    def _have_limit(self, query: Union[str, Query]) -> Tuple[bool, str]:
+        if isinstance(query, Query):
+            query = query.get_query()
+        match = re.search(r"query\s*{(?P<content>.+)}", query)
         # pre-calculate the cost of the upcoming graphql query
-        rate_query = QueryCost(match.group("content"))
-        rate_limit = self._retry_request(rate_query, {"dryrun": True})
+        rate_query = QueryCost(match.group("content"), dryrun=True).get_query()
+        rate_limit = self._retry_request(rate_query)
         rate_limit = rate_limit.json()["data"]["rateLimit"]
-        # debug purpose
-        # print(query_string, rate_query, rate_limit.json())
         cost, remaining, reset_at = (
             rate_limit["cost"],
             rate_limit["remaining"],
@@ -183,15 +163,12 @@ class Client:
         )
         return (self._retry_attempts * cost > remaining, reset_at)
 
-    def _execute(
-        self, query: Union[str, Query], substitutions: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _execute(self, query: Union[str, Query]) -> Dict[str, Any]:
         """
-        Executes a query with the given substitutions and handles response processing and error checking.
+        Executes a query and handles response processing and error checking.
 
         Args:
             query (Union[str, Query]): The GraphQL query to execute.
-            substitutions (Dict[str, Any]): Substitutions to apply to the query template.
 
         Returns:
             Dict[str, Any]: The parsed JSON response from the server.
@@ -199,7 +176,7 @@ class Client:
         Raises:
             QueryFailedException: If the query execution fails or returns errors.
         """
-        no_limit, reset_at = self._have_limit(query, substitutions)
+        no_limit, reset_at = self._have_limit(query)
         # if the cost of the upcoming graphql query larger than avaliable ratelimit,
         # wait till ratelimit reset
         if no_limit:
@@ -209,13 +186,14 @@ class Client:
             )
             time_diff = reset_at - current_time
             seconds = time_diff.total_seconds()
-            print(f"stop at {current_time}s.")
-            print(f"waiting for {seconds}s.")
-            print(f"reset at {reset_at}s.")
+            print("GitHub GraphQL API Rate Limit Exceeded.")
+            print(f"Stop at {current_time}s.")
+            print(f"Waiting for {seconds}s.")
+            print(f"Reset at {reset_at}s.")
             time.sleep(seconds + 5)
             # TBD: display the reset time in the frontend
 
-        response = self._retry_request(query, substitutions)
+        response = self._retry_request(query)
         try:
             json_response = response.json()
         except RequestException as e:
@@ -226,44 +204,38 @@ class Client:
         raise QueryFailedException(query=query, response=response)
 
     def _execution_generator(
-        self, query: Union[Query, PaginatedQuery], substitutions: Dict[str, Any]
+        self, query: PaginatedQuery
     ) -> Generator[Dict[str, Any], None, None]:
         """
         Handles the iteration over paginated query results, yielding each page's data as it's fetched.
 
         Args:
             query (Union[Query, PaginatedQuery]): The paginated GraphQL query to execute.
-            substitutions (Dict[str, Any]): Substitutions to apply to the query template (query parameters).
 
         Returns:
             Generator[Dict[str, Any], None, None]: A generator yielding each page's data as a dictionary.
         """
         while query.paginator.has_next():
-            response = self._execute(query, substitutions)
+            response = self._execute(query)
             curr_node = response
 
             for field_name in query.path:
-                curr_node = curr_node[Template(field_name).substitute(**substitutions)]
+                curr_node = curr_node[field_name]
 
             end_cursor = curr_node["pageInfo"]["endCursor"]
             has_next_page = curr_node["pageInfo"]["hasNextPage"]
             query.paginator.update_paginator(has_next_page, end_cursor)
             yield response
 
-    def execute(
-        self, query: Union[str, Query, PaginatedQuery], substitutions: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def execute(self, query: Union[str, Query, PaginatedQuery]) -> Dict[str, Any]:
         """
         Public method to execute a non-paginated or paginated query.
 
         Args:
             query (Union[str, Query, PaginatedQuery]): The GraphQL query to execute.
-            substitutions (Dict[str, Any]): Substitutions to apply to the query template.
-
         Returns:
             Dict[str, Any]: The parsed JSON response from the server.
         """
         if isinstance(query, PaginatedQuery):
-            return self._execution_generator(query, substitutions)
-
-        return self._execute(query, substitutions)
+            return self._execution_generator(query)
+        return self._execute(query)

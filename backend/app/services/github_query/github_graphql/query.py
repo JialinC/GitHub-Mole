@@ -1,8 +1,7 @@
 """The module defines four query-related classes that are used to generate GraphQL query strings
 in an object-oriented way."""
 
-from string import Template
-from typing import Union, List, Dict, Tuple, Any, Optional
+from typing import Union, List, Dict, Tuple, Optional
 from datetime import datetime
 from collections import deque
 
@@ -127,6 +126,15 @@ class QueryNode:
         """
         return [field for field in self.fields if isinstance(field, QueryNode)]
 
+    def get_query(self) -> str:
+        """
+        Returns the query string representation of the QueryNode.
+
+        Returns:
+            str: The query string representation of the QueryNode.
+        """
+        return self.__str__()
+
     def __str__(self) -> str:
         return f"{self.name}{self._format_args()} {{ {self._format_fields()} }}"
 
@@ -167,55 +175,6 @@ class Query(QueryNode):
             return True
         except ValueError:
             return False
-
-    @staticmethod
-    def convert_dict(data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Converts a dictionary of data into a format suitable for GraphQL query substitution,
-        especially handling different data types like boolean, dictionary, or string with a specific format.
-
-        Args:
-            data (Dict): The dictionary of data to be converted.
-
-        Returns:
-            Dict: A dictionary with values converted into GraphQL-friendly formats.
-        """
-        result = {}
-        for key, value in data.items():
-            if isinstance(value, bool):
-                result[key] = str(value).lower()
-            elif isinstance(value, dict):
-                result[key] = (
-                    "{"
-                    + ", ".join(
-                        (
-                            f"{key}: {value}"
-                            if key == "field" or key == "direction"
-                            else f'{key}: "{value}"'
-                        )
-                        for key, value in value.items()
-                    )
-                    + "}"
-                )
-            elif isinstance(value, str) and Query.test_time_format(value):
-                result[key] = '"' + value + '"'
-            else:
-                result[key] = value
-        return result
-
-    def substitute(self, **kwargs: Any) -> str:
-        """
-        Substitutes placeholders in the query with actual values provided in kwargs.
-        This method is particularly useful for dynamically inserting values into the query before execution.
-
-        Args:
-            **kwargs: A mapping of placeholders to their actual values.
-
-        Returns:
-            str: The query string with placeholders substituted with actual values.
-        """
-        converted_args = Query.convert_dict(kwargs)
-        return Template(str(self)).substitute(**converted_args)
 
 
 class QueryNodePaginator(QueryNode):
