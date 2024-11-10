@@ -8,6 +8,19 @@ from backend.app.services.github_query.github_graphql.query import (
     PaginatedQuery,
     QueryNodePaginator,
 )
+from ..constants import (
+    FIELD_LOGIN,
+    FIELD_TOTAL_COUNT,
+    FIELD_CREATED_AT,
+    FIELD_END_CURSOR,
+    FIELD_HAS_NEXT_PAGE,
+    NODE_USER,
+    NODE_ISSUE_COMMENTS,
+    NODE_NODES,
+    NODE_PAGE_INFO,
+    ARG_LOGIN,
+    ARG_FIRST,
+)
 
 
 class UserIssueComments(PaginatedQuery):
@@ -17,7 +30,7 @@ class UserIssueComments(PaginatedQuery):
     queries that expect a large amount of data that might be delivered in multiple pages.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, login: str, pg_size: int = 10) -> None:
         """
         Initializes the UserIssueComments query with specific fields and arguments
         to retrieve user issue comments, including pagination handling. The query is constructed
@@ -26,18 +39,19 @@ class UserIssueComments(PaginatedQuery):
         super().__init__(
             fields=[
                 QueryNode(
-                    "user",
-                    args={"login": "$user"},
+                    NODE_USER,
+                    args={ARG_LOGIN: login},
                     fields=[
-                        "login",
+                        FIELD_LOGIN,
                         QueryNodePaginator(
-                            "issueComments",
-                            args={"first": "$pg_size"},
+                            NODE_ISSUE_COMMENTS,
+                            args={ARG_FIRST: pg_size},
                             fields=[
-                                "totalCount",
-                                QueryNode("nodes", fields=["createdAt"]),
+                                FIELD_TOTAL_COUNT,
+                                QueryNode(NODE_NODES, fields=[FIELD_CREATED_AT]),
                                 QueryNode(
-                                    "pageInfo", fields=["endCursor", "hasNextPage"]
+                                    NODE_PAGE_INFO,
+                                    fields=[FIELD_END_CURSOR, FIELD_HAS_NEXT_PAGE],
                                 ),
                             ],
                         ),
@@ -59,7 +73,7 @@ class UserIssueComments(PaginatedQuery):
             list: A list of dictionaries, each representing an issue comment and its associated data,
             particularly the creation date.
         """
-        issue_comments = raw_data["user"]["issueComments"]["nodes"]
+        issue_comments = raw_data[NODE_USER][NODE_ISSUE_COMMENTS][NODE_NODES]
         return issue_comments
 
     @staticmethod
@@ -76,7 +90,7 @@ class UserIssueComments(PaginatedQuery):
         """
         counter = 0
         for issue_comment in issue_comments:
-            if created_before(issue_comment["createdAt"], time):
+            if created_before(issue_comment[FIELD_CREATED_AT], time):
                 counter += 1
             else:
                 break

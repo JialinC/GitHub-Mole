@@ -8,6 +8,19 @@ from backend.app.services.github_query.github_graphql.query import (
     PaginatedQuery,
     QueryNodePaginator,
 )
+from ..constants import (
+    FIELD_LOGIN,
+    FIELD_TOTAL_COUNT,
+    FIELD_CREATED_AT,
+    FIELD_END_CURSOR,
+    FIELD_HAS_NEXT_PAGE,
+    NODE_USER,
+    NODE_REPOSITORY_DISCUSSION_COMMENTS,
+    NODE_NODES,
+    NODE_PAGE_INFO,
+    ARG_LOGIN,
+    ARG_FIRST,
+)
 
 
 class UserRepositoryDiscussionComments(PaginatedQuery):
@@ -17,7 +30,7 @@ class UserRepositoryDiscussionComments(PaginatedQuery):
     queries that expect a large amount of data that might be delivered in multiple pages.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, login: str, pg_size: int = 10) -> None:
         """
         Initializes the UserRepositoryDiscussionComments query with specific fields and arguments
         to retrieve user repository discussion comments, including pagination handling. The query is constructed
@@ -26,18 +39,19 @@ class UserRepositoryDiscussionComments(PaginatedQuery):
         super().__init__(
             fields=[
                 QueryNode(
-                    "user",
-                    args={"login": "$user"},
+                    NODE_USER,
+                    args={ARG_LOGIN: login},
                     fields=[
-                        "login",
+                        FIELD_LOGIN,
                         QueryNodePaginator(
-                            "repositoryDiscussionComments",
-                            args={"first": "$pg_size"},
+                            NODE_REPOSITORY_DISCUSSION_COMMENTS,
+                            args={ARG_FIRST: pg_size},
                             fields=[
-                                "totalCount",
-                                QueryNode("nodes", fields=["createdAt"]),
+                                FIELD_TOTAL_COUNT,
+                                QueryNode(NODE_NODES, fields=[FIELD_CREATED_AT]),
                                 QueryNode(
-                                    "pageInfo", fields=["endCursor", "hasNextPage"]
+                                    NODE_PAGE_INFO,
+                                    fields=[FIELD_END_CURSOR, FIELD_HAS_NEXT_PAGE],
                                 ),
                             ],
                         ),
@@ -61,9 +75,9 @@ class UserRepositoryDiscussionComments(PaginatedQuery):
             list: A list of dictionaries, each representing a repository discussion comment and its associated data,
             particularly the creation date.
         """
-        repository_discussion_comments = raw_data["user"][
-            "repositoryDiscussionComments"
-        ]["nodes"]
+        repository_discussion_comments = raw_data[NODE_USER][
+            NODE_REPOSITORY_DISCUSSION_COMMENTS
+        ][NODE_NODES]
         return repository_discussion_comments
 
     @staticmethod
@@ -83,7 +97,7 @@ class UserRepositoryDiscussionComments(PaginatedQuery):
         """
         counter = 0
         for repository_discussion_comment in repository_discussion_comments:
-            if created_before(repository_discussion_comment["createdAt"], time):
+            if created_before(repository_discussion_comment[FIELD_CREATED_AT], time):
                 counter += 1
             else:
                 break

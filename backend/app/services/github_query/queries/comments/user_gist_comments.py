@@ -8,6 +8,19 @@ from backend.app.services.github_query.github_graphql.query import (
     PaginatedQuery,
     QueryNodePaginator,
 )
+from ..constants import (
+    FIELD_LOGIN,
+    FIELD_TOTAL_COUNT,
+    FIELD_CREATED_AT,
+    FIELD_END_CURSOR,
+    FIELD_HAS_NEXT_PAGE,
+    NODE_USER,
+    NODE_GIST_COMMENTS,
+    NODE_NODES,
+    NODE_PAGE_INFO,
+    ARG_LOGIN,
+    ARG_FIRST,
+)
 
 
 class UserGistComments(PaginatedQuery):
@@ -17,7 +30,7 @@ class UserGistComments(PaginatedQuery):
     queries that expect a large amount of data that might be delivered in multiple pages.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, login: str, pg_size: int = 10) -> None:
         """
         Initializes the UserGistComments query with specific fields and arguments
         to retrieve user gist comments including pagination handling.
@@ -25,18 +38,19 @@ class UserGistComments(PaginatedQuery):
         super().__init__(
             fields=[
                 QueryNode(
-                    "user",
-                    args={"login": "$user"},
+                    NODE_USER,
+                    args={ARG_LOGIN: login},
                     fields=[
-                        "login",
+                        FIELD_LOGIN,
                         QueryNodePaginator(
-                            "gistComments",
-                            args={"first": "$pg_size"},
+                            NODE_GIST_COMMENTS,
+                            args={ARG_FIRST: pg_size},
                             fields=[
-                                "totalCount",
-                                QueryNode("nodes", fields=["createdAt"]),
+                                FIELD_TOTAL_COUNT,
+                                QueryNode(NODE_NODES, fields=[FIELD_CREATED_AT]),
                                 QueryNode(
-                                    "pageInfo", fields=["endCursor", "hasNextPage"]
+                                    NODE_PAGE_INFO,
+                                    fields=[FIELD_END_CURSOR, FIELD_HAS_NEXT_PAGE],
                                 ),
                             ],
                         ),
@@ -58,7 +72,7 @@ class UserGistComments(PaginatedQuery):
             list: A list of dictionaries, each representing a gist comment and its associated data,
             particularly the creation date.
         """
-        gist_comments = raw_data["user"]["gistComments"]["nodes"]
+        gist_comments = raw_data[NODE_USER][NODE_GIST_COMMENTS][NODE_NODES]
         return gist_comments
 
     @staticmethod
@@ -75,7 +89,7 @@ class UserGistComments(PaginatedQuery):
         """
         counter = 0
         for gist_comment in gist_comments:
-            if created_before(gist_comment["createdAt"], time):
+            if created_before(gist_comment[FIELD_CREATED_AT], time):
                 counter += 1
             else:
                 break
