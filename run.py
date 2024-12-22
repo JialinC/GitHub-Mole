@@ -1,12 +1,17 @@
-from app import create_app
-from app.database import db
-from sqlalchemy import text
-from flask import Flask, session, jsonify, request, abort
-from app.models.user import User
-from app.models.github_user_data import GitHubUserData
+from backend.app import create_app
+from flask_cors import CORS
+from backend.app.database import db
+from flask import session, jsonify
+from backend.app.models.user import User
 from datetime import datetime, timedelta
+from flask_jwt_extended import JWTManager
+
+
+# from sqlalchemy import text
 
 app = create_app()
+CORS(app)
+jwt = JWTManager(app)
 
 
 @app.route("/index")
