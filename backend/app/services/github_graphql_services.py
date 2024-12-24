@@ -18,6 +18,14 @@ from .github_query.queries.comments import (
     UserRepositoryDiscussionComments,
 )
 
+from .github_query.queries.contributions import (
+    UserGists,
+    UserIssues,
+    UserPullRequests,
+    UserRepositories,
+    UserRepositoryDiscussions,
+)
+
 # from .github_query.queries.repositories import (
 #     RepositoryContributors,
 #     RepositoryContributorsContribution,
@@ -112,6 +120,126 @@ def get_user_gist_comments_page(
     try:
         response = client.execute(
             query=UserGistComments(login=login),
+            pagination="frontend",
+            end_cursor=end_cursor,
+        )
+        return response
+    except QueryFailedException as e:
+        return {"error": str(e)}
+
+
+def get_user_issue_comments_page(
+    login: str, protocol: str, host: str, token: str, end_cursor: Optional[str] = None
+):
+    """
+    Args:
+    Returns:
+    """
+    client = get_github_client(protocol=protocol, host=host, token=token)
+
+    try:
+        response = client.execute(
+            query=UserIssueComments(login=login),
+            pagination="frontend",
+            end_cursor=end_cursor,
+        )
+        return response
+    except QueryFailedException as e:
+        return {"error": str(e)}
+
+
+def get_user_repository_discussion_comments_page(
+    login: str, protocol: str, host: str, token: str, end_cursor: Optional[str] = None
+):
+    """
+    Args:
+    Returns:
+    """
+    client = get_github_client(protocol=protocol, host=host, token=token)
+
+    try:
+        response = client.execute(
+            query=UserRepositoryDiscussionComments(login=login),
+            pagination="frontend",
+            end_cursor=end_cursor,
+        )
+        return response
+    except QueryFailedException as e:
+        return {"error": str(e)}
+
+
+def get_user_gists_page(
+    login: str, protocol: str, host: str, token: str, end_cursor: Optional[str] = None
+):
+    """
+    Args:
+    Returns:
+    """
+    client = get_github_client(protocol=protocol, host=host, token=token)
+
+    try:
+        response = client.execute(
+            query=UserGists(login=login),
+            pagination="frontend",
+            end_cursor=end_cursor,
+        )
+        return response
+    except QueryFailedException as e:
+        return {"error": str(e)}
+
+
+def get_user_issues_page(
+    login: str, protocol: str, host: str, token: str, end_cursor: Optional[str] = None
+):
+    """
+    Args:
+    Returns:
+    """
+    client = get_github_client(protocol=protocol, host=host, token=token)
+
+    try:
+        response = client.execute(
+            query=UserIssues(login=login),
+            pagination="frontend",
+            end_cursor=end_cursor,
+        )
+        return response
+    except QueryFailedException as e:
+        return {"error": str(e)}
+
+
+def get_user_pull_requests_page(
+    login: str, protocol: str, host: str, token: str, end_cursor: Optional[str] = None
+):
+    """
+    Args:
+    Returns:
+    """
+    client = get_github_client(protocol=protocol, host=host, token=token)
+
+    try:
+        response = client.execute(
+            query=UserPullRequests(login=login),
+            pagination="frontend",
+            end_cursor=end_cursor,
+        )
+        return response
+    except QueryFailedException as e:
+        return {"error": str(e)}
+
+
+def get_user_repository_discussions_page(
+    login: str, protocol: str, host: str, token: str, end_cursor: Optional[str] = None
+):
+    """
+    Args:
+    Returns:
+    """
+    client = get_github_client(protocol=protocol, host=host, token=token)
+
+    try:
+        response = client.execute(
+            query=UserRepositoryDiscussions(login=login),
             pagination="frontend",
             end_cursor=end_cursor,
         )

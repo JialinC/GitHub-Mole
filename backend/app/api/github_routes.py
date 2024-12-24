@@ -18,6 +18,12 @@ from ..services.github_graphql_services import (
     get_specific_user_login,
     get_user_commit_comments_page,
     get_user_gist_comments_page,
+    get_user_issue_comments_page,
+    get_user_repository_discussion_comments_page,
+    get_user_gists_page,
+    get_user_issues_page,
+    get_user_pull_requests_page,
+    get_user_repository_discussions_page,
 )
 
 github_bp = Blueprint("api", __name__)
@@ -96,4 +102,92 @@ def user_gist_comments(login):
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
     data = get_user_gist_comments_page(login, protocol, host, pat, end_cursor)
+    return jsonify(data)
+
+
+@github_bp.route("/graphql/user-issue-comments/<login>", methods=["GET"])
+@jwt_required()
+def user_issue_comments(login):
+    """
+    Route:
+    Method: GET
+    """
+    end_cursor = request.args.get("end_cursor")
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_user_issue_comments_page(login, protocol, host, pat, end_cursor)
+    return jsonify(data)
+
+
+@github_bp.route(
+    "/graphql/user-repository-discussion-comments/<login>", methods=["GET"]
+)
+@jwt_required()
+def user_repository_discussion_comments(login):
+    """
+    Route:
+    Method: GET
+    """
+    end_cursor = request.args.get("end_cursor")
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_user_repository_discussion_comments_page(
+        login, protocol, host, pat, end_cursor
+    )
+    return jsonify(data)
+
+
+@github_bp.route("/graphql/user-gists/<login>", methods=["GET"])
+@jwt_required()
+def user_gists(login):
+    """
+    Route:
+    Method: GET
+    """
+    end_cursor = request.args.get("end_cursor")
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_user_gists_page(login, protocol, host, pat, end_cursor)
+    return jsonify(data)
+
+
+@github_bp.route("/graphql/user-issues/<login>", methods=["GET"])
+@jwt_required()
+def user_issues(login):
+    """
+    Route:
+    Method: GET
+    """
+    end_cursor = request.args.get("end_cursor")
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_user_issues_page(login, protocol, host, pat, end_cursor)
+    return jsonify(data)
+
+
+@github_bp.route("/graphql/user-pull-requests/<login>", methods=["GET"])
+@jwt_required()
+def user_pull_requests(login):
+    """
+    Route:
+    Method: GET
+    """
+    end_cursor = request.args.get("end_cursor")
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_user_pull_requests_page(login, protocol, host, pat, end_cursor)
+    return jsonify(data)
+
+
+@github_bp.route("/graphql/user-repository-discussions/<login>", methods=["GET"])
+@jwt_required()
+def user_repository_discussions(login):
+    """
+    Route:
+    Method: GET
+    """
+    end_cursor = request.args.get("end_cursor")
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_user_repository_discussions_page(login, protocol, host, pat, end_cursor)
     return jsonify(data)
