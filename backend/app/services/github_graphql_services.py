@@ -75,6 +75,26 @@ def get_specific_user_login(login: str, protocol: str, host: str, token: str):
         return {"error": str(e)}
 
 
+def get_user_commit_comments_page(
+    login: str, protocol: str, host: str, token: str, end_cursor: Optional[str] = None
+):
+    """
+    Args:
+    Returns:
+    """
+    client = get_github_client(protocol=protocol, host=host, token=token)
+
+    try:
+        response = client.execute(
+            query=UserCommitComments(login=login),
+            pagination="frontend",
+            end_cursor=end_cursor,
+        )
+        return response
+    except QueryFailedException as e:
+        return {"error": str(e)}
+
+
 # def get_repository_contributors(
 #     owner: str, repo_name: str, page_size: int = 100, token: Optional[str] = None
 # ):
