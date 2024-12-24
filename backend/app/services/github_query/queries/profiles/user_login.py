@@ -1,6 +1,16 @@
 """The module defines several classes that formulate GraphQL query string to extract basic user profile information."""
 
-from backend.app.services.github_query.github_graphql.query import QueryNode, Query
+from ..query import QueryNode, Query
+from ..constants import (
+    NODE_VIEWER,
+    NODE_USER,
+    FIELD_LOGIN,
+    FIELD_NAME,
+    FIELD_ID,
+    FIELD_EMAIL,
+    FIELD_CREATED_AT,
+    ARG_LOGIN,
+)
 
 
 class UserLoginViewer(Query):
@@ -16,8 +26,8 @@ class UserLoginViewer(Query):
         super().__init__(
             fields=[
                 QueryNode(
-                    "viewer",
-                    fields=["login"],  # 'login' is typically the username in GitHub.
+                    NODE_VIEWER,
+                    fields=[FIELD_LOGIN],
                 )
             ]
         )
@@ -29,7 +39,7 @@ class UserLogin(Query):
     other profile information using the 'user' field in a GraphQL query.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, login: str) -> None:
         """
         Initializes a UserLogin object to fetch specified user information including login, name, id, email,
         and creation date.
@@ -37,16 +47,16 @@ class UserLogin(Query):
         super().__init__(
             fields=[
                 QueryNode(
-                    "user",
+                    NODE_USER,
                     args={
-                        "login": "$user"  # Variable to be substituted with actual user login.
+                        ARG_LOGIN: login  # Variable to be substituted with actual user login.
                     },
                     fields=[
-                        "login",  # The username or login name of the user.
-                        "name",  # The full name of the user.
-                        "id",  # The unique ID of the user.
-                        "email",  # The email address of the user.
-                        "createdAt",  # The creation date of the user's account.
+                        FIELD_LOGIN,  # The username or login name of the user.
+                        FIELD_NAME,  # The full name of the user.
+                        FIELD_ID,  # The unique ID of the user.
+                        FIELD_EMAIL,  # The email address of the user.
+                        FIELD_CREATED_AT,  # The creation date of the user's account.
                     ],
                 )
             ]
