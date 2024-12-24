@@ -17,6 +17,7 @@ from ..services.github_graphql_services import (
     get_current_user_login,
     get_specific_user_login,
     get_user_commit_comments_page,
+    get_user_gist_comments_page,
 )
 
 github_bp = Blueprint("api", __name__)
@@ -31,6 +32,14 @@ def check_user():
     return user
 
 
+def extract_user_credentials_and_host(user):
+    pat = user.personal_access_token
+    parsed_url = urlparse(user.api_url)
+    protocol = parsed_url.scheme
+    host = parsed_url.netloc
+    return pat, protocol, host
+
+
 @github_bp.route("/graphql/current-user-login", methods=["GET"])
 @jwt_required()
 def current_user_login():
@@ -41,10 +50,7 @@ def current_user_login():
     Returns: A JSON object containing the login information of the current user.
     """
     user = check_user()
-    pat = user.personal_access_token
-    parsed_url = urlparse(user.api_url)
-    protocol = parsed_url.scheme
-    host = parsed_url.netloc
+    pat, protocol, host = extract_user_credentials_and_host(user)
     data = get_current_user_login(protocol=protocol, host=host, token=pat)
     return jsonify(data)
 
@@ -60,10 +66,7 @@ def specific_user_login(login):
     Returns: A JSON object containing the login information of the specified user.
     """
     user = check_user()
-    pat = user.personal_access_token
-    parsed_url = urlparse(user.api_url)
-    protocol = parsed_url.scheme
-    host = parsed_url.netloc
+    pat, protocol, host = extract_user_credentials_and_host(user)
     data = get_specific_user_login(login, protocol, host, pat)
     return jsonify(data)
 
@@ -76,14 +79,21 @@ def user_commit_comments(login):
     Method: GET
     """
     end_cursor = request.args.get("end_cursor")
-    # hasNextPage = request.args.get("hasNextPage")
-    print("end_cursor:", end_cursor)
-    # print("hasNextPage:", hasNextPage)
     user = check_user()
-    pat = user.personal_access_token
-    parsed_url = urlparse(user.api_url)
-    protocol = parsed_url.scheme
-    host = parsed_url.netloc
+    pat, protocol, host = extract_user_credentials_and_host(user)
     data = get_user_commit_comments_page(login, protocol, host, pat, end_cursor)
-    # print("route response:", data)
+    return jsonify(data)
+
+
+@github_bp.route("/graphql/user-gist-comments/<login>", methods=["GET"])
+@jwt_required()
+def user_gist_comments(login):
+    """
+    Route:
+    Method: GET
+    """
+    end_cursor = request.args.get("end_cursor")
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_user_gist_comments_page(login, protocol, host, pat, end_cursor)
     return jsonify(data)

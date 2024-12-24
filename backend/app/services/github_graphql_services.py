@@ -11,7 +11,12 @@ from backend.app.services.github_query.queries import (
     UserLogin,
 )
 
-from .github_query.queries.comments import UserCommitComments
+from .github_query.queries.comments import (
+    UserCommitComments,
+    UserGistComments,
+    UserIssueComments,
+    UserRepositoryDiscussionComments,
+)
 
 # from .github_query.queries.repositories import (
 #     RepositoryContributors,
@@ -87,6 +92,26 @@ def get_user_commit_comments_page(
     try:
         response = client.execute(
             query=UserCommitComments(login=login),
+            pagination="frontend",
+            end_cursor=end_cursor,
+        )
+        return response
+    except QueryFailedException as e:
+        return {"error": str(e)}
+
+
+def get_user_gist_comments_page(
+    login: str, protocol: str, host: str, token: str, end_cursor: Optional[str] = None
+):
+    """
+    Args:
+    Returns:
+    """
+    client = get_github_client(protocol=protocol, host=host, token=token)
+
+    try:
+        response = client.execute(
+            query=UserGistComments(login=login),
             pagination="frontend",
             end_cursor=end_cursor,
         )
