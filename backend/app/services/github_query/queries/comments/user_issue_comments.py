@@ -3,7 +3,7 @@ to extract issue comments created by the user based on a given user ID."""
 
 from typing import Dict, Any, List
 from backend.app.services.github_query.utils.helper import created_before
-from backend.app.services.github_query.github_graphql.query import (
+from ..query import (
     QueryNode,
     PaginatedQuery,
     QueryNodePaginator,
@@ -12,6 +12,8 @@ from ..constants import (
     FIELD_LOGIN,
     FIELD_TOTAL_COUNT,
     FIELD_CREATED_AT,
+    FIELD_BODY_TEXT,
+    FIELD_ID,
     FIELD_END_CURSOR,
     FIELD_HAS_NEXT_PAGE,
     NODE_USER,
@@ -48,7 +50,14 @@ class UserIssueComments(PaginatedQuery):
                             args={ARG_FIRST: pg_size},
                             fields=[
                                 FIELD_TOTAL_COUNT,
-                                QueryNode(NODE_NODES, fields=[FIELD_CREATED_AT]),
+                                QueryNode(
+                                    NODE_NODES,
+                                    fields=[
+                                        FIELD_CREATED_AT,
+                                        FIELD_BODY_TEXT,
+                                        FIELD_ID,
+                                    ],
+                                ),
                                 QueryNode(
                                     NODE_PAGE_INFO,
                                     fields=[FIELD_END_CURSOR, FIELD_HAS_NEXT_PAGE],
