@@ -3,10 +3,25 @@ to extract gists created by the user based on a given user ID."""
 
 from typing import List, Dict, Any
 from backend.app.services.github_query.utils.helper import created_before
-from backend.app.services.github_query.github_graphql.query import (
+from ..query import (
     QueryNode,
     PaginatedQuery,
     QueryNodePaginator,
+)
+from ..constants import (
+    NODE_USER,
+    NODE_GISTS,
+    NODE_NODES,
+    NODE_PAGE_INFO,
+    FIELD_LOGIN,
+    FIELD_CREATED_AT,
+    FIELD_DESCRIPTION,
+    FIELD_ID,
+    FIELD_TOTAL_COUNT,
+    FIELD_END_CURSOR,
+    FIELD_HAS_NEXT_PAGE,
+    ARG_LOGIN,
+    ARG_FIRST,
 )
 
 
@@ -17,7 +32,7 @@ class UserGists(PaginatedQuery):
     multiple pages.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, login: str, pg_size: int = 10) -> None:
         """Initializes a query for User Gists as a paginated query.
 
         This query is used to fetch a list of gists for a specific user,
@@ -26,18 +41,26 @@ class UserGists(PaginatedQuery):
         super().__init__(
             fields=[
                 QueryNode(
-                    "user",
-                    args={"login": "$user"},
+                    NODE_USER,
+                    args={ARG_LOGIN: login},
                     fields=[
-                        "login",
+                        FIELD_LOGIN,
                         QueryNodePaginator(
-                            "gists",
-                            args={"first": "$pg_size"},
+                            NODE_GISTS,
+                            args={ARG_FIRST: pg_size},
                             fields=[
-                                "totalCount",
-                                QueryNode("nodes", fields=["createdAt"]),
+                                FIELD_TOTAL_COUNT,
                                 QueryNode(
-                                    "pageInfo", fields=["endCursor", "hasNextPage"]
+                                    NODE_NODES,
+                                    fields=[
+                                        FIELD_CREATED_AT,
+                                        FIELD_DESCRIPTION,
+                                        FIELD_ID,
+                                    ],
+                                ),
+                                QueryNode(
+                                    NODE_PAGE_INFO,
+                                    fields=[FIELD_END_CURSOR, FIELD_HAS_NEXT_PAGE],
                                 ),
                             ],
                         ),
@@ -56,7 +79,7 @@ class UserGists(PaginatedQuery):
         Returns:
             A list of dictionaries, each containing data about a single gist.
         """
-        gists = raw_data.get("user", {}).get("gists", {}).get("nodes", [])
+        gists = raw_data.get(NODE_USER, {}).get(NODE_GISTS, {}).get(NODE_NODES, [])
         return gists
 
     @staticmethod
@@ -72,7 +95,7 @@ class UserGists(PaginatedQuery):
         """
         counter = 0
         for gist in gists:
-            if created_before(gist.get("createdAt", ""), time):
+            if created_before(gist.get(FIELD_CREATED_AT, ""), time):
                 counter += 1
             else:
                 break

@@ -3,10 +3,25 @@ to extract pull requests created by the user based on a given user ID."""
 
 from typing import List, Dict, Any
 from backend.app.services.github_query.utils.helper import created_before
-from backend.app.services.github_query.github_graphql.query import (
+from ..query import (
     QueryNode,
     PaginatedQuery,
     QueryNodePaginator,
+)
+from ..constants import (
+    NODE_USER,
+    NODE_PULL_REQUESTS,
+    NODE_NODES,
+    NODE_PAGE_INFO,
+    FIELD_LOGIN,
+    FIELD_CREATED_AT,
+    FIELD_BODY_TEXT,
+    FIELD_ID,
+    FIELD_TOTAL_COUNT,
+    FIELD_END_CURSOR,
+    FIELD_HAS_NEXT_PAGE,
+    ARG_LOGIN,
+    ARG_FIRST,
 )
 
 
@@ -16,25 +31,33 @@ class UserPullRequests(PaginatedQuery):
     It navigates through potentially large sets of pull request data with pagination.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, login: str, pg_size: int = 10) -> None:
         """
         Initializes the UserPullRequests query with necessary fields and pagination support.
         """
         super().__init__(
             fields=[
                 QueryNode(
-                    "user",
-                    args={"login": "$user"},
+                    NODE_USER,
+                    args={ARG_LOGIN: login},
                     fields=[
-                        "login",
+                        FIELD_LOGIN,
                         QueryNodePaginator(
-                            "pullRequests",
-                            args={"first": "$pg_size"},
+                            NODE_PULL_REQUESTS,
+                            args={ARG_FIRST: pg_size},
                             fields=[
-                                "totalCount",
-                                QueryNode("nodes", fields=["createdAt"]),
+                                FIELD_TOTAL_COUNT,
                                 QueryNode(
-                                    "pageInfo", fields=["endCursor", "hasNextPage"]
+                                    NODE_NODES,
+                                    fields=[
+                                        FIELD_CREATED_AT,
+                                        FIELD_BODY_TEXT,
+                                        FIELD_ID,
+                                    ],
+                                ),
+                                QueryNode(
+                                    NODE_PAGE_INFO,
+                                    fields=[FIELD_END_CURSOR, FIELD_HAS_NEXT_PAGE],
                                 ),
                             ],
                         ),
@@ -54,10 +77,9 @@ class UserPullRequests(PaginatedQuery):
         Returns:
             List[Dict]: A list of pull requests, each represented as a dictionary.
         """
-        pull_requests = (
-            raw_data.get("user", {}).get("pullRequests", {}).get("nodes", [])
+        return (
+            raw_data.get(NODE_USER, {}).get(NODE_PULL_REQUESTS, {}).get(NODE_NODES, [])
         )
-        return pull_requests
 
     @staticmethod
     def created_before_time(pull_requests: Dict[str, Any], time: str) -> int:
@@ -73,7 +95,7 @@ class UserPullRequests(PaginatedQuery):
         """
         counter = 0
         for pull_request in pull_requests:
-            if created_before(pull_request.get("createdAt", ""), time):
+            if created_before(pull_request.get(FIELD_CREATED_AT, ""), time):
                 counter += 1
             else:
                 break

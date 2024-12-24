@@ -3,10 +3,26 @@ to extract repository discussions created by the user based on a given user ID."
 
 from typing import List, Dict, Any
 from backend.app.services.github_query.utils.helper import created_before
-from backend.app.services.github_query.github_graphql.query import (
+from ..query import (
     QueryNode,
     PaginatedQuery,
     QueryNodePaginator,
+)
+
+from ..constants import (
+    NODE_USER,
+    NODE_REPOSITORY_DISCUSSIONS,
+    NODE_NODES,
+    NODE_PAGE_INFO,
+    FIELD_LOGIN,
+    FIELD_CREATED_AT,
+    FIELD_BODY_TEXT,
+    FIELD_ID,
+    FIELD_TOTAL_COUNT,
+    FIELD_END_CURSOR,
+    FIELD_HAS_NEXT_PAGE,
+    ARG_LOGIN,
+    ARG_FIRST,
 )
 
 
@@ -16,23 +32,31 @@ class UserRepositoryDiscussions(PaginatedQuery):
     It extends PaginatedQuery to handle potentially large numbers of repositories.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, login: str, pg_size: int = 10) -> None:
         """Initializes a paginated query for GitHub user repository discussions."""
         super().__init__(
             fields=[
                 QueryNode(
-                    "user",
-                    args={"login": "$user"},
+                    NODE_USER,
+                    args={ARG_LOGIN: login},
                     fields=[
-                        "login",
+                        FIELD_LOGIN,
                         QueryNodePaginator(
-                            "repositoryDiscussions",
-                            args={"first": "$pg_size"},
+                            NODE_REPOSITORY_DISCUSSIONS,
+                            args={ARG_FIRST: pg_size},
                             fields=[
-                                "totalCount",
-                                QueryNode("nodes", fields=["createdAt"]),
+                                FIELD_TOTAL_COUNT,
                                 QueryNode(
-                                    "pageInfo", fields=["endCursor", "hasNextPage"]
+                                    NODE_NODES,
+                                    fields=[
+                                        FIELD_CREATED_AT,
+                                        FIELD_BODY_TEXT,
+                                        FIELD_ID,
+                                    ],
+                                ),
+                                QueryNode(
+                                    NODE_PAGE_INFO,
+                                    fields=[FIELD_END_CURSOR, FIELD_HAS_NEXT_PAGE],
                                 ),
                             ],
                         ),
@@ -52,10 +76,11 @@ class UserRepositoryDiscussions(PaginatedQuery):
         Returns:
             List[Dict]: A list of dictionaries, each containing data about a single repository discussion.
         """
-        repository_discussions = (
-            raw_data.get("user", {}).get("repositoryDiscussions", {}).get("nodes", [])
+        return (
+            raw_data.get(NODE_USER, {})
+            .get(NODE_REPOSITORY_DISCUSSIONS, {})
+            .get(NODE_NODES, [])
         )
-        return repository_discussions
 
     @staticmethod
     def created_before_time(repository_discussions: Dict[str, Any], time: str) -> int:
@@ -71,7 +96,7 @@ class UserRepositoryDiscussions(PaginatedQuery):
         """
         counter = 0
         for repository_discussion in repository_discussions:
-            if created_before(repository_discussion.get("createdAt", ""), time):
+            if created_before(repository_discussion.get(FIELD_CREATED_AT, ""), time):
                 counter += 1
             else:
                 break
