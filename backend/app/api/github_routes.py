@@ -1,7 +1,7 @@
 """This file defines the URLs for various GraphQL endpoints."""
 
 from urllib.parse import urlparse
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from backend.app.database import db
 from backend.app.models.user import User
@@ -16,6 +16,7 @@ import logging
 from ..services.github_graphql_services import (
     get_current_user_login,
     get_specific_user_login,
+    get_user_commit_comments_page,
 )
 
 github_bp = Blueprint("api", __name__)
@@ -63,5 +64,26 @@ def specific_user_login(login):
     parsed_url = urlparse(user.api_url)
     protocol = parsed_url.scheme
     host = parsed_url.netloc
-    data = get_specific_user_login(login, protocol=protocol, host=host, token=pat)
+    data = get_specific_user_login(login, protocol, host, pat)
+    return jsonify(data)
+
+
+@github_bp.route("/graphql/user-commit-comments/<login>", methods=["GET"])
+@jwt_required()
+def user_commit_comments(login):
+    """
+    Route:
+    Method: GET
+    """
+    end_cursor = request.args.get("end_cursor")
+    # hasNextPage = request.args.get("hasNextPage")
+    print("end_cursor:", end_cursor)
+    # print("hasNextPage:", hasNextPage)
+    user = check_user()
+    pat = user.personal_access_token
+    parsed_url = urlparse(user.api_url)
+    protocol = parsed_url.scheme
+    host = parsed_url.netloc
+    data = get_user_commit_comments_page(login, protocol, host, pat, end_cursor)
+    # print("route response:", data)
     return jsonify(data)
