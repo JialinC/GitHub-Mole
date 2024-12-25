@@ -3,7 +3,22 @@ to extract the number of various contribution made by the user based on a given 
 
 from typing import Dict, Any
 from collections import Counter
-from backend.app.services.github_query.github_graphql.query import QueryNode, Query
+from ..query import Query, QueryNode
+from ..constants import (
+    ARG_LOGIN,
+    ARG_FROM,
+    ARG_TO,
+    NODE_USER,
+    NODE_CONTRIBUTIONS_COLLECTION,
+    FIELD_STARTED_AT,
+    FIELD_ENDED_AT,
+    FIELD_RESTRICTED_CONTRIBUTIONS_COUNT,
+    FIELD_TOTAL_COMMIT_CONTRIBUTIONS,
+    FIELD_TOTAL_ISSUE_CONTRIBUTIONS,
+    FIELD_TOTAL_PULL_REQUEST_CONTRIBUTIONS,
+    FIELD_TOTAL_PULL_REQUEST_REVIEW_CONTRIBUTIONS,
+    FIELD_TOTAL_REPOSITORY_CONTRIBUTIONS,
+)
 
 
 class UserContributionsCollection(Query):
@@ -12,43 +27,36 @@ class UserContributionsCollection(Query):
     over a certain period. It includes detailed contribution counts like commits, issues, pull requests, etc.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        login: str,
+        start: str,
+        end: str,
+    ) -> None:
         """
         Initializes a UserContributionsCollection query object to fetch detailed contribution information of a user.
         """
         super().__init__(
             fields=[
                 QueryNode(
-                    "user",
-                    args={
-                        "login": "$user"
-                    },  # The GitHub username for which to fetch contribution data.
+                    NODE_USER,
+                    args={ARG_LOGIN: login},
                     fields=[
                         QueryNode(
-                            "contributionsCollection",
+                            NODE_CONTRIBUTIONS_COLLECTION,
                             args={
-                                "from": "$start",
-                                "to": "$end",
-                            },  # Time period for the contributions.
+                                ARG_FROM: start,
+                                ARG_TO: end,
+                            },
                             fields=[
-                                # The date and time at which the collection period starts.
-                                "startedAt",
-                                # The date and time at which the collection period ends.
-                                "endedAt",
-                                # Count of contributions to private repos the viewer does not have access to.
-                                "restrictedContributionsCount",
-                                # The total number of commits authored by the user.
-                                "totalCommitContributions",
-                                # The total number of issues opened by the user.
-                                "totalIssueContributions",
-                                # The total number of pull requests opened by the user.
-                                "totalPullRequestContributions",
-                                # The total number of pull request reviews by the user.
-                                "totalPullRequestReviewContributions",
-                                # The total number of repositories the user contributed to.
-                                "totalRepositoryContributions",
-                                # Each of these fields provides a count related to different types of contributions.
-                                # User can extend this to include fields they interested.
+                                FIELD_STARTED_AT,
+                                FIELD_ENDED_AT,
+                                FIELD_RESTRICTED_CONTRIBUTIONS_COUNT,
+                                FIELD_TOTAL_COMMIT_CONTRIBUTIONS,
+                                FIELD_TOTAL_ISSUE_CONTRIBUTIONS,
+                                FIELD_TOTAL_PULL_REQUEST_CONTRIBUTIONS,
+                                FIELD_TOTAL_PULL_REQUEST_REVIEW_CONTRIBUTIONS,
+                                FIELD_TOTAL_REPOSITORY_CONTRIBUTIONS,
                             ],
                         ),
                     ],
@@ -69,27 +77,15 @@ class UserContributionsCollection(Query):
         Returns:
             Counter: A collection counter aggregating the various types of contributions made by the user.
         """
-        raw_data = raw_data["user"]["contributionsCollection"]
+        raw_data = raw_data[NODE_USER][NODE_CONTRIBUTIONS_COLLECTION]
         contribution_collection = Counter(
             {
-                "res_con": raw_data[
-                    "restrictedContributionsCount"
-                ],  # Restricted contributions count.
-                "commit": raw_data[
-                    "totalCommitContributions"
-                ],  # Total commit contributions.
-                "issue": raw_data[
-                    "totalIssueContributions"
-                ],  # Total issue contributions.
-                "pr": raw_data[
-                    "totalPullRequestContributions"
-                ],  # Total pull request contributions.
-                "pr_review": raw_data[
-                    "totalPullRequestReviewContributions"
-                ],  # Total pull request review contributions.
-                "repository": raw_data[
-                    "totalRepositoryContributions"
-                ],  # Total repository contributions.
+                "res_con": raw_data[FIELD_RESTRICTED_CONTRIBUTIONS_COUNT],
+                "commit": raw_data[FIELD_TOTAL_COMMIT_CONTRIBUTIONS],
+                "issue": raw_data[FIELD_TOTAL_ISSUE_CONTRIBUTIONS],
+                "pr": raw_data[FIELD_TOTAL_PULL_REQUEST_CONTRIBUTIONS],
+                "pr_review": raw_data[FIELD_TOTAL_PULL_REQUEST_REVIEW_CONTRIBUTIONS],
+                "repository": raw_data[FIELD_TOTAL_REPOSITORY_CONTRIBUTIONS],
             }
         )
         return contribution_collection
