@@ -1,8 +1,33 @@
 """The module defines UserProfileStats that formulate GraphQL query string to extract user profile information 
-for a given GitHub ID."""
+for a given GitHub ID. Only the used fields are queried, open to customization."""
 
 from typing import Dict, Any
-from backend.app.services.github_query.github_graphql.query import QueryNode, Query
+from ..query import QueryNode, Query
+from ..constants import (
+    FIELD_LOGIN,
+    FIELD_NAME,
+    FIELD_EMAIL,
+    FIELD_CREATED_AT,
+    FIELD_BIO,
+    FIELD_COMPANY,
+    FIELD_TOTAL_COUNT,
+    NODE_USER,
+    ARG_LOGIN,
+    NODE_WATCHING,
+    NODE_STARRED_REPOSITORIES,
+    NODE_FOLLOWING,
+    NODE_FOLLOWERS,
+    NODE_ISSUES,
+    NODE_PROJECTS,
+    NODE_PULL_REQUESTS,
+    NODE_REPOSITORIES,
+    NODE_GIST_COMMENTS,
+    NODE_ISSUE_COMMENTS,
+    NODE_COMMIT_COMMENTS,
+    NODE_REPOSITORY_DISCUSSION_COMMENTS,
+    NODE_REPOSITORY_DISCUSSIONS,
+    NODE_GISTS,
+)
 
 
 class UserProfileStats(Query):
@@ -11,7 +36,7 @@ class UserProfileStats(Query):
     about a GitHub user's profile using the 'user' field in a GraphQL query.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, login: str) -> None:
         """
         Initializes a UserProfileStats query object to fetch a comprehensive set of information
         about a user, including their activities, contributions, and public profile details.
@@ -19,39 +44,35 @@ class UserProfileStats(Query):
         super().__init__(
             fields=[
                 QueryNode(
-                    "user",
-                    args={"login": "$user"},
+                    NODE_USER,
+                    args={ARG_LOGIN: login},
                     fields=[
-                        "login",
-                        "name",
-                        "email",
-                        "createdAt",
-                        "bio",
-                        "company",
-                        # Various boolean fields indicating the user's status or roles:
-                        "isBountyHunter",
-                        "isCampusExpert",
-                        "isDeveloperProgramMember",
-                        "isEmployee",
-                        "isGitHubStar",
-                        "isHireable",
-                        "isSiteAdmin",
-                        # Nodes representing counts of various items related to the user:
-                        QueryNode("watching", fields=["totalCount"]),
-                        QueryNode("starredRepositories", fields=["totalCount"]),
-                        QueryNode("following", fields=["totalCount"]),
-                        QueryNode("followers", fields=["totalCount"]),
-                        QueryNode("gists", fields=["totalCount"]),
-                        QueryNode("issues", fields=["totalCount"]),
-                        QueryNode("projects", fields=["totalCount"]),
-                        QueryNode("pullRequests", fields=["totalCount"]),
-                        QueryNode("repositories", fields=["totalCount"]),
-                        QueryNode("repositoryDiscussions", fields=["totalCount"]),
-                        QueryNode("gistComments", fields=["totalCount"]),
-                        QueryNode("issueComments", fields=["totalCount"]),
-                        QueryNode("commitComments", fields=["totalCount"]),
+                        FIELD_LOGIN,
+                        FIELD_NAME,
+                        FIELD_EMAIL,
+                        FIELD_CREATED_AT,
+                        FIELD_BIO,
+                        FIELD_COMPANY,
+                        QueryNode(NODE_WATCHING, fields=[FIELD_TOTAL_COUNT]),
                         QueryNode(
-                            "repositoryDiscussionComments", fields=["totalCount"]
+                            NODE_STARRED_REPOSITORIES, fields=[FIELD_TOTAL_COUNT]
+                        ),
+                        QueryNode(NODE_FOLLOWING, fields=[FIELD_TOTAL_COUNT]),
+                        QueryNode(NODE_FOLLOWERS, fields=[FIELD_TOTAL_COUNT]),
+                        QueryNode(NODE_GISTS, fields=[FIELD_TOTAL_COUNT]),
+                        QueryNode(NODE_ISSUES, fields=[FIELD_TOTAL_COUNT]),
+                        QueryNode(NODE_PROJECTS, fields=[FIELD_TOTAL_COUNT]),
+                        QueryNode(NODE_PULL_REQUESTS, fields=[FIELD_TOTAL_COUNT]),
+                        QueryNode(NODE_REPOSITORIES, fields=[FIELD_TOTAL_COUNT]),
+                        QueryNode(
+                            NODE_REPOSITORY_DISCUSSIONS, fields=[FIELD_TOTAL_COUNT]
+                        ),
+                        QueryNode(NODE_GIST_COMMENTS, fields=[FIELD_TOTAL_COUNT]),
+                        QueryNode(NODE_ISSUE_COMMENTS, fields=[FIELD_TOTAL_COUNT]),
+                        QueryNode(NODE_COMMIT_COMMENTS, fields=[FIELD_TOTAL_COUNT]),
+                        QueryNode(
+                            NODE_REPOSITORY_DISCUSSION_COMMENTS,
+                            fields=[FIELD_TOTAL_COUNT],
                         ),
                     ],
                 )
@@ -75,28 +96,30 @@ class UserProfileStats(Query):
             Each piece of information is extracted from the nested structure of the
             input and presented as a flat dictionary for easier access.
         """
-        profile_stats = raw_data["user"]
+        profile_stats = raw_data[NODE_USER]
         processed_stats = {
-            "github": profile_stats["login"],
-            "created_at": profile_stats["createdAt"],
-            "company": profile_stats["company"],
-            "followers": profile_stats["followers"]["totalCount"],
-            "gists": profile_stats["gists"]["totalCount"],
-            "issues": profile_stats["issues"]["totalCount"],
-            "projects": profile_stats["projects"]["totalCount"],
-            "pull_requests": profile_stats["pullRequests"]["totalCount"],
-            "repositories": profile_stats["repositories"]["totalCount"],
-            "repository_discussions": profile_stats["repositoryDiscussions"][
-                "totalCount"
-            ],
-            "gist_comments": profile_stats["gistComments"]["totalCount"],
-            "issue_comments": profile_stats["issueComments"]["totalCount"],
-            "commit_comments": profile_stats["commitComments"]["totalCount"],
+            "github": profile_stats[FIELD_LOGIN],
+            "created_at": profile_stats[FIELD_CREATED_AT],
+            "company": profile_stats[FIELD_COMPANY],
+            "followers": profile_stats[NODE_FOLLOWERS][FIELD_TOTAL_COUNT],
+            "gists": profile_stats[NODE_GISTS][FIELD_TOTAL_COUNT],
+            "issues": profile_stats[NODE_ISSUES][FIELD_TOTAL_COUNT],
+            "projects": profile_stats[NODE_PROJECTS][FIELD_TOTAL_COUNT],
+            "pull_requests": profile_stats[NODE_PULL_REQUESTS][FIELD_TOTAL_COUNT],
+            "repositories": profile_stats[NODE_REPOSITORIES][FIELD_TOTAL_COUNT],
+            "repository_discussions": profile_stats[
+                NODE_REPOSITORY_DISCUSSION_COMMENTS
+            ][FIELD_TOTAL_COUNT],
+            "gist_comments": profile_stats[NODE_GIST_COMMENTS][FIELD_TOTAL_COUNT],
+            "issue_comments": profile_stats[NODE_ISSUE_COMMENTS][FIELD_TOTAL_COUNT],
+            "commit_comments": profile_stats[NODE_COMMIT_COMMENTS][FIELD_TOTAL_COUNT],
             "repository_discussion_comments": profile_stats[
-                "repositoryDiscussionComments"
-            ]["totalCount"],
-            "watching": profile_stats["watching"]["totalCount"],
-            "starred_repositories": profile_stats["starredRepositories"]["totalCount"],
-            "following": profile_stats["following"]["totalCount"],
+                NODE_REPOSITORY_DISCUSSION_COMMENTS
+            ][FIELD_TOTAL_COUNT],
+            "watching": profile_stats[NODE_WATCHING][FIELD_TOTAL_COUNT],
+            "starred_repositories": profile_stats[NODE_STARRED_REPOSITORIES][
+                FIELD_TOTAL_COUNT
+            ],
+            "following": profile_stats[NODE_FOLLOWING][FIELD_TOTAL_COUNT],
         }
         return processed_stats
