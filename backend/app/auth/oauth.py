@@ -1,7 +1,7 @@
 """This module set up necessary configuration for OAuth."""
 
-from flask import url_for
 from authlib.integrations.flask_client import OAuth
+from backend.app.config import AuthConfig
 
 oauth = OAuth()
 
@@ -13,21 +13,12 @@ def config_oauth(app):
     It sets up the necessary URLs and scopes required for OAuth authentication with GitHub.
     """
     oauth.init_app(app)
-
-    def get_redirect_uri():
-        # Use url_for inside a function to ensure it's called within a request context
-        return url_for("auth.authorize", _external=True, _scheme="https")
-
+    # Configure GitHub OAuth using environment variables
     oauth.register(
         name="github",
-        client_id=app.config["GITHUB_OAUTH_CLIENT_ID"],
-        client_secret=app.config["GITHUB_OAUTH_CLIENT_SECRET"],
-        access_token_url="https://github.com/login/oauth/access_token",
-        authorize_url="https://github.com/login/oauth/authorize",
-        api_base_url="https://api.github.com/",
-        client_kwargs={
-            "scope": "user:email"
-        },  # extend this to meet project requirements
-        # Pass the function get_redirect_uri as the redirect_uri argument
-        redirect_uri=get_redirect_uri,
+        client_id=AuthConfig.GITHUB_CLIENT_ID,
+        client_secret=AuthConfig.GITHUB_CLIENT_SECRET,
+        authorize_url=AuthConfig.GITHUB_AUTHORIZE_URL,
+        access_token_url=AuthConfig.GITHUB_ACCESS_TOKEN_URL,
+        client_kwargs={"scope": "user:email"},
     )
