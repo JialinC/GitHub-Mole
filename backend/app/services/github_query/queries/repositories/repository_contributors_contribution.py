@@ -2,10 +2,34 @@
 to extract all the commits made by a given contibutor to a repository's default branch."""
 
 from typing import Dict, List, Optional, Any
-from backend.app.services.github_query.github_graphql.query import (
+from ..query import (
     QueryNode,
     PaginatedQuery,
     QueryNodePaginator,
+)
+from ..constants import (
+    ARG_FIRST,
+    ARG_NAME,
+    ARG_OWNER,
+    ARG_AUTHOR,
+    FIELD_END_CURSOR,
+    FIELD_HAS_NEXT_PAGE,
+    FIELD_TOTAL_COUNT,
+    FIELD_AUTHORED_DATE,
+    FIELD_CHANGED_FILES_IF_AVAILABLE,
+    FIELD_ADDITIONS,
+    FIELD_DELETIONS,
+    FIELD_MESSAGE,
+    FIELD_ID,
+    NODE_DEFAULT_BRANCH_REF,
+    NODE_HISTORY,
+    NODE_NODES,
+    NODE_PAGE_INFO,
+    NODE_REPOSITORY,
+    NODE_TARGET,
+    NODE_ON,
+    NODE_COMMIT,
+    NODE_PARENTS,
 )
 
 
@@ -18,55 +42,62 @@ class RepositoryContributorsContribution(PaginatedQuery):
     the user profile query.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self, owner: str, repo_name: str, GitHub_id: str, pg_size: int = 100
+    ) -> None:
         """
         Initializes a paginated query to extract contributions made by contributors in a specific repository.
         Focuses on the commit history of the repository's default branch, targeting individual contributions.
+        GitHub_id: str = "{ id: $id }"
         """
         super().__init__(
             fields=[
                 QueryNode(
-                    "repository",
-                    args={"owner": "$owner", "name": "$repo_name"},
+                    NODE_REPOSITORY,
+                    args={
+                        ARG_OWNER: owner,
+                        ARG_NAME: repo_name,
+                    },
                     fields=[
                         QueryNode(
-                            "defaultBranchRef",
+                            NODE_DEFAULT_BRANCH_REF,
                             fields=[
                                 QueryNode(
-                                    "target",
+                                    NODE_TARGET,
                                     fields=[
                                         QueryNode(
-                                            "... on Commit",
+                                            NODE_ON + NODE_COMMIT,
                                             fields=[
                                                 QueryNodePaginator(
-                                                    "history",
+                                                    NODE_HISTORY,
                                                     args={
-                                                        "author": "{ id: $id }",
-                                                        "first": "$pg_size",
+                                                        ARG_AUTHOR: GitHub_id,
+                                                        ARG_FIRST: pg_size,
                                                     },
                                                     fields=[
-                                                        "totalCount",
+                                                        FIELD_TOTAL_COUNT,
                                                         QueryNode(
-                                                            "nodes",
+                                                            NODE_NODES,
                                                             fields=[
-                                                                "authoredDate",
-                                                                "changedFilesIfAvailable",
-                                                                "additions",
-                                                                "deletions",
-                                                                "message",
+                                                                FIELD_ID,
+                                                                FIELD_AUTHORED_DATE,
+                                                                FIELD_CHANGED_FILES_IF_AVAILABLE,
+                                                                FIELD_ADDITIONS,
+                                                                FIELD_DELETIONS,
+                                                                FIELD_MESSAGE,
                                                                 QueryNode(
-                                                                    "parents (first: 2)",
+                                                                    NODE_PARENTS,
                                                                     fields=[
-                                                                        "totalCount"
+                                                                        FIELD_TOTAL_COUNT
                                                                     ],
                                                                 ),
                                                             ],
                                                         ),
                                                         QueryNode(
-                                                            "pageInfo",
+                                                            NODE_PAGE_INFO,
                                                             fields=[
-                                                                "endCursor",
-                                                                "hasNextPage",
+                                                                FIELD_END_CURSOR,
+                                                                FIELD_HAS_NEXT_PAGE,
                                                             ],
                                                         ),
                                                     ],
@@ -98,7 +129,9 @@ class RepositoryContributorsContribution(PaginatedQuery):
         Returns:
             Dict[str, int]: A dictionary containing the cumulative statistics: total additions, deletions, and commits.
         """
-        nodes = raw_data["repository"]["defaultBranchRef"]["target"]["history"]["nodes"]
+        nodes = raw_data[NODE_REPOSITORY][NODE_DEFAULT_BRANCH_REF][NODE_TARGET][
+            NODE_HISTORY
+        ][NODE_NODES]
         if cumulative_contribution is None:
             cumulative_contribution = {
                 "total_additions": 0,
@@ -107,9 +140,9 @@ class RepositoryContributorsContribution(PaginatedQuery):
             }
 
         for node in nodes:
-            if node["parents"] and node["parents"]["totalCount"] < 2:
-                cumulative_contribution["total_additions"] += node["additions"]
-                cumulative_contribution["total_deletions"] += node["deletions"]
+            if node[NODE_PARENTS] and node[NODE_PARENTS][FIELD_TOTAL_COUNT] < 2:
+                cumulative_contribution["total_additions"] += node[FIELD_ADDITIONS]
+                cumulative_contribution["total_deletions"] += node[FIELD_DELETIONS]
                 cumulative_contribution["total_commits"] += 1
 
         return cumulative_contribution
@@ -129,19 +162,21 @@ class RepositoryContributorsContribution(PaginatedQuery):
         Returns:
             List[Dict[str, int]]: A list of dictionaries, each representing details of an individual commit.
         """
-        nodes = raw_data["repository"]["defaultBranchRef"]["target"]["history"]["nodes"]
+        nodes = raw_data[NODE_REPOSITORY][NODE_DEFAULT_BRANCH_REF][NODE_TARGET][
+            NODE_HISTORY
+        ][NODE_NODES]
         if commit_contributions is None:
             commit_contributions = []
 
         for node in nodes:
-            if node["parents"] and node["parents"]["totalCount"] < 2:
+            if node[NODE_PARENTS] and node[NODE_PARENTS][FIELD_TOTAL_COUNT] < 2:
                 commit_contributions.append(
                     {
-                        "authoredDate": node["authoredDate"],
-                        "changedFiles": node["changedFilesIfAvailable"],
-                        "additions": node["additions"],
-                        "deletions": node["deletions"],
-                        "message": node["message"],
+                        "authoredDate": node[FIELD_AUTHORED_DATE],
+                        "changedFiles": node[FIELD_CHANGED_FILES_IF_AVAILABLE],
+                        "additions": node[FIELD_ADDITIONS],
+                        "deletions": node[FIELD_DELETIONS],
+                        "message": node[FIELD_MESSAGE],
                     }
                 )
 
