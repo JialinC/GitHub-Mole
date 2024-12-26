@@ -2,10 +2,38 @@
 to extract all the commits made to a repository's default branch."""
 
 from typing import Dict, Optional
-from backend.app.services.github_query.github_graphql.query import (
+from ..query import (
     QueryNode,
     PaginatedQuery,
     QueryNodePaginator,
+)
+from ..constants import (
+    ARG_FIRST,
+    ARG_NAME,
+    ARG_OWNER,
+    FIELD_END_CURSOR,
+    FIELD_HAS_NEXT_PAGE,
+    FIELD_TOTAL_COUNT,
+    FIELD_AUTHORED_DATE,
+    FIELD_CHANGED_FILES_IF_AVAILABLE,
+    FIELD_ADDITIONS,
+    FIELD_DELETIONS,
+    FIELD_MESSAGE,
+    FIELD_ID,
+    FIELD_NAME,
+    FIELD_EMAIL,
+    FIELD_LOGIN,
+    NODE_AUTHOR,
+    NODE_DEFAULT_BRANCH_REF,
+    NODE_HISTORY,
+    NODE_NODES,
+    NODE_PAGE_INFO,
+    NODE_REPOSITORY,
+    NODE_TARGET,
+    NODE_ON,
+    NODE_COMMIT,
+    NODE_PARENTS,
+    NODE_USER,
 )
 
 
@@ -16,62 +44,64 @@ class RepositoryCommits(PaginatedQuery):
     It locates the repository base on the owner GitHub ID and the repository's name.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, owner: str, repo_name: str, pg_size: int = 10) -> None:
         """Initializes a paginated query for repository commits with specific fields and pagination controls."""
         super().__init__(
             fields=[
                 QueryNode(
-                    "repository",
+                    NODE_REPOSITORY,
                     args={
-                        "owner": "$owner",
-                        "name": "$repo_name",
-                    },  # Query arguments for specifying the repository
+                        ARG_OWNER: owner,
+                        ARG_NAME: repo_name,
+                    },
                     fields=[
                         QueryNode(
-                            "defaultBranchRef",  # Points to the default branch of the repository
+                            NODE_DEFAULT_BRANCH_REF,  # Points to the default branch of the repository
                             fields=[
                                 QueryNode(
-                                    "target",
+                                    NODE_TARGET,
                                     fields=[
                                         QueryNode(
-                                            "... on Commit",  # Inline fragment on Commit type
+                                            NODE_ON
+                                            + NODE_COMMIT,  # Inline fragment on Commit type
                                             fields=[
                                                 QueryNodePaginator(
-                                                    "history",  # Paginated history of commits
+                                                    NODE_HISTORY,  # Paginated history of commits
                                                     args={
-                                                        "first": "$pg_size"
+                                                        ARG_FIRST: pg_size
                                                     },  # Pagination control arguments
                                                     fields=[
-                                                        "totalCount",  # Total number of commits in the history
+                                                        FIELD_TOTAL_COUNT,  # Total number of commits in the history
                                                         QueryNode(
-                                                            "nodes",  # List of commit nodes
+                                                            NODE_NODES,  # List of commit nodes
                                                             fields=[
+                                                                FIELD_ID,
                                                                 # Date when the commit was authored
-                                                                "authoredDate",
+                                                                FIELD_AUTHORED_DATE,
                                                                 # Number of files changed, if available
-                                                                "changedFilesIfAvailable",
+                                                                FIELD_CHANGED_FILES_IF_AVAILABLE,
                                                                 # Number of additions made in the commit
-                                                                "additions",
+                                                                FIELD_ADDITIONS,
                                                                 # Number of deletions made in the commit
-                                                                "deletions",
+                                                                FIELD_DELETIONS,
                                                                 # Commit message
-                                                                "message",
+                                                                FIELD_MESSAGE,
                                                                 QueryNode(
                                                                     # Parent commits of the commit, limited to 2
-                                                                    "parents (first: 2)",
+                                                                    NODE_PARENTS,
                                                                     fields=[
-                                                                        "totalCount"  # Total number of parent commits
+                                                                        FIELD_TOTAL_COUNT  # Total number of parents
                                                                     ],
                                                                 ),
                                                                 QueryNode(
-                                                                    "author",  # Author of the commit
+                                                                    NODE_AUTHOR,  # Author of the commit
                                                                     fields=[
-                                                                        "name",  # Name of the author
-                                                                        "email",  # Email of the author
+                                                                        FIELD_NAME,  # Name of the author
+                                                                        FIELD_EMAIL,  # Email of the author
                                                                         QueryNode(
-                                                                            "user",  # User associated with the author
+                                                                            NODE_USER,
                                                                             fields=[
-                                                                                "login"  # Login of the user
+                                                                                FIELD_LOGIN  # Login of the user
                                                                             ],
                                                                         ),
                                                                     ],
@@ -79,10 +109,10 @@ class RepositoryCommits(PaginatedQuery):
                                                             ],
                                                         ),
                                                         QueryNode(
-                                                            "pageInfo",  # Information about pagination
+                                                            NODE_PAGE_INFO,
                                                             fields=[
-                                                                "endCursor",
-                                                                "hasNextPage",
+                                                                FIELD_END_CURSOR,
+                                                                FIELD_HAS_NEXT_PAGE,
                                                             ],
                                                         ),
                                                     ],
@@ -113,21 +143,23 @@ class RepositoryCommits(PaginatedQuery):
             A dictionary of cumulative commit data per author, with details like total additions, deletions,
             file changes, and commits.
         """
-        nodes = raw_data["repository"]["defaultBranchRef"]["target"]["history"]["nodes"]
+        nodes = raw_data[NODE_REPOSITORY][NODE_DEFAULT_BRANCH_REF][NODE_TARGET][
+            NODE_HISTORY
+        ][NODE_NODES]
         if cumulative_commits is None:
             cumulative_commits = {}
 
         # Process each commit node to accumulate data
         for node in nodes:
             # Consider only commits with less than 2 parents (usually mainline commits)
-            if node["parents"] and node["parents"]["totalCount"] < 2:
-                name = node["author"]["name"]
-                login = node["author"]["user"]
+            if node[NODE_PARENTS] and node[NODE_PARENTS][FIELD_TOTAL_COUNT] < 2:
+                name = node[NODE_AUTHOR][FIELD_NAME]
+                login = node[NODE_AUTHOR][NODE_USER]
                 if login:
-                    login = login["login"]
-                additions = node["additions"]
-                deletions = node["deletions"]
-                files = node["changedFilesIfAvailable"]
+                    login = login[FIELD_LOGIN]
+                additions = node[FIELD_ADDITIONS]
+                deletions = node[FIELD_DELETIONS]
+                files = node[FIELD_CHANGED_FILES_IF_AVAILABLE]
                 if name not in cumulative_commits:
                     if login:
                         cumulative_commits[name] = {
