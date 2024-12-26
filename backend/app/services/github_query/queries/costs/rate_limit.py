@@ -1,7 +1,16 @@
 """The module defines the RateLimit class, which formulates the GraphQL query string
 to extract the remaining rate limit of the current user."""
 
-from backend.app.services.github_query.github_graphql.query import QueryNode, Query
+from ..query import QueryNode, Query
+from ..constants import (
+    NODE_RATE_LIMIT,
+    FIELD_LIMIT,
+    FIELD_COST,
+    FIELD_REMAINING,
+    FIELD_RESET_AT,
+    FIELD_USED,
+    ARG_DRYRUN,
+)
 
 
 class RateLimit(Query):
@@ -10,7 +19,7 @@ class RateLimit(Query):
     of the GitHub API, including the cost of the last query, remaining quota, and reset time.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, dryrun: bool) -> None:
         """
         Initializes the RateLimit query with predefined fields to retrieve rate limit information.
         The 'rateLimit' field is a special field in the GitHub GraphQL API that provides rate limit status.
@@ -18,16 +27,14 @@ class RateLimit(Query):
         super().__init__(
             fields=[
                 QueryNode(
-                    "rateLimit",
-                    args={
-                        "dryRun": "$dryrun"  # Indicates whether the rate limit should be checked in dry run mode.
-                    },
+                    NODE_RATE_LIMIT,
+                    args={ARG_DRYRUN: dryrun},
                     fields=[
-                        "cost",  # The cost of the last query counted against the rate limit.
-                        "limit",  # The maximum number of points the client is permitted to consume in a window of time.
-                        "remaining",  # The remaining number of points the client can consume.
-                        "resetAt",  # The time at which the current rate limit window resets in UTC epoch seconds.
-                        "used",  # The number of points used in the current rate limit window.
+                        FIELD_COST,
+                        FIELD_LIMIT,
+                        FIELD_REMAINING,
+                        FIELD_RESET_AT,
+                        FIELD_USED,
                     ],
                 )
             ]
