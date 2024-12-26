@@ -2,10 +2,31 @@
 to extract all contibutors to a repository's default branch."""
 
 from typing import Dict, Set, Optional
-from backend.app.services.github_query.github_graphql.query import (
+from ..query import (
     QueryNode,
     PaginatedQuery,
     QueryNodePaginator,
+)
+from ..constants import (
+    ARG_FIRST,
+    ARG_NAME,
+    ARG_OWNER,
+    FIELD_END_CURSOR,
+    FIELD_HAS_NEXT_PAGE,
+    FIELD_LOGIN,
+    FIELD_EMAIL,
+    FIELD_NAME,
+    FIELD_TOTAL_COUNT,
+    NODE_AUTHOR,
+    NODE_DEFAULT_BRANCH_REF,
+    NODE_HISTORY,
+    NODE_NODES,
+    NODE_PAGE_INFO,
+    NODE_REPOSITORY,
+    NODE_TARGET,
+    NODE_USER,
+    NODE_ON,
+    NODE_COMMIT,
 )
 
 
@@ -16,44 +37,43 @@ class RepositoryContributors(PaginatedQuery):
     It locates the repository base on the owner GitHub ID and the repository's name.
     """
 
-    def __init__(self):
+    def __init__(self, owner: str, repo_name: str, pg_size: int = 10) -> None:
         super().__init__(
             fields=[
                 QueryNode(
-                    "repository",
+                    NODE_REPOSITORY,
                     args={
-                        "owner": "$owner",
-                        "name": "$repo_name",
+                        ARG_OWNER: owner,
+                        ARG_NAME: repo_name,
                     },  # Query arguments for specifying the repository
                     fields=[
                         QueryNode(
-                            "defaultBranchRef",  # Points to the default branch of the repository
+                            NODE_DEFAULT_BRANCH_REF,  # Points to the default branch of the repository
                             fields=[
                                 QueryNode(
-                                    "target",
+                                    NODE_TARGET,
                                     fields=[
                                         QueryNode(
-                                            "... on Commit",  # Inline fragment on Commit type
+                                            NODE_ON
+                                            + NODE_COMMIT,  # Inline fragment on Commit type
                                             fields=[
                                                 QueryNodePaginator(
-                                                    "history",  # Paginated history of commits
-                                                    args={
-                                                        "first": "$pg_size"
-                                                    },  # Pagination control arguments
+                                                    NODE_HISTORY,  # Paginated history of commits
+                                                    args={ARG_FIRST: pg_size},
                                                     fields=[
-                                                        "totalCount",  # Total number of commits in the history
+                                                        FIELD_TOTAL_COUNT,  # Total number of commits in the history
                                                         QueryNode(
-                                                            "nodes",  # List of commit nodes
+                                                            NODE_NODES,  # List of commit nodes
                                                             fields=[
                                                                 QueryNode(
-                                                                    "author",  # Author of the commit
+                                                                    NODE_AUTHOR,  # Author of the commit
                                                                     fields=[
-                                                                        "name",  # Name of the author
-                                                                        "email",  # Email of the author
+                                                                        FIELD_NAME,  # Name of the author
+                                                                        FIELD_EMAIL,  # Email of the author
                                                                         QueryNode(
-                                                                            "user",  # User associated with the author
+                                                                            NODE_USER,
                                                                             fields=[
-                                                                                "login"  # Login of the user
+                                                                                FIELD_LOGIN  # Login of the user
                                                                             ],
                                                                         ),
                                                                     ],
@@ -61,10 +81,10 @@ class RepositoryContributors(PaginatedQuery):
                                                             ],
                                                         ),
                                                         QueryNode(
-                                                            "pageInfo",  # Information about pagination
+                                                            NODE_PAGE_INFO,
                                                             fields=[
-                                                                "endCursor",
-                                                                "hasNextPage",
+                                                                FIELD_END_CURSOR,
+                                                                FIELD_HAS_NEXT_PAGE,
                                                             ],
                                                         ),
                                                     ],
@@ -94,19 +114,21 @@ class RepositoryContributors(PaginatedQuery):
         Returns:
             A dictionary containing sets of unique author names and logins.
         """
-        nodes = raw_data["repository"]["defaultBranchRef"]["target"]["history"]["nodes"]
+        nodes = raw_data[NODE_REPOSITORY][NODE_DEFAULT_BRANCH_REF][NODE_TARGET][
+            NODE_HISTORY
+        ][NODE_NODES]
         if unique_authors is None:
             unique_authors = {"name": set(), "login": set()}
 
         # Process each commit node to accumulate unique author data
         for node in nodes:
-            author = node["author"]
-            name = author["name"]
-            login = author["user"]["login"] if author["user"] else None
+            author = node[NODE_AUTHOR]
+            name = author[FIELD_NAME]
+            login = author[NODE_USER][FIELD_LOGIN] if author[NODE_USER] else None
 
             if name:
-                unique_authors["name"].add(name)
+                unique_authors[FIELD_NAME].add(name)
             if login:
-                unique_authors["login"].add(login)
+                unique_authors[FIELD_LOGIN].add(login)
 
         return unique_authors
