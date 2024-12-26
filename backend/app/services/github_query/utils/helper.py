@@ -5,9 +5,10 @@ import re
 import string
 import random
 from datetime import datetime, timedelta
-from backend.app.services.github_query.github_graphql.query import Query
-from backend.app.services.github_query.github_graphql.client import Client
-from backend.app.services.github_query.queries.costs.query_cost import QueryCost
+
+# from backend.app.services.github_query.github_graphql.query import Query
+# from backend.app.services.github_query.github_graphql.client import Client
+# from backend.app.services.github_query.queries.costs.query_cost import QueryCost
 
 
 def print_methods(obj: object) -> None:
@@ -190,27 +191,27 @@ def get_owner_and_name(link: str) -> tuple:
     return match.group("owner"), match.group("repo")
 
 
-def have_rate_limit(client: Client, query: Query, args: dict) -> list:
-    """
-    Determines whether enough rate limit remains to execute a given query.
+# def have_rate_limit(client: Client, query: Query, args: dict) -> list:
+#     """
+#     Determines whether enough rate limit remains to execute a given query.
 
-    Args:
-        client (Client): The client to use for execution.
-        query (Query): The query to execute.
-        args (dict): Arguments for the query.
+#     Args:
+#         client (Client): The client to use for execution.
+#         query (Query): The query to execute.
+#         args (dict): Arguments for the query.
 
-    Returns:
-        list: A list containing a boolean indicating whether the rate limit is sufficient and the reset time.
-    """
-    query_string = str(query.substitute(**args))
-    match = re.search(r"query\s*{(?P<content>.+)}", query_string)
-    rate_limit = client.execute(
-        query=QueryCost(match.group("content")), substitutions={"dryrun": True}
-    )["rateLimit"]
-    cost = rate_limit["cost"]
-    remaining = rate_limit["remaining"]
-    reset_at = rate_limit["resetAt"]
-    if cost < remaining - 5:
-        return [True, reset_at]
-    else:
-        return [False, reset_at]
+#     Returns:
+#         list: A list containing a boolean indicating whether the rate limit is sufficient and the reset time.
+#     """
+#     query_string = str(query.substitute(**args))
+#     match = re.search(r"query\s*{(?P<content>.+)}", query_string)
+#     rate_limit = client.execute(
+#         QueryCost(match.group("content"), dryrun=True).get_query()
+#     )["rateLimit"]
+#     cost = rate_limit["cost"]
+#     remaining = rate_limit["remaining"]
+#     reset_at = rate_limit["resetAt"]
+#     if cost < remaining - 5:
+#         return [True, reset_at]
+#     else:
+#         return [False, reset_at]
