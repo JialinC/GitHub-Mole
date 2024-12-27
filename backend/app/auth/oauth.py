@@ -1,7 +1,7 @@
 """This module set up necessary configuration for OAuth."""
 
 from authlib.integrations.flask_client import OAuth
-from backend.app.config import AuthConfig
+from app.config import AuthConfig
 
 oauth = OAuth()
 

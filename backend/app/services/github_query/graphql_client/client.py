@@ -7,11 +7,11 @@ from typing import Union, Optional, Dict, Any, Generator, Tuple
 import requests
 from requests.exceptions import Timeout, RequestException
 from requests import Response
-from backend.app.services.github_query.queries.query import (
+from app.services.github_query.queries.query import (
     Query,
     PaginatedQuery,
 )
-from backend.app.services.github_query.queries.costs.query_cost import (
+from app.services.github_query.queries.costs.query_cost import (
     QueryCost,
 )
 from .authentication import (

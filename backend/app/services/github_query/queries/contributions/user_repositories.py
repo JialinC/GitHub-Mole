@@ -2,7 +2,7 @@
 to extract repositories created by the user based on a given user ID."""
 
 from typing import List, Dict, Any
-from backend.app.services.github_query.utils.helper import (
+from app.services.github_query.utils.helper import (
     created_before,
     created_after,
     in_time_period,

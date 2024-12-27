@@ -2,7 +2,7 @@
 to extract repository discussions created by the user based on a given user ID."""
 
 from typing import List, Dict, Any
-from backend.app.services.github_query.utils.helper import created_before
+from app.services.github_query.utils.helper import created_before
 from ..query import (
     QueryNode,
     PaginatedQuery,

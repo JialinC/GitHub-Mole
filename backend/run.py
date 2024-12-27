@@ -1,8 +1,8 @@
-from backend.app import create_app
+from app import create_app
 from flask_cors import CORS
-from backend.app.database import db
+from app.database import db
 from flask import session, jsonify
-from backend.app.models.user import User
+from app.models.user import User
 from datetime import datetime, timedelta
 from flask_jwt_extended import JWTManager
 

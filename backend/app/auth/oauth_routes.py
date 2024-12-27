@@ -1,12 +1,12 @@
 """The module defines necessary endpoints for GitHub OAuth"""
 
 from flask import Blueprint, redirect, url_for
-from .oauth import oauth  # Import the OAuth object configured for GitHub integration.
 from flask_jwt_extended import create_access_token, create_refresh_token
-from backend.app.database import db
-from backend.app.models.user import User
-from backend.app.config import AuthConfig
-from backend.app.config import Config
+from app.database import db
+from app.models.user import User
+from app.config import AuthConfig
+from app.config import Config
+from .oauth import oauth  # Import the OAuth object configured for GitHub integration.
 
 
 # Create a Blueprint for authentication-related routes. This organizes auth routes under a common namespace.

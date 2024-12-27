@@ -1,3 +1,4 @@
+import logging
 import requests
 from flask import Blueprint, jsonify, current_app, request, redirect
 from flask_jwt_extended import (
@@ -5,9 +6,9 @@ from flask_jwt_extended import (
     get_jwt_identity,
     create_access_token,
 )
-from backend.app.database import db
-from backend.app.models.user import User
-import logging
+from app.database import db
+from app.models.user import User
+
 
 helper_bp = Blueprint("helper", __name__)
 
