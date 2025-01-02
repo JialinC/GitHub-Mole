@@ -11,6 +11,7 @@ from ..constants import (
     FIELD_BIO,
     FIELD_COMPANY,
     FIELD_TOTAL_COUNT,
+    FIELD_AVATARURL,
     NODE_USER,
     ARG_LOGIN,
     NODE_WATCHING,
@@ -53,6 +54,7 @@ class UserProfileStats(Query):
                         FIELD_CREATED_AT,
                         FIELD_BIO,
                         FIELD_COMPANY,
+                        FIELD_AVATARURL,
                         QueryNode(NODE_WATCHING, fields=[FIELD_TOTAL_COUNT]),
                         QueryNode(
                             NODE_STARRED_REPOSITORIES, fields=[FIELD_TOTAL_COUNT]
@@ -101,6 +103,7 @@ class UserProfileStats(Query):
             "github": profile_stats[FIELD_LOGIN],
             "created_at": profile_stats[FIELD_CREATED_AT],
             "company": profile_stats[FIELD_COMPANY],
+            "avatarUrl": profile_stats[FIELD_AVATARURL],
             "followers": profile_stats[NODE_FOLLOWERS][FIELD_TOTAL_COUNT],
             "gists": profile_stats[NODE_GISTS][FIELD_TOTAL_COUNT],
             "issues": profile_stats[NODE_ISSUES][FIELD_TOTAL_COUNT],
