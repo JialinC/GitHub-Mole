@@ -19,7 +19,7 @@ class UserQuery(db.Model):
     )
 
     def __repr__(self):
-        return f"<UserQuery {self.user_id} queried {self.queried_github_id}>"
+        return f"<UserQuery {self.user_id} queried {self.queried_github_login}>"
 
     @classmethod
     def create(cls, user_id, queried_github_id):
