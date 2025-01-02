@@ -1,12 +1,12 @@
 import logging
 import requests
-from flask import Blueprint, jsonify, current_app, request, redirect
+from flask import Blueprint, jsonify, current_app, request
 from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
     create_access_token,
+    create_refresh_token,
 )
-from app.database import db
 from app.models.user import User
 
 
@@ -32,46 +32,58 @@ def validate_pat_and_api_url(pat, api_url):
         response = requests.get(api_url, headers=headers, timeout=5)
         response.raise_for_status()
     except requests.RequestException as e:
-        raise ValidationError(
-            f"Invalid personal access token or enterprise API URL: {str(e)}"
-        )
+        raise ValidationError(str(e))
     return response.json()
 
 
-def update_or_create_user(github_id, pat, api_url):
-    user = User.query.filter_by(github_id=github_id).first()
+def update_or_create_user(github_id, github_login, pat, api_url):
+    user = User.query.filter_by(github_login=github_login).first()
     if user:
-        user.personal_access_token = pat
-        db.session.commit()
+        user.update(personal_access_token=pat)
         return "Access token updated successfully"
     else:
-        new_user = User(github_id=github_id, personal_access_token=pat, api_url=api_url)
-        db.session.add(new_user)
-        db.session.commit()
+        User.create(
+            github_id=github_id,
+            github_login=github_login,
+            personal_access_token=pat,
+            api_url=api_url,
+        )
         return "New user created successfully"
 
 
 @helper_bp.route("/helper/validate-pat", methods=["POST"])
 def validate_pat():
-    pat = request.json.get("pat")
-    account_type = request.json.get("accountType")
-    api_url = request.json.get("apiUrl")
+    data = request.json
+    pat = data.get("pat")
+    account_type = data.get("accountType")
+    api_url = data.get("apiUrl")
     user_api_url = api_url + "/user"
-    logging.info(f"Validating PAT for account type: {account_type}, API URL: {api_url}")
+    logging.info(
+        "Validating PAT for account type: %s, API URL: %s", account_type, api_url
+    )
 
     try:
         user_data = validate_pat_and_api_url(pat, user_api_url)
-        github_id = user_data["id"]
-        update_or_create_user(github_id, pat, api_url)
+        github_login = user_data["login"]
+        github_id = str(user_data["node_id"])
+        update_or_create_user(github_id, github_login, pat, api_url)
         access_token = create_access_token(identity=github_id)
-        return redirect(
-            f"{current_app.config['FRONTEND_URL']}/dashboard?token={access_token}"
+        refresh_token = create_refresh_token(identity=github_id)
+        return (
+            jsonify(
+                {
+                    "valid": True,
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                }
+            ),
+            200,
         )
     except ValidationError as e:
-        logging.error(f"Validation error: {str(e)}")
+        logging.error("Validation error: %s", str(e))
         return jsonify({"valid": False, "error": str(e)}), 400
     except Exception as e:
-        logging.error(f"Unexpected error: {str(e)}")
+        logging.error("Unexpected error: %s", str(e))
         return jsonify({"valid": False, "error": "An unexpected error occurred"}), 500
 
 

@@ -2,7 +2,6 @@
 
 from flask import Blueprint, redirect, url_for
 from flask_jwt_extended import create_access_token, create_refresh_token
-from app.database import db
 from app.models.user import User
 from app.config import AuthConfig
 from app.config import Config
@@ -50,19 +49,20 @@ def callback():
     user_info = resp.json()  # Convert the response to JSON to extract user details.
 
     # Store the access token and user info in the session or database
-    github_id = str(user_info["id"])
-    user = User.query.filter_by(github_id=github_id).first()
+    github_login = user_info["login"]
+    github_id = str(user_info["node_id"])
+    personal_access_token = token["access_token"]
+    api_url = AuthConfig.GITHUB_API_BASE_URL
+    user = User.query.filter_by(github_login=github_login).first()
     if user:
-        user.personal_access_token = token["access_token"]
-        db.session.commit()
+        user.update(personal_access_token=personal_access_token)
     else:
-        new_user = User(
+        User.create(
             github_id=github_id,
-            personal_access_token=token["access_token"],
-            api_url=AuthConfig.GITHUB_API_BASE_URL,
+            github_login=github_login,
+            personal_access_token=personal_access_token,
+            api_url=api_url,
         )
-        db.session.add(new_user)
-        db.session.commit()
 
     # Generate JWT token
     access_token = create_access_token(identity=github_id)
