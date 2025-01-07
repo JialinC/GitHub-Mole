@@ -6,6 +6,7 @@ from .auth.oauth import config_oauth
 from .auth.oauth_routes import auth_bp
 from .api.github_routes import github_bp
 from .api.helper_routes import helper_bp
+from .api.team_routes import team_bp
 import logging
 
 
@@ -21,7 +22,6 @@ def create_app():
 
     db.init_app(app)
     migrate = Migrate(app, db)
-    from .models import user
 
     # Register blueprints
     if app.config["GITHUB_CLIENT_ID"]:
@@ -31,6 +31,7 @@ def create_app():
         print("GITHUB_CLIENT_ID not set")
     app.register_blueprint(github_bp, url_prefix="/api")
     app.register_blueprint(helper_bp, url_prefix="/api")
+    app.register_blueprint(team_bp, url_prefix="/api")
 
     # Configure logging
     logging.basicConfig(level=logging.INFO)
