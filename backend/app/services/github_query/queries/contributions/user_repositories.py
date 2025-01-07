@@ -128,7 +128,7 @@ class UserRepositories(PaginatedQuery):
         )
 
     @staticmethod
-    def user_repositories(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def user_repository_page(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Extracts and returns the list of repositories from the raw GraphQL query response data.
 
@@ -138,9 +138,7 @@ class UserRepositories(PaginatedQuery):
         Returns:
             A list of dictionaries, each containing data about a single repository.
         """
-        return (
-            raw_data.get(NODE_USER, {}).get(NODE_REPOSITORIES, {}).get(NODE_NODES, [])
-        )
+        return raw_data.get(NODE_USER, {}).get(NODE_REPOSITORIES, {})
 
     @staticmethod
     def cumulated_repository_stats(
