@@ -12,7 +12,7 @@ const Footer: React.FC = () => {
             rel="noopener noreferrer"
             className="text-blue-400 hover:text-blue-600 underline ml-1"
           >
-            Jialin
+            J
           </a>
         </p>
         <p>
