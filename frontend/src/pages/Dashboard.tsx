@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { FaDatabase, FaGithub, FaUsers, FaCodeBranch } from "react-icons/fa";
 import CardButton from "../components/CardButton";
 import Navbar from "../components/Navbar";
@@ -7,41 +6,8 @@ import Footer from "../components/Footer";
 import Loading from "../components/Loading";
 import ErrorPage from "../components/Error";
 import axiosInstance from "../utils/axiosConfig";
-import { formatDate, convertToLocalTime } from "../utils/dateUtils";
-
-interface CurUser {
-  avatarUrl: string;
-  login: string;
-  created_at: string;
-  followers: number;
-  following: number;
-  watching: number;
-  starred_repositories: number;
-  gists: number;
-  issues: number;
-  projects: number;
-  pull_requests: number;
-  repositories: number;
-  repository_discussions: number;
-  commit_comments: number;
-  gist_comments: number;
-  issue_comments: number;
-  repository_discussion_comments: number;
-}
-
-interface Contributions {
-  commit: number;
-  pr_review: number;
-  res_con: number;
-}
-
-interface RateLimit {
-  cost: number;
-  limit: number;
-  remaining: number;
-  resetAt: string;
-  used: number;
-}
+import { formatDate, convertToLocalTime } from "../utils/helpers";
+import { CurUser, Contributions } from "../types";
 
 const Dashboard: React.FC = () => {
   const [rateLimit, setRateLimit] = useState<any>(null);
@@ -51,7 +17,6 @@ const Dashboard: React.FC = () => {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -179,7 +144,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <Navbar avatarUrl={curUser?.avatarUrl} rateLimit={rateLimit}></Navbar>
       <main className="flex-grow container mx-auto p-4">
         <div className="bg-stone-900 bg-opacity-30 p-8 rounded-lg shadow-lg flex items-center mb-8">
           <div className="w-1/7 flex flex-col items-start">
@@ -187,7 +152,7 @@ const Dashboard: React.FC = () => {
               <img
                 src={curUser?.avatarUrl || ""}
                 alt="User Profile"
-                className="rounded-full w-32 h-32 border-4 border-white shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out transform transition-transform duration-300 hover:scale-105"
+                className="rounded-full w-32 h-32 border-4 border-white shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out transform hover:scale-105"
               />
               <div className="absolute bottom-0 right-0 bg-green-500 border-2 border-white rounded-full w-6 h-6"></div>
             </div>
