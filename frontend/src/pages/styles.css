@@ -1,0 +1,7 @@
+.thick-divide-y > :not([hidden]) ~ :not([hidden]) {
+  border-top-width: 2px; /* Adjust the thickness as needed */
+}
+
+.thick-divide-x > :not([hidden]) ~ :not([hidden]) {
+  border-left-width: 2px; /* Adjust the thickness as needed */
+}
