@@ -13,6 +13,8 @@ from ..services.github_graphql_services import (
     get_specific_user_login,
     get_user_profile_stats,
     get_user_contributions_collection,
+    get_user_contribution_years,
+    get_user_contribution_calendar,
     get_user_repositories_page,
     get_user_commit_comments_page,
     get_user_gist_comments_page,
@@ -116,6 +118,34 @@ def user_contributions_collection(login):
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
     data = get_user_contributions_collection(login, protocol, host, pat)
+    return jsonify(data)
+
+
+@github_bp.route("/graphql/user-contribution-years/<login>", methods=["GET"])
+@jwt_required()
+def user_contribution_years(login):
+    """
+    Route:
+    Method:
+    """
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_user_contribution_years(login, protocol, host, pat)
+    return jsonify(data)
+
+
+@github_bp.route("/graphql/user-contribution-calendar/<login>", methods=["GET"])
+@jwt_required()
+def user_contribution_calendar(login):
+    """
+    Route:
+    Method:
+    """
+    start = request.args.get("start")
+    end = request.args.get("end")
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_user_contribution_calendar(login, protocol, host, pat, start, end)
     return jsonify(data)
 
 
