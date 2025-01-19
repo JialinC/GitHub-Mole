@@ -1,5 +1,4 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 
 interface CardButtonProps {
   icon: React.ReactNode;
@@ -8,16 +7,19 @@ interface CardButtonProps {
 }
 
 const CardButton: React.FC<CardButtonProps> = ({ icon, text, navigateTo }) => {
-  const navigate = useNavigate();
-
   return (
-    <button
-      className="bg-zinc-500 bg-opacity-80 p-8 rounded-lg shadow-lg text-white flex items-center justify-center flex-col transform transition-transform duration-300 hover:scale-105"
-      onClick={() => navigate(navigateTo)}
+    <a
+      href={navigateTo}
+      target="_self"
+      className="block p-6 max-w-sm bg-gray-700 rounded-lg border border-gray-600 shadow-md hover:bg-gray-900 transition-transform transform hover:scale-105"
     >
-      {icon}
-      <h3 className="text-xl font-bold mb-4">{text}</h3>
-    </button>
+      <div className="flex flex-col items-center">
+        {icon}
+        <h5 className="mb-2 text-2xl font-bold tracking-tight text-white">
+          {text}
+        </h5>
+      </div>
+    </a>
   );
 };
 
