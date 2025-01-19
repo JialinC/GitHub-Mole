@@ -79,7 +79,7 @@ class UserGists(PaginatedQuery):
         Returns:
             A list of dictionaries, each containing data about a single gist.
         """
-        gists = raw_data.get(NODE_USER, {}).get(NODE_GISTS, {}).get(NODE_NODES, [])
+        gists = raw_data.get(NODE_USER, {}).get(NODE_GISTS, {})
         return gists
 
     @staticmethod

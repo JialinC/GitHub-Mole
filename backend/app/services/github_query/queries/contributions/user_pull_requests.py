@@ -77,9 +77,7 @@ class UserPullRequests(PaginatedQuery):
         Returns:
             List[Dict]: A list of pull requests, each represented as a dictionary.
         """
-        return (
-            raw_data.get(NODE_USER, {}).get(NODE_PULL_REQUESTS, {}).get(NODE_NODES, [])
-        )
+        return raw_data.get(NODE_USER, {}).get(NODE_PULL_REQUESTS, {})
 
     @staticmethod
     def created_before_time(pull_requests: Dict[str, Any], time: str) -> int:

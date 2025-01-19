@@ -76,11 +76,7 @@ class UserRepositoryDiscussions(PaginatedQuery):
         Returns:
             List[Dict]: A list of dictionaries, each containing data about a single repository discussion.
         """
-        return (
-            raw_data.get(NODE_USER, {})
-            .get(NODE_REPOSITORY_DISCUSSIONS, {})
-            .get(NODE_NODES, [])
-        )
+        return raw_data.get(NODE_USER, {}).get(NODE_REPOSITORY_DISCUSSIONS, {})
 
     @staticmethod
     def created_before_time(repository_discussions: Dict[str, Any], time: str) -> int:

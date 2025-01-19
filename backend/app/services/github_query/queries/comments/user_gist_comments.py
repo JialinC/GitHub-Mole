@@ -81,7 +81,7 @@ class UserGistComments(PaginatedQuery):
             list: A list of dictionaries, each representing a gist comment and its associated data,
             particularly the creation date.
         """
-        gist_comments = raw_data[NODE_USER][NODE_GIST_COMMENTS][NODE_NODES]
+        gist_comments = raw_data[NODE_USER][NODE_GIST_COMMENTS]
         return gist_comments
 
     @staticmethod

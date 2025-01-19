@@ -79,7 +79,7 @@ class UserIssues(PaginatedQuery):
         Returns:
             List[Dict]: A list of issues, each represented as a dictionary.
         """
-        return raw_data.get(NODE_USER, {}).get(NODE_ISSUES, {}).get(NODE_NODES, [])
+        return raw_data.get(NODE_USER, {}).get(NODE_ISSUES, {})
 
     @staticmethod
     def created_before_time(issues: Dict[str, Any], time: str) -> int:

@@ -80,7 +80,7 @@ class UserCommitComments(PaginatedQuery):
         Returns:
             list: A list of dictionaries, each representing a commit comment and its associated data.
         """
-        commit_comments = raw_data[NODE_USER][NODE_COMMIT_COMMENTS][NODE_NODES]
+        commit_comments = raw_data[NODE_USER][NODE_COMMIT_COMMENTS]
         return commit_comments
 
     @staticmethod

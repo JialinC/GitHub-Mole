@@ -86,7 +86,7 @@ class UserRepositoryDiscussionComments(PaginatedQuery):
         """
         repository_discussion_comments = raw_data[NODE_USER][
             NODE_REPOSITORY_DISCUSSION_COMMENTS
-        ][NODE_NODES]
+        ]
         return repository_discussion_comments
 
     @staticmethod

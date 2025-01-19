@@ -25,7 +25,7 @@ from ..constants import (
     FIELD_TOTAL_SIZE,
     FIELD_ID,
     NODE_REPOSITORIES,
-    NODE_PRIMARY_LANGUAGES,
+    NODE_PRIMARY_LANGUAGE,
     NODE_LANGUAGES,
     NODE_EDGES,
     NODE_NODE,
@@ -89,7 +89,7 @@ class UserRepositories(PaginatedQuery):
                                         FIELD_UPDATED_AT,
                                         FIELD_ID,
                                         QueryNode(
-                                            NODE_PRIMARY_LANGUAGES, fields=[FIELD_NAME]
+                                            NODE_PRIMARY_LANGUAGE, fields=[FIELD_NAME]
                                         ),
                                         QueryNode(
                                             NODE_LANGUAGES,

@@ -101,7 +101,10 @@ class UserProfileStats(Query):
         profile_stats = raw_data[NODE_USER]
         processed_stats = {
             "github": profile_stats[FIELD_LOGIN],
+            "name": profile_stats[FIELD_NAME],
+            "email": profile_stats[FIELD_EMAIL],
             "created_at": profile_stats[FIELD_CREATED_AT],
+            "bio": profile_stats[FIELD_BIO],
             "company": profile_stats[FIELD_COMPANY],
             "avatarUrl": profile_stats[FIELD_AVATARURL],
             "followers": profile_stats[NODE_FOLLOWERS][FIELD_TOTAL_COUNT],

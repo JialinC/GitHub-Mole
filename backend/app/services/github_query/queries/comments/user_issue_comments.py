@@ -82,7 +82,7 @@ class UserIssueComments(PaginatedQuery):
             list: A list of dictionaries, each representing an issue comment and its associated data,
             particularly the creation date.
         """
-        issue_comments = raw_data[NODE_USER][NODE_ISSUE_COMMENTS][NODE_NODES]
+        issue_comments = raw_data[NODE_USER][NODE_ISSUE_COMMENTS]
         return issue_comments
 
     @staticmethod
