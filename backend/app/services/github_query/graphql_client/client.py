@@ -190,7 +190,13 @@ class Client:
             print(f"Stop at {current_time}s.")
             print(f"Waiting for {seconds}s.")
             print(f"Reset at {reset_at}s.")
-            time.sleep(seconds + 5)
+            return {
+                "query": query,
+                "no_limit": no_limit,
+                "wait_seconds": seconds + 3,
+                "reset_at": reset_at.isoformat(),
+            }
+            # time.sleep(seconds + 5)
             # TBD: display the reset time in the frontend
 
         response = self._retry_request(query)
