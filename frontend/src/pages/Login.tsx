@@ -103,7 +103,7 @@ const Login: React.FC = () => {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-grow container mx-auto p-4 flex flex-col items-center justify-center text-center">
-          <div className="bg-stone-900 bg-opacity-30 p-8 rounded-lg shadow-lg max-w-md w-full">
+          <div className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
             <h1 className="text-2xl font-bold text-white mb-4">Login</h1>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
@@ -168,7 +168,7 @@ const Login: React.FC = () => {
               </div>
             </form>
           </div>
-          <div className="mt-8 bg-stone-900 bg-opacity-30 p-6 rounded-lg shadow-lg text-left">
+          <div className="mt-8 bg-gray-800 p-6 rounded-lg shadow-lg text-left">
             <p className="text-white text-sm">
               <strong>NOTE:</strong> Personal GitHub accounts are for individual
               users and provide access to both public and private repositories
