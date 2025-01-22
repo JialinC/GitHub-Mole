@@ -1,4 +1,3 @@
-import React from "react";
 import { ClipLoader } from "react-spinners";
 
 const Loading = ({ size = 150, color = "#ff0000" }) => {
