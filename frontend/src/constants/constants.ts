@@ -43,36 +43,44 @@ export const contributions = [
   export const teamTableHeaders = ["Github ID","Age (days)","Commits","Comments","PRs & Issues","Lang Counts","Pop Lang Size","Repos"];
 
   export  const tableHeaders: TableHeaders = { 	
-    Contributions:["GitHub ID","Name","Email","Created At","Bio","Company",
+    Contributions:["GitHub ID","Name","Email","Created At","Age (days)","Bio","Company",
         "Watching",
         "Starred Repositories",
         "Following",
         "Followers",
         "Private Contributions",
-        "Commit Contributions",
+        "Commits",
         "Gists",
         "Issues",
         "Projects",
         "Pull Requests",
+        "Pull Request Reviews",
         "Repositories",
         "Repository Discussions",
-        "Gist Comments",
-        "Issue Comments",
         "Commit Comments",
+        "Issue Comments",
+        "Gist Comments",
         "Repository Discussion Comments",
-        "Owned Original Repo",	"Owned Original Repo Size",	"Owned Original Repo Selected Langs Size",
-        "Owned Forked Repo", "Owned Forked Repo Size",	"Owned Forked Repo Selected Langs Size",
-        "Collaborating Original Repo",	"Collaborating Original Repo Size",	"Collaborating Original Repo Selected Langs Size",
-        "Collaborating Forked Repo", "Collaborating Forked Repo Size",	"Collaborating Forked Repo Selected Langs Size"
+        "Owned Original Repo",	"Owned Original Repo Size",	"Owned Original Repo Selected Langs Size", "Owned Original Repo Langs Number",
+        "Owned Forked Repo", "Owned Forked Repo Size",	"Owned Forked Repo Selected Langs Size", "Owned Forked Repo Langs Number",
+        "Collaborating Original Repo",	"Collaborating Original Repo Size",	"Collaborating Original Repo Selected Langs Size", "Collaborating Original Repo Langs Number",
+        "Collaborating Forked Repo", "Collaborating Forked Repo Size",	"Collaborating Forked Repo Selected Langs Size", "Collaborating Forked Repo Langs Size Number",
+        "Total Langs Number"
     ],
-    "Commit Comments":["Github ID","Created At","Body Text"],	
-    "Gist Comments":["Github ID","Created At","Body Text"],
-    "Issue Comments":["Github ID","Created At","Body Text"],
-    "Repository Discussion Comments":["Github ID","Created At","Body Text"],
+    "Commit Comments":["GitHub ID","Created At","Body Text"],	
+    "Gist Comments":["GitHub ID","Created At","Body Text"],
+    "Issue Comments":["GitHub ID","Created At","Body Text"],
+    "Repository Discussion Comments":["GitHub ID","Created At","Body Text"],
     commits:[], // to be implemented
-    "Gists":["Github ID","Created At","Description"],
-    "Issues":["Github ID","Created At","Body Text","Title"],
-    "Pull Requests":["Github ID","Created At","Body Text"],
-    "Repository Discussions":["Github ID","Created At","Body Text"],
-    Repositories:["Github ID","Name","Created At","Updated At","Primary Language","Language Stats"]
-}
+    "Gists":["GitHub ID","Created At","Description"],
+    "Issues":["GitHub ID","Created At","Body Text","Title"],
+    "Pull Requests":["GitHub ID","Created At","Body Text"],
+    "Repository Discussions":["GitHub ID","Created At","Body Text"],
+    "Owned Original Repo":["GitHub ID","Name","Created At","Updated At","Primary Language","Language Stats"],
+    "Owned Forked Repo":["GitHub ID","Name","Created At","Updated At","Primary Language","Language Stats"],
+    "Collaborating Original Repo":["GitHub ID","Name","Created At","Updated At","Primary Language","Language Stats"],
+    "Collaborating Forked Repo":["GitHub ID","Name","Created At","Updated At","Primary Language","Language Stats"],
+  }
+
+  export const repoTypes: string[] = ["Owned Original Repo",
+    "Owned Forked Repo","Collaborating Original Repo","Collaborating Forked Repo"];
