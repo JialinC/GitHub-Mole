@@ -41,11 +41,28 @@ export const contribsDesc: React.ReactNode = (
 export const ownCSV: React.ReactNode = (
   <>
     Please upload a CSV file containing a list of GitHub IDs. The file must
-    include a title row with the column title The file must contain a title row
-    that marks the title of each column. The first column must be a user
+    include a title row with the column title. The first column must be a user
     identifier in whatever format, and all other columns must contain numbers
     (either integer or double).
     <span className="font-semibold text-white"> "GitHub ID"</span>. An example
     file containing four GitHub IDs (A, B, C, D) is shown below:
+  </>
+);
+
+export const repoURLCSV: React.ReactNode = (
+  <>
+    Please upload a CSV file containing a list of repository URLs. The file must
+    include a title row with the column title{" "}
+    <span className="font-semibold text-white"> "Repository URL"</span>. An
+    example file containing four repository URLs is shown below:
+  </>
+);
+
+export const selfDataFile: React.ReactNode = (
+  <>
+    The file must contain a title row that marks the title of each column. The
+    first column must be a user identifier in whatever format, and all other
+    columns must contain numbers (either integer or double). An example file
+    containing three data rows is shown below:
   </>
 );
