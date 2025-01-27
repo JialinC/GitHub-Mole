@@ -9,7 +9,7 @@ const Home: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen flex flex-col mx-auto bg-cover bg-center"
+      className="min-h-screen flex flex-col mx-auto bg-cover lg:bg-contain bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${backgroundImage})` }}
     >
       <Navbar>
