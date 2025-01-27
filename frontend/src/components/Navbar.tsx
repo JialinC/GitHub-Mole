@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import logoImage from "../assets/app_logo.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface NavbarProps {
   children?: React.ReactNode;
@@ -11,6 +11,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ children, avatarUrl, rateLimit }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   let menuTimeout: ReturnType<typeof setTimeout>;
+  const navigate = useNavigate();
 
   const handleMouseEnter = () => {
     clearTimeout(menuTimeout);
@@ -25,7 +26,10 @@ const Navbar: React.FC<NavbarProps> = ({ children, avatarUrl, rateLimit }) => {
 
   const handleLogout = () => {
     // Implement logout functionality here
+    localStorage.clear();
     console.log("User logged out");
+    // Redirect to the login page or home page
+    navigate("/login");
   };
 
   return (
@@ -70,12 +74,6 @@ const Navbar: React.FC<NavbarProps> = ({ children, avatarUrl, rateLimit }) => {
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                 >
-                  <Link
-                    to="/profile"
-                    className="block px-4 py-2 hover:bg-gray-200"
-                  >
-                    User Profile
-                  </Link>
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-200"
