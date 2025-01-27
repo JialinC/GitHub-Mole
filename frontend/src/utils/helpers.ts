@@ -1,4 +1,6 @@
 import { Repository } from "../types/Types";
+import { Dispatch, SetStateAction } from 'react';
+import Papa from 'papaparse';
 
 export const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -90,4 +92,174 @@ export const toCamelCase = (str: string): string => {
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
     .join('');
+};
+
+
+interface HandleFileChangeParams {
+  event: React.ChangeEvent<HTMLInputElement>;
+  setErrors: Dispatch<SetStateAction<{ [key: string]: string }>>;
+  setFile: Dispatch<SetStateAction<File | null>>;
+  maxSizeInMB?: number;
+}
+
+export const handleFileChange = ({
+  event,
+  setErrors,
+  setFile,
+  maxSizeInMB = 5, // Default maximum file size is 5 MB
+}: HandleFileChangeParams) => {
+  if (event.target.files && event.target.files.length > 0) {
+    const selectedFile = event.target.files[0];
+    if (selectedFile.size > maxSizeInMB * 1024 * 1024) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        file: `File size exceeds ${maxSizeInMB} MB`,
+      }));
+      setFile(null);
+    } else {
+      setErrors((prevErrors) => ({ ...prevErrors, file: "" }));
+      setFile(selectedFile);
+    }
+  }
+};
+
+
+export const validateSelfDataFile = (file: File): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    Papa.parse(file, {
+      complete: (results) => {
+        const data = results.data as string[][];
+
+        if (data.length === 0) {
+          return reject(new Error("The file is empty."));
+        }
+
+        const headers = data[0];
+        if (headers.length === 0) {
+          return reject(new Error("The file must contain a title row."));
+        }
+
+        for (let i = 1; i < data.length; i++) {
+          const row = data[i];
+
+          if (row.length !== headers.length) {
+            return reject(
+              new Error(`Row ${i + 1} does not match the header length.`)
+            );
+          }
+
+          // Check if the first column is a user identifier (non-empty string)
+          if (!row[0] || typeof row[0] !== "string") {
+            return reject(
+              new Error(`Invalid user identifier in row ${i + 1}.`)
+            );
+          }
+
+          // Check if all other columns contain numbers (either integer or double)
+          for (let j = 1; j < row.length; j++) {
+            if (isNaN(Number(row[j]))) {
+              return reject(
+                new Error(`Invalid number in row ${i + 1}, column ${j + 1}.`)
+              );
+            }
+          }
+        }
+
+        resolve();
+      },
+      error: (error) => {
+        reject(new Error(`Failed to parse CSV file: ${error.message}`));
+      },
+      header: false,
+      skipEmptyLines: true,
+    });
+  });
+};
+
+export const validateGitHubIdsFile = (file: File): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    Papa.parse(file, {
+      complete: (results) => {
+        const data = results.data as string[][];
+
+        if (data.length === 0) {
+          return reject(new Error("The file is empty."));
+        }
+
+        const headers = data[0];
+        if (headers.length === 0 || headers[0] !== "GitHub ID") {
+          return reject(
+            new Error(
+              'The file must include a title row with the column title "GitHub ID".'
+            )
+          );
+        }
+
+        for (let i = 1; i < data.length; i++) {
+          const row = data[i];
+
+          if (row.length !== headers.length) {
+            return reject(
+              new Error(`Row ${i + 1} does not match the header length.`)
+            );
+          }
+
+          // Check if the first column is a GitHub ID (non-empty string)
+          if (!row[0] || typeof row[0] !== "string") {
+            return reject(new Error(`Invalid GitHub ID in row ${i + 1}.`));
+          }
+        }
+
+        resolve();
+      },
+      error: (error) => {
+        reject(new Error(`Failed to parse CSV file: ${error.message}`));
+      },
+      header: false,
+      skipEmptyLines: true,
+    });
+  });
+};
+
+export const handleWaitTime = (
+  waitTime: number,
+  setTotTime: Dispatch<SetStateAction<number>>,
+  setRemTime: Dispatch<SetStateAction<number>>,
+  setNoRateLimit: Dispatch<SetStateAction<boolean>>
+): Promise<void> => {
+  return new Promise<void>((resolve) => {
+    const endTime = Date.now() + (waitTime + 3) * 1000;
+    setTotTime(waitTime + 3);
+    let bool = true;
+    const interval = setInterval(() => {
+      const timeLeft = Math.max(0, endTime - Date.now());
+      setRemTime(Math.ceil(timeLeft / 1000)); // Update countdown state
+      if (bool) {
+        setNoRateLimit(true);
+        bool = false;
+      }
+      if (timeLeft === 0) {
+        clearInterval(interval);
+        setNoRateLimit(false);
+        setRemTime(1000 - 1); // Reset countdown state
+        setTotTime(1000);
+        resolve();
+      }
+    }, 1000);
+  });
+};
+
+type FetchFunction = (...args: any[]) => Promise<any>;
+
+export const fetchWithRateLimit = async (
+  fetchFunction: FetchFunction,
+  handleWaitTime: (waitTime: number, ...args: any[]) => Promise<void>,
+  ...args: any[]
+): Promise<any> => {
+  let response = await fetchFunction(...args);
+  if ("no_limit" in response) {
+    await handleWaitTime(response.wait_seconds, ...args);
+    response = await fetchFunction(...args);
+  }
+  return response;
 };
