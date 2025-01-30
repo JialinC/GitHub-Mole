@@ -1,35 +1,43 @@
 import React, { useState, useEffect, useRef } from "react";
-import OptionSelector from "../components/OptionSelector";
-import { repoURLCSV } from "../constants/Descriptions";
-import UploadSection from "../components/UploadSection";
-import ErrorMessage from "../components/ErrorMessage";
-import Table from "../components/Table";
 import Button from "../components/Button";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import CommitsHistPie from "../components/CommitsHistPie";
+import ErrorMessage from "../components/ErrorMessage";
 import ErrorPage from "../components/Error";
+import Footer from "../components/Footer";
+import Modal from "../components/Modal";
+import Navbar from "../components/Navbar";
+import OptionSelector from "../components/OptionSelector";
 import Prompt from "../components/Prompt";
-
+import Table from "../components/Table";
+import UploadSection from "../components/UploadSection";
+import { repoURLCSV } from "../constants/Descriptions";
 import { commitTableHeaders } from "../constants/constants";
 import githubIDs from "../assets/github_ids.png";
-import { getUserAvatarUrl } from "../utils/helpers";
 import {
-  fetchRateLimit,
-  fetchCommits,
+  downloadCsv,
+  generateCsvContent,
+  getUserAvatarUrl,
+  handleFileChange as handleFileChangeUtil,
+  handleWaitTime as handleWaitTimeUtil,
+} from "../utils/helpers";
+import {
   checkDuplicate,
-  saveToDatabase,
   fetchBranches,
   fetchBranchCommits,
+  fetchCommits,
+  fetchRateLimit,
+  saveToDatabase,
 } from "../utils/queries";
 
 import Papa from "papaparse";
 
 const Contributions: React.FC = () => {
+  const [file, setFile] = useState<File | null>(null);
+  const [fatal, setFatal] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [queryOption, setQueryOption] = useState<string>("allBranches");
-  const [file, setFile] = useState<File | null>(null);
-  const [fileError, setFileError] = useState<string>();
-  const [fatal, setFatal] = useState<string | null>(null);
 
   const [noRateLimit, setNoRateLimit] = useState<boolean>(false);
   const [totTime, setTotTime] = useState<number>(1000);
@@ -40,9 +48,7 @@ const Contributions: React.FC = () => {
   const [tableData, setTableData] = useState<string[][] | null>(null);
 
   const [isPromptOpen, setIsPromptOpen] = useState(false);
-  const [datasetName, setDatasetName] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [rateLimit, setRateLimit] = useState<{
     limit: number;
     remaining: number;
@@ -51,12 +57,8 @@ const Contributions: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const loadRateLimit = async () => {
-    try {
-      const rateLimitData = await fetchRateLimit(setFatal);
-      setRateLimit(rateLimitData);
-    } catch (error) {
-      console.error("Error in loadRateLimit:", error);
-    }
+    const rateLimitData = await fetchRateLimit(setFatal);
+    setRateLimit(rateLimitData);
   };
 
   useEffect(() => {
@@ -78,39 +80,53 @@ const Contributions: React.FC = () => {
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const selectedFile = event.target.files[0];
-      const maxSizeInMB = 5; // Set the maximum file size (e.g., 5 MB)
-      if (selectedFile.size > maxSizeInMB * 1024 * 1024) {
-        setFileError(`File size exceeds ${maxSizeInMB} MB`);
-        setFile(null);
-      } else {
-        setFileError("");
-        setFile(selectedFile);
-      }
-    }
+    handleFileChangeUtil({ event, setErrors, setFile });
   };
 
   const handleWaitTime = (waitTime: number) => {
-    return new Promise<void>((resolve) => {
-      const endTime = Date.now() + (waitTime + 3) * 1000;
-      setTotTime(waitTime + 3);
-      let bool = true;
-      const interval = setInterval(() => {
-        const timeLeft = Math.max(0, endTime - Date.now());
-        setRemTime(Math.ceil(timeLeft / 1000)); // Update countdown state
-        if (bool) {
-          setNoRateLimit(true);
-          bool = false;
-        }
-        if (timeLeft === 0) {
-          clearInterval(interval);
-          setNoRateLimit(false);
-          setRemTime(1000 - 1); // Reset countdown state
-          setTotTime(1000);
+    return handleWaitTimeUtil(waitTime, setTotTime, setRemTime, setNoRateLimit);
+  };
+
+  const validateCsvFile = (file: File): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      Papa.parse(file, {
+        complete: (results) => {
+          const data = results.data as string[][];
+
+          if (data.length === 0 || data[0].indexOf("Repository URL") === -1) {
+            return reject(
+              new Error(
+                'The file must include a title row with the column title "Repository URL".'
+              )
+            );
+          }
+
+          for (let i = 1; i < data.length; i++) {
+            const url = data[i][data[0].indexOf("Repository URL")];
+            try {
+              const parsedUrl = new URL(url);
+              const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+
+              if (pathParts.length < 2) {
+                return reject(
+                  new Error(`Invalid URL found in row ${i + 1}: ${url}`)
+                );
+              }
+            } catch (error) {
+              return reject(
+                new Error(`Invalid URL found in row ${i + 1}: ${url}`)
+              );
+            }
+          }
+
           resolve();
-        }
-      }, 1000);
+        },
+        error: (error) => {
+          reject(new Error(`Failed to parse CSV file: ${error.message}`));
+        },
+        header: false,
+        skipEmptyLines: true,
+      });
     });
   };
 
@@ -133,7 +149,8 @@ const Contributions: React.FC = () => {
       const repo = pathParts[1];
       return { owner, repo };
     } catch (error) {
-      throw new Error("Invalid URL");
+      console.error(`Error parsing URL: ${url}`, error);
+      throw new Error(`Invalid URL: ${url}`);
     }
   };
 
@@ -198,7 +215,6 @@ const Contributions: React.FC = () => {
       if (signal.aborted) {
         return;
       }
-
       const { owner, repo } = parseGithubUrl(data[i][0]);
 
       if (queryOption === "allBranches") {
@@ -218,52 +234,12 @@ const Contributions: React.FC = () => {
     setLoading(false);
   };
 
-  const validateCsvFile = (file: File): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      Papa.parse(file, {
-        complete: (results) => {
-          const data = results.data as string[][];
-
-          if (data.length === 0 || data[0].indexOf("Repository URL") === -1) {
-            return reject(
-              new Error(
-                'The file must include a title row with the column title "Repository URL".'
-              )
-            );
-          }
-
-          for (let i = 1; i < data.length; i++) {
-            const url = data[i][data[0].indexOf("Repository URL")];
-            try {
-              const parsedUrl = new URL(url);
-              const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
-
-              if (pathParts.length < 2) {
-                return reject(
-                  new Error(`Invalid URL found in row ${i + 1}: ${url}`)
-                );
-              }
-            } catch (error) {
-              return reject(
-                new Error(`Invalid URL found in row ${i + 1}: ${url}`)
-              );
-            }
-          }
-
-          resolve();
-        },
-        error: (error) => {
-          reject(new Error(`Failed to parse CSV file: ${error.message}`));
-        },
-        header: false,
-        skipEmptyLines: true,
-      });
-    });
-  };
-
   const handleSubmit = async () => {
     if (!file) {
-      setFileError("No file selected");
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        file: "No file selected",
+      }));
       return;
     }
 
@@ -271,9 +247,17 @@ const Contributions: React.FC = () => {
       await validateCsvFile(file);
     } catch (error) {
       if (error instanceof Error) {
-        setFileError(error.message);
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          file: error.message,
+        }));
+        return;
       } else {
-        setFileError("An unknown error occurred");
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          file: "An unknown error occurred",
+        }));
+        return;
       }
     }
 
@@ -286,40 +270,30 @@ const Contributions: React.FC = () => {
       });
     } catch (error) {
       if (error instanceof Error) {
-        setFileError(error.message);
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          file: error.message,
+        }));
+        return;
       } else {
-        setFileError("An unknown error occurred");
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          file: "An unknown error occurred",
+        }));
+        return;
       }
     }
 
     const signal = abortControllerRef.current?.signal;
   };
 
-  const escapeCsvValue = (value: string) => {
-    if (value.includes(",") || value.includes("\n") || value.includes('"')) {
-      return `"${value.replace(/"/g, '""')}"`;
-    }
-    return value;
-  };
-
   const handleExport = () => {
-    const csvContent = [
-      tableHeader.map(escapeCsvValue).join(","), // Add the headers
-      ...(tableData
-        ? tableData.map((row) => row.map(escapeCsvValue).join(","))
-        : []), // Add the data rows
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    let fileName = "commits.csv";
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (tableData) {
+      const csvContent = generateCsvContent(tableHeader, tableData);
+      downloadCsv(csvContent, "repository_commits.csv");
+    } else {
+      alert("No contributions to export");
+    }
   };
 
   const handleBackToOptions = () => {
@@ -328,18 +302,17 @@ const Contributions: React.FC = () => {
   };
 
   const handleSave = async (name: string) => {
-    setDatasetName(name);
     const response = await checkDuplicate({ name, type: "Commits" }, setFatal);
 
     if (response.exists) {
-      setErrorMessage(
-        "A dataset of this type with this name already exists. Please choose a different name."
-      );
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        errorMessage:
+          "A dataset of this type with this name already exists. Please choose a different name.",
+      }));
       setIsPromptOpen(true);
     } else {
-      setDatasetName("");
-      setErrorMessage(null);
-      const response = await saveToDatabase(
+      await saveToDatabase(
         {
           name,
           type: "Commits",
@@ -348,10 +321,13 @@ const Contributions: React.FC = () => {
         },
         setFatal
       );
-      console.log(response);
-      alert("Data saved successfully.");
-      setErrorMessage(null);
+      setIsModalVisible(true);
+      setErrors((prevErrors) => ({ ...prevErrors, errorMessage: "" }));
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
   };
 
   if (fatal) {
@@ -394,7 +370,7 @@ const Contributions: React.FC = () => {
                 title="Upload Repository URLs"
                 description={repoURLCSV}
               />
-              {fileError && <ErrorMessage error={fileError} />}
+              {errors.file && <ErrorMessage error={errors.file} />}
               <div className="text-gray-300 mb-4">
                 Note: Querying all the commits from a repository is a very
                 resource-intensive operation. The rate limit of 5,000 requests
@@ -406,6 +382,7 @@ const Contributions: React.FC = () => {
             </>
           ) : (
             <>
+              <CommitsHistPie headers={tableHeader} data={tableData} />
               <Table
                 headers={tableHeader}
                 data={tableData}
@@ -430,8 +407,16 @@ const Contributions: React.FC = () => {
                     isOpen={isPromptOpen}
                     onClose={() => setIsPromptOpen(false)}
                     onSave={handleSave}
-                    errorMessage={errorMessage}
+                    errorMessage={errors.errorMessage}
                   />
+                  {isModalVisible && (
+                    <Modal
+                      title="Success"
+                      message="Data saved successfully."
+                      onClose={handleCloseModal}
+                      success={true}
+                    />
+                  )}
                 </>
               )}
               {noRateLimit && (
