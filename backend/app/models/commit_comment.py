@@ -30,14 +30,25 @@ class CommitComment(db.Model):
     @classmethod
     def create_from_row(cls, row, user_query_id):
         created_at = (
-            None if row[1] == "N/A" else datetime.strptime(row[1], "%Y-%m-%dT%H:%M:%SZ")
+            None
+            if row.get("Created At") == "N/A"
+            else datetime.strptime(row.get("Created At"), "%Y-%m-%dT%H:%M:%SZ")
         )
         return cls(
-            body_text=row[2],
+            body_text=row.get("Body Text"),
             created_at=created_at,
-            author_github_login=row[0],
+            author_github_login=row.get("GitHub ID"),
             user_query_id=user_query_id,
         )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "body_text": self.body_text,
+            "created_at": self.created_at.isoformat() if self.created_at else "N/A",
+            "author_github_login": self.author_github_login,
+            "user_query_id": self.user_query_id,
+        }
 
     @classmethod
     def read(cls, id):
