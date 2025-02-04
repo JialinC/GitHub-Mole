@@ -1,8 +1,8 @@
-"""Initial migration
+"""user userquery model
 
-Revision ID: 17094ed45005
+Revision ID: 3fbdb8532fdc
 Revises: 
-Create Date: 2025-01-08 17:14:06.859008
+Create Date: 2025-01-20 12:36:11.250519
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '17094ed45005'
+revision = '3fbdb8532fdc'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,12 +30,13 @@ def upgrade():
     )
     op.create_table('user_queries',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('user_login', sa.String(length=80), nullable=False),
     sa.Column('ds_name', sa.String(length=80), nullable=False),
-    sa.Column('start_time', sa.DateTime(), nullable=False),
-    sa.Column('end_time', sa.DateTime(), nullable=False),
+    sa.Column('start_time', sa.DateTime(), nullable=True),
+    sa.Column('end_time', sa.DateTime(), nullable=True),
     sa.Column('queried_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.Column('data_type', sa.String(length=80), nullable=False),
+    sa.ForeignKeyConstraint(['user_login'], ['users.github_login'], ),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
