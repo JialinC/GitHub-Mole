@@ -25,10 +25,8 @@ const Navbar: React.FC<NavbarProps> = ({ children, avatarUrl, rateLimit }) => {
   };
 
   const handleLogout = () => {
-    // Implement logout functionality here
     localStorage.clear();
     console.log("User logged out");
-    // Redirect to the login page or home page
     navigate("/login");
   };
 
@@ -41,9 +39,13 @@ const Navbar: React.FC<NavbarProps> = ({ children, avatarUrl, rateLimit }) => {
             alt="GitHub-Mole Logo"
             className="h-10 w-10 mr-2"
           />
-          <div className="text-xl font-bold text-white tracking-wide shadow-lg">
+          <a
+            href="/about"
+            target="_self"
+            className="text-white mr-4 text-xl font-bold tracking-wide shadow-lg transition-transform transform hover:scale-110 hover:bg-red-700"
+          >
             GitHub-Mole
-          </div>
+          </a>
         </div>
         <div className="flex items-center">
           {children}
