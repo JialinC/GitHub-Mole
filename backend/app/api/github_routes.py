@@ -1,10 +1,14 @@
 """This file defines the URLs for various GraphQL endpoints."""
 
 from urllib.parse import urlparse
+from datetime import datetime, timezone
+from pygments.lexers import guess_lexer_for_filename
+from pygments.lexers.special import TextLexer
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.user import User
 import logging
+import requests
 
 # Import service methods
 from ..services.github_graphql_services import (
@@ -24,9 +28,11 @@ from ..services.github_graphql_services import (
     get_user_issues_page,
     get_user_pull_requests_page,
     get_user_repository_discussions_page,
+    get_repository_branches_page,
     get_repository_contributors_page,
-    get_repository_commits_page,
-    get_repository_contributors_contribution_page,
+    get_repository_branch_commits_page,
+    get_repository_contributor_contributions_page,
+    get_user_repository_names_page,
 )
 
 github_bp = Blueprint("api", __name__)
@@ -115,9 +121,11 @@ def user_contributions_collection(login):
     Route:
     Method:
     """
+    start = request.args.get("start")
+    end = request.args.get("end")
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
-    data = get_user_contributions_collection(login, protocol, host, pat)
+    data = get_user_contributions_collection(login, protocol, host, pat, start, end)
     return jsonify(data)
 
 
@@ -325,6 +333,20 @@ def user_repository_discussions(login):
     return jsonify(data)
 
 
+@github_bp.route("/graphql/repository_branches/<owner>/<repo>", methods=["GET"])
+@jwt_required()
+def repository_branches(owner, repo):
+    """
+    Route:
+    Method: GET
+    """
+    end_cursor = request.args.get("end_cursor")
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_repository_branches_page(owner, repo, protocol, host, pat, end_cursor)
+    return jsonify(data)
+
+
 @github_bp.route("/graphql/repository_contributors/<owner>/<repo>", methods=["GET"])
 @jwt_required()
 def repository_contributors(owner, repo):
@@ -341,9 +363,32 @@ def repository_contributors(owner, repo):
     return jsonify(data)
 
 
-@github_bp.route("/graphql/repository_commits/<owner>/<repo>", methods=["GET"])
+@github_bp.route(
+    "/graphql/repository_branch_commits/<owner>/<repo>/<use_default>", methods=["GET"]
+)
 @jwt_required()
-def repository_commits(owner, repo):
+def repository_branch_commits(owner, repo, use_default):
+    """
+    Route:
+    Method: GET
+    """
+    branch = request.args.get("branch")
+    end_cursor = request.args.get("end_cursor")
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_repository_branch_commits_page(
+        owner, repo, branch, use_default, protocol, host, pat, end_cursor
+    )
+    return jsonify(data)
+
+
+# mining all commits details
+@github_bp.route(
+    "/graphql/user_repository_names/<login>",
+    methods=["GET"],
+)
+@jwt_required()
+def user_repository_names(login):
     """
     Route:
     Method: GET
@@ -351,24 +396,119 @@ def repository_commits(owner, repo):
     end_cursor = request.args.get("end_cursor")
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
-    data = get_repository_commits_page(owner, repo, protocol, host, pat, end_cursor)
+    data = get_user_repository_names_page(login, protocol, host, pat, end_cursor)
     return jsonify(data)
 
 
 @github_bp.route(
-    "/graphql/repository_contributors_contribution/<owner>/<repo>/<login>",
+    "/graphql/repository_contributor_contributions/<owner>/<repo>/<login>",
     methods=["GET"],
 )
 @jwt_required()
-def repository_contributors_contribution(owner, repo, login):
+def repository_contributor_contributions(owner, repo, login):
     """
     Route:
     Method: GET
     """
+    branch = request.args.get("branch")
     end_cursor = request.args.get("end_cursor")
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
-    data = get_repository_contributors_contribution_page(
-        owner, repo, login, protocol, host, pat, end_cursor
+    data = get_repository_contributor_contributions_page(
+        owner, repo, branch, login, protocol, host, pat, end_cursor
     )
     return jsonify(data)
+
+
+@github_bp.route(
+    "/rest/commits/<owner>/<repo>/<sha>",
+    methods=["GET"],
+)
+@jwt_required()
+def get_commit_details(owner, repo, sha):
+    """
+    Route:
+    Method: GET
+    """
+    user = check_user()
+    token, protocol, host = extract_user_credentials_and_host(user)
+    rate_limit_url = f"{protocol}://{host}/rate_limit"
+    headers = {"Authorization": f"token {token}"}
+    try:
+        response = requests.get(rate_limit_url, headers=headers, timeout=10)
+        response.raise_for_status()
+        rate_limit_data = response.json()
+        remaining_requests = rate_limit_data["rate"]["remaining"]
+        reset_time = rate_limit_data["rate"]["reset"]
+        reset_at = datetime.fromtimestamp(reset_time, tz=timezone.utc)
+        current_time = datetime.now(timezone.utc)
+        time_diff = reset_at - current_time
+        seconds = time_diff.total_seconds()
+        if remaining_requests == 0:
+            return (
+                jsonify(
+                    {
+                        "error": "Rate limit exceeded",
+                        "wait_seconds": seconds + 2,
+                        "reset_at": reset_at.isoformat(),
+                        "message": "Try again after the reset time.",
+                    }
+                ),
+                429,
+            )
+
+        commit_url = f"{protocol}://{host}/repos/{owner}/{repo}/commits/{sha}"
+        retries = 3
+        for attempt in range(retries):
+            try:
+                response = requests.get(commit_url, headers=headers, timeout=10)
+                response.raise_for_status()
+                break
+            except requests.exceptions.RequestException as e:
+                if attempt < retries - 1:
+                    logging.warning(
+                        "Attempt %d failed: %s. Retrying...", attempt + 1, str(e)
+                    )
+                    continue
+                else:
+                    logging.error("All retry attempts failed: %s", str(e))
+                    return (
+                        jsonify(
+                            {
+                                "error": "Failed to fetch commit details after multiple attempts"
+                            }
+                        ),
+                        500,
+                    )
+        commit = response.json()
+        res = {
+            "author": commit["commit"]["author"]["name"],
+            "author_email": commit["commit"]["author"]["email"],
+            "authoredDate": commit["commit"]["author"]["date"],
+            "message": commit["commit"]["message"],
+            "author_login": commit["author"]["login"] if commit["author"] else None,
+            "parents": len(commit["parents"]),
+            "additions": commit["stats"]["additions"],
+            "deletions": commit["stats"]["deletions"],
+            "changedFilesIfAvailable": len(commit["files"]),
+            "lang_stats": {},
+        }
+        # Calculate language statistics
+        for file in commit["files"]:
+            try:
+                lexer = guess_lexer_for_filename(file["filename"], file["patch"])
+            except Exception:
+                lexer = TextLexer()  # Default to plain text lexer if no lexer is found
+
+            if lexer.name in res["lang_stats"]:
+                res["lang_stats"][lexer.name]["additions"] += file["additions"]
+                res["lang_stats"][lexer.name]["deletions"] += file["deletions"]
+            else:
+                res["lang_stats"][lexer.name] = {
+                    "additions": file["additions"],
+                    "deletions": file["deletions"],
+                }
+
+        return jsonify({"commit": res})
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
