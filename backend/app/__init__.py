@@ -7,6 +7,7 @@ from .auth.oauth_routes import auth_bp
 from .api.github_routes import github_bp
 from .api.helper_routes import helper_bp
 from .api.team_routes import team_bp
+from .api.db_routes import db_bp
 import logging
 
 
@@ -32,6 +33,7 @@ def create_app():
     app.register_blueprint(github_bp, url_prefix="/api")
     app.register_blueprint(helper_bp, url_prefix="/api")
     app.register_blueprint(team_bp, url_prefix="/api")
+    app.register_blueprint(db_bp, url_prefix="/api")
 
     # Configure logging
     logging.basicConfig(level=logging.INFO)

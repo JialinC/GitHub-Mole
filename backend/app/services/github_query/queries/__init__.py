@@ -1,3 +1,7 @@
+from .commits import (
+    RepositoryContributorContributions,
+    UserRepositoryNames,
+)
 from .comments import (
     UserCommitComments,
     UserGistComments,
@@ -12,11 +16,14 @@ from .contributions import (
     UserRepositoryDiscussions,
 )
 from .repositories import (
-    RepositoryCommits,
+    RepositoryBranches,
+    RepositoryBranchCommits,
     RepositoryContributors,
-    RepositoryContributorsContribution,
 )
-from .time_range_contributions import UserContributionsCollection
+from .time_range_contributions import (
+    UserContributionsCollection,
+    UserContributionCalendar,
+)
 from .costs import QueryCost, RateLimit
 from .profiles import UserLogin, UserLoginViewer, UserProfileStats
 
@@ -30,13 +37,16 @@ __all__ = [
     "UserPullRequests",
     "UserRepositories",
     "UserRepositoryDiscussions",
-    "RepositoryCommits",
+    "RepositoryBranches",
+    "RepositoryBranchCommits",
     "RepositoryContributors",
-    "RepositoryContributorsContribution",
     "UserContributionsCollection",
+    "UserContributionCalendar",
     "QueryCost",
     "RateLimit",
     "UserLogin",
     "UserLoginViewer",
     "UserProfileStats",
+    "RepositoryContributorContributions",
+    "UserRepositoryNames",
 ]
