@@ -7,7 +7,7 @@ from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
 )
-from app.models.user import User
+from app.models import User, UserQuery
 
 
 helper_bp = Blueprint("helper", __name__)
@@ -98,7 +98,6 @@ def user_info():
         return jsonify({"msg": "User not found"}), 404
     pat = user.personal_access_token
     api_url = user.api_url
-    print(github_id, pat, api_url)
 
     user_api_url = api_url + "/user"
     try:
@@ -115,3 +114,18 @@ def refresh():
     current_user = get_jwt_identity()
     new_access_token = create_access_token(identity=current_user)
     return jsonify(access_token=new_access_token)
+
+
+@helper_bp.route("/helper/check-duplicate", methods=["GET"])
+@jwt_required()
+def check_duplicate():
+    name = request.args.get("name")
+    dstype = request.args.get("type")
+    github_id = get_jwt_identity()
+    user = User.query.filter_by(github_id=github_id).first()
+    existing_dataset = UserQuery.query.filter_by(
+        ds_name=name, user_login=user.github_login, data_type=dstype
+    ).first()
+    if existing_dataset:
+        return jsonify({"exists": True}), 200
+    return jsonify({"exists": False}), 200
