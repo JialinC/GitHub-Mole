@@ -2,12 +2,12 @@
 Import repository related queries
 """
 
-from .repository_commits import RepositoryCommits
 from .repository_contributors import RepositoryContributors
-from .repository_contributors_contribution import RepositoryContributorsContribution
+from .repository_branches import RepositoryBranches
+from .repository_branch_commits import RepositoryBranchCommits
 
 __all__ = [
-    "RepositoryCommits",
+    "RepositoryBranches",
+    "RepositoryBranchCommits",
     "RepositoryContributors",
-    "RepositoryContributorsContribution",
 ]
