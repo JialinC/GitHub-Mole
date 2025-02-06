@@ -1,31 +1,33 @@
 import React, { useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
+import { data, useNavigate } from "react-router-dom";
 import Button from "../components/Button";
-import ViewTable from "../components/ViewTable";
-import Histogram from "../components/Histogram";
-import TotalHistogram from "../components/TotalHistogram";
-import RepoHistPie from "../components/RepoHistPie";
 import CommitsHistPie from "../components/CommitsHistPie";
-import Modal from "../components/Modal";
-import Footer from "../components/Footer";
 import ErrorPage from "../components/Error";
+import Footer from "../components/Footer";
+import Histogram from "../components/Histogram";
+import Modal from "../components/Modal";
+import Navbar from "../components/Navbar";
+import RepoHistPie from "../components/RepoHistPie";
+import TotalHistogram from "../components/TotalHistogram";
+import UserCommitsHistPie from "../components/UserCommitsHistPie";
+import ViewTable from "../components/ViewTable";
 import {
-  userQueryHeaders,
-  viewTableHeaders,
   headerToFieldMap,
   numericalValue,
+  userQueryHeaders,
+  viewTableHeaders,
 } from "../constants/constants";
 import {
+  downloadCsv,
   getUserAvatarUrl,
   generateCsvContent,
-  downloadCsv,
 } from "../utils/helpers";
 import {
+  deleteUserQuery,
+  deleteUserContribution,
   fetchRateLimit,
   fetchUserQueries,
-  deleteUserQuery,
   fetchUserContribution,
-  deleteUserContribution,
 } from "../utils/queries";
 
 const History: React.FC = () => {
@@ -46,6 +48,7 @@ const History: React.FC = () => {
   });
 
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const navigate = useNavigate();
   const [rateLimit, setRateLimit] = useState<{
     limit: number;
     remaining: number;
@@ -63,6 +66,8 @@ const History: React.FC = () => {
       const avatarUrl = getUserAvatarUrl();
       if (avatarUrl) {
         setAvatarUrl(avatarUrl);
+      } else {
+        navigate("/login");
       }
       await loadRateLimit();
       await getUserQueries();
@@ -75,8 +80,8 @@ const History: React.FC = () => {
     const tableData = response.map((query: any) => [
       query.ds_name,
       query.data_type,
-      query.start_time,
-      query.end_time,
+      query.start_time || "N/A",
+      query.end_time || "N/A",
       query.queried_at,
       <>
         <button
@@ -209,8 +214,13 @@ const History: React.FC = () => {
                     headers={contributionHeaders.slice(0, -1)}
                     data={contributions}
                   />
-                ) : contribType === "Commits" ? (
+                ) : contribType === "Repo Commits" ? (
                   <CommitsHistPie
+                    headers={contributionHeaders.slice(0, -1)}
+                    data={contributions}
+                  />
+                ) : contribType === "User Commits" ? (
+                  <UserCommitsHistPie
                     headers={contributionHeaders.slice(0, -1)}
                     data={contributions}
                   />
@@ -218,10 +228,13 @@ const History: React.FC = () => {
                   <TotalHistogram headers={histHeader} data={histData} />
                 ) : (
                   <>
-                    <h3 className="text-2xl font-bold text-white text-center">
+                    <h2 className="text-xl font-bold text-white text-center">
                       Number of {contribType} by GitHub ID
-                    </h3>
-                    <Histogram data={contributions} />
+                    </h2>
+                    <Histogram
+                      headers={contributionHeaders.slice(0, -1)}
+                      data={contributions}
+                    />
                   </>
                 )}
                 <ViewTable
