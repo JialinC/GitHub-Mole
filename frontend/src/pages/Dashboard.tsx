@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CustomHeatmap from "../components/CustomHeatmap";
 import YearSelection from "../components/YearSelection";
-import { FaDatabase, FaGithub, FaUsers, FaCodeBranch } from "react-icons/fa";
+import {
+  FaDatabase,
+  FaGithub,
+  FaUsers,
+  FaCodeBranch,
+  FaBomb,
+} from "react-icons/fa";
 import CardButton from "../components/CardButton";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -19,6 +26,7 @@ import {
 } from "../utils/queries";
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [rateLimit, setRateLimit] = useState<any>(null);
   const [curUser, setCurUser] = useState<CurUser | null>(null);
   const [contributions, setContributions] = useState<Contributions | null>(
@@ -100,7 +108,14 @@ const Dashboard: React.FC = () => {
       } else {
         const user = await fetchCurUser(setError);
         setCurUser(user);
-        localStorage.setItem("curUser", JSON.stringify(user));
+        if (user !== null) {
+          localStorage.setItem("curUser", JSON.stringify(user));
+        } else {
+          localStorage.removeItem("curUser");
+          navigate("/login");
+          return null;
+        }
+        // localStorage.setItem("curUser", JSON.stringify(user));
         return user;
       }
     };
@@ -134,6 +149,9 @@ const Dashboard: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       const user = await getCurUser();
+      if (!user) {
+        return;
+      }
       await getContributions(user.login);
       const year = await getContribYears(user.login);
       await getContribWeeks(user.login, year);
@@ -214,9 +232,9 @@ const Dashboard: React.FC = () => {
                   <img
                     src={curUser?.avatarUrl || ""}
                     alt="User Profile"
-                    className="rounded-full w-32 h-32 border-4 border-gray-600 shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out transform hover:scale-105"
+                    className="rounded-full w-32 h-32 border-4 border-white shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out transform hover:scale-105"
                   />
-                  <div className="absolute bottom-0 right-0 bg-green-500 border-2 border-gray-800 rounded-full w-6 h-6"></div>
+                  <div className="absolute bottom-0 right-0 bg-green-500 border-2 border-white rounded-full w-6 h-6"></div>
                 </div>
                 <ul className="text-gray-400 text-sm text-center space-y-1 mt-4">
                   <li>
@@ -281,14 +299,19 @@ const Dashboard: React.FC = () => {
               navigateTo="/contributions"
             />
             <CardButton
+              icon={<FaCodeBranch className="text-6xl mb-4 text-purple-400" />}
+              text="Mine Commits in Repository"
+              navigateTo="/repositories"
+            />
+            <CardButton
               icon={<FaUsers className="text-6xl mb-4 text-green-400" />}
               text="Form Development Teams"
               navigateTo="/teams"
             />
             <CardButton
-              icon={<FaCodeBranch className="text-6xl mb-4 text-purple-400" />}
-              text="Mine Commits in Repository"
-              navigateTo="/repositories"
+              icon={<FaBomb className="text-6xl mb-4 text-red-400" />}
+              text="Mine All Commits by a User"
+              navigateTo="/commits"
             />
           </div>
         </div>
