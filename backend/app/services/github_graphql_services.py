@@ -19,8 +19,10 @@ from app.services.github_query.queries import (
     UserRepositories,
     UserRepositoryDiscussions,
     RepositoryContributors,
-    RepositoryCommits,
-    RepositoryContributorsContribution,
+    RepositoryBranches,
+    RepositoryBranchCommits,
+    RepositoryContributorContributions,
+    UserRepositoryNames,
 )
 from .github_query.graphql_client import (
     PersonalAccessTokenAuthenticator,
@@ -111,14 +113,20 @@ def get_user_profile_stats(login: str, protocol: str, host: str, token: str):
         return {"error": str(e)}
 
 
-def get_user_contributions_collection(login: str, protocol: str, host: str, token: str):
+def get_user_contributions_collection(
+    login: str, protocol: str, host: str, token: str, start: str = None, end: str = None
+):
     """ """
     created_at = get_specific_user_login(login, protocol, host, token)["user"][
         "createdAt"
     ]
     client = get_github_client(protocol=protocol, host=host, token=token)
-    gh_start = datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%SZ")
-    gh_end = datetime.now()
+    gh_start = (
+        datetime.strptime(start, "%Y-%m-%d")
+        if start
+        else datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%SZ")
+    )
+    gh_end = datetime.strptime(end, "%Y-%m-%d") if end else datetime.now()
     end = gh_end.strftime("%Y-%m-%dT%H:%M:%SZ")
     start = gh_start.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -379,6 +387,26 @@ def get_user_repository_discussions_page(
         return {"error": str(e)}
 
 
+def get_repository_branches_page(
+    owner: str,
+    repo_name: str,
+    protocol: str,
+    host: str,
+    token: str,
+    end_cursor: Optional[str] = None,
+):
+    client = get_github_client(protocol=protocol, host=host, token=token)
+    try:
+        response = client.execute(
+            query=RepositoryBranches(owner=owner, repo_name=repo_name),
+            pagination="frontend",
+            end_cursor=end_cursor,
+        )
+        return RepositoryBranches.branches(response)
+    except QueryFailedException as e:
+        return {"error": str(e)}
+
+
 def get_repository_contributors_page(
     owner: str,
     repo_name: str,
@@ -401,9 +429,11 @@ def get_repository_contributors_page(
         return {"error": str(e)}
 
 
-def get_repository_commits_page(
+def get_repository_branch_commits_page(
     owner: str,
     repo_name: str,
+    branch_name: str,
+    use_default: bool,
     protocol: str,
     host: str,
     token: str,
@@ -413,22 +443,31 @@ def get_repository_commits_page(
     Fetches commits for a specific repository.
     """
     client = get_github_client(protocol=protocol, host=host, token=token)
-
     try:
+        query = RepositoryBranchCommits(
+            owner=owner,
+            repo_name=repo_name,
+            branch_name=branch_name,
+            use_default=use_default,
+        )
         response = client.execute(
-            query=RepositoryCommits(owner=owner, repo_name=repo_name),
+            query=query,
             pagination="frontend",
             end_cursor=end_cursor,
         )
-        return response
+        history = query.commits_list(response)
+        page_info = history["pageInfo"]
+        commits = history["nodes"]
+        return {"pageInfo": page_info, "commits": commits}
     except QueryFailedException as e:
         return {"error": str(e)}
 
 
-def get_repository_contributors_contribution_page(
+def get_repository_contributor_contributions_page(
     owner: str,
     repo_name: str,
-    login: str,
+    branch_name: str,
+    id: str,
     protocol: str,
     host: str,
     token: str,
@@ -437,20 +476,48 @@ def get_repository_contributors_contribution_page(
     """
     Fetches contributions made by a specific contributor to a repository.
     """
-    contributor_id = get_specific_user_login(login, protocol, host, token)["user"]["id"]
-
     client = get_github_client(protocol=protocol, host=host, token=token)
-    contributor = {"id": '"' + contributor_id + '"'}
 
     try:
         response = client.execute(
-            query=RepositoryContributorsContribution(
-                owner=owner, repo_name=repo_name, GitHub_id=contributor
+            query=RepositoryContributorContributions(
+                owner=owner,
+                repo_name=repo_name,
+                branch_name=branch_name,
+                github_id=id,
             ),
             pagination="frontend",
             end_cursor=end_cursor,
         )
 
-        return response
+        history = RepositoryContributorContributions.commits_list(response)
+        page_info = history["pageInfo"]
+        commits = history["nodes"]
+        return {"pageInfo": page_info, "commits": commits}
+    except QueryFailedException as e:
+        return {"error": str(e)}
+
+
+def get_user_repository_names_page(
+    login: str,
+    protocol: str,
+    host: str,
+    token: str,
+    end_cursor: Optional[str] = None,
+):
+    """
+    Fetches names of all the repos of a given GitHub login.
+    """
+    client = get_github_client(protocol=protocol, host=host, token=token)
+    try:
+        response = client.execute(
+            query=UserRepositoryNames(login=login),
+            pagination="frontend",
+            end_cursor=end_cursor,
+        )
+        repos, ghid = UserRepositoryNames.user_repository_names(response)
+        page_info = repos["pageInfo"]
+        nodes = repos["nodes"]
+        return {"pageInfo": page_info, "repos": nodes, "id": ghid}
     except QueryFailedException as e:
         return {"error": str(e)}
