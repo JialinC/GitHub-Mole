@@ -65,8 +65,6 @@ const CommitsHistPie: React.FC<GraphComponentProps> = ({ headers, data }) => {
     label: string;
   } | null>({ value: "ALL", label: "ALL" });
   const [aggregatedData, setAggregatedData] = useState<AggregatedData[]>([]);
-
-  console.log(headers);
   const getHeaderIndex = (headers: string[], field: string): number => {
     return headers.indexOf(field);
   };

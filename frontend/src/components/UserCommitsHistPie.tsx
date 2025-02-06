@@ -70,7 +70,6 @@ const UserCommitsHistPie: React.FC<GraphComponentProps> = ({
     label: string;
   } | null>(null);
   const [aggregatedData, setAggregatedData] = useState<AggregatedData[]>([]);
-
   const getHeaderIndex = (headers: string[], field: string): number => {
     return headers.indexOf(field);
   };
@@ -80,18 +79,18 @@ const UserCommitsHistPie: React.FC<GraphComponentProps> = ({
   const langIndex = getHeaderIndex(headers, "Languages");
 
   const authors = Array.from(
-    new Set(
-      data
-        .map((commit) => commit[authorIndex] as string)
-        .filter((author) => author !== "N/A")
-    )
+    new Set(data.map((commit) => commit[authorIndex] as string))
   ).map((author) => ({ value: author, label: author }));
 
   const repos = selectedAuthor
     ? Array.from(
         new Set(
           data
-            .filter((commit) => commit[authorIndex] === selectedAuthor.value)
+            .filter(
+              (commit) =>
+                commit[authorIndex] === selectedAuthor.value &&
+                commit[repoIndex] !== "N/A"
+            )
             .map((commit) => commit[repoIndex] as string)
         )
       ).map((repo) => ({ value: repo, label: repo }))

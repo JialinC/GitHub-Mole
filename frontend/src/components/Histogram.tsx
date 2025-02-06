@@ -10,15 +10,17 @@ import {
 } from "recharts";
 
 interface HistogramProps {
+  headers: any[];
   data: any[][];
 }
 
-const Histogram: React.FC<HistogramProps> = ({ data }) => {
-  console.log(data);
+const Histogram: React.FC<HistogramProps> = ({ headers, data }) => {
+  const githubIdIndex = headers.indexOf("GitHub ID");
+  const createdAtIndex = headers.indexOf("Created At");
   const countOccurrences = (data: string[][]) => {
     return data.reduce((acc: Record<string, number>, row: string[]) => {
-      const githubId = row[0];
-      if (row[1] === "N/A") {
+      const githubId = row[githubIdIndex];
+      if (row[createdAtIndex] === "N/A") {
         acc[githubId] = 0;
         return acc;
       }

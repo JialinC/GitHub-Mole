@@ -72,7 +72,6 @@ const HistPie: React.FC<GraphComponentProps> = ({ headers, data }) => {
     repoData.forEach((row) => {
       if (row[langs] === "N/A") return {};
       const stats = JSON.parse(row[langs]);
-      console.log("stats:" + stats);
       Object.keys(stats).forEach((lang) => {
         if (!languageStats[lang]) {
           languageStats[lang] = 0;
