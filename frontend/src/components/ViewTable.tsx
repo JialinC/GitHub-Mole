@@ -14,7 +14,7 @@ const ViewTable: React.FC<TableProps> = ({
   return (
     <div className="mt-6 overflow-auto">
       <div className="overflow-hidden bg-gray-900 rounded-lg shadow-md">
-        <div className="overflow-auto max-h-96">
+        <div className="overflow-auto max-h-[80vh]">
           <table className="min-w-full table-fixed border-collapse">
             <thead className="bg-gray-700 sticky top-0 shadow">
               <tr>
