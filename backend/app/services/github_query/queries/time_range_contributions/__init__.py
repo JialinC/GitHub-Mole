@@ -5,7 +5,9 @@ within a specified time range.
 """
 
 from .user_contributions_collection import UserContributionsCollection
+from .user_contribution_calendar import UserContributionCalendar
 
 __all__ = [
     "UserContributionsCollection",
+    "UserContributionCalendar",
 ]
