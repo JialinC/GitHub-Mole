@@ -6,9 +6,9 @@ import string
 import random
 from datetime import datetime, timedelta
 
-# from backend.app.services.github_query.github_graphql.query import Query
-# from backend.app.services.github_query.github_graphql.client import Client
-# from backend.app.services.github_query.queries.costs.query_cost import QueryCost
+# from app.services.github_query.github_graphql.query import Query
+# from app.services.github_query.github_graphql.client import Client
+# from app.services.github_query.queries.costs.query_cost import QueryCost
 
 
 def print_methods(obj: object) -> None:
