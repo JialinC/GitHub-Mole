@@ -1,0 +1,19 @@
+/* src/App.css */
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #007bff;
+  color: white;
+  padding: 2rem 0;
+}
+
+.card {
+  margin-bottom: 1.5rem;
+}
+
+footer {
+  background-color: #f8f9fa;
+  padding: 1rem 0;
+}

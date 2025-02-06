@@ -1,12 +1,28 @@
 import React from "react";
-import UserLogin from "./components/UserLogin";
+import { Routes, Route } from "react-router-dom";
+import About from "./pages/About";
+import Commits from "./pages/Commits";
+import Contributions from "./pages/Contributions";
+import Dashboard from "./pages/Dashboard";
+import History from "./pages/History";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Repositories from "./pages/Repositories";
+import Teams from "./pages/Teams";
 
-const App = () => {
+const App: React.FC = () => {
   return (
-    <div>
-      <h1>React App</h1>
-      <UserLogin />
-    </div>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/history" element={<History />} />
+      <Route path="/contributions" element={<Contributions />} />
+      <Route path="/repositories" element={<Repositories />} />
+      <Route path="/teams" element={<Teams />} />
+      <Route path="/commits" element={<Commits />} />
+    </Routes>
   );
 };
 
