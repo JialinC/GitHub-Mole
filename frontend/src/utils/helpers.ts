@@ -221,6 +221,49 @@ export const validateGitHubIdsFile = (file: File): Promise<void> => {
   });
 };
 
+export const validateCsvFile = (file: File): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    Papa.parse(file, {
+      complete: (results) => {
+        const data = results.data as string[][];
+
+        if (data.length === 0 || data[0].indexOf("Repository URL") === -1) {
+          return reject(
+            new Error(
+              'The file must include a title row with the column title "Repository URL".'
+            )
+          );
+        }
+
+        for (let i = 1; i < data.length; i++) {
+          const url = data[i][data[0].indexOf("Repository URL")];
+          try {
+            const parsedUrl = new URL(url);
+            const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+
+            if (pathParts.length < 2) {
+              return reject(
+                new Error(`Invalid URL found in row ${i + 1}: ${url}`)
+              );
+            }
+          } catch (error) {
+            return reject(
+              new Error(`Invalid URL found in row ${i + 1}: ${url}`)
+            );
+          }
+        }
+
+        resolve();
+      },
+      error: (error) => {
+        reject(new Error(`Failed to parse CSV file: ${error.message}`));
+      },
+      header: false,
+      skipEmptyLines: true,
+    });
+  });
+};
+
 export const handleWaitTime = (
   waitTime: number,
   setTotTime: Dispatch<SetStateAction<number>>,
@@ -262,4 +305,44 @@ export const fetchWithRateLimit = async (
     response = await fetchFunction(...args);
   }
   return response;
+};
+
+export const escapeCsvValue = (value: any): string => {
+  const stringValue = String(value);
+  if (stringValue.includes(",") || stringValue.includes("\n") || stringValue.includes('"')) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+};
+
+export const generateCsvContent = (headers: string[], data: any[][]): string => {
+  const csvContent = [
+    headers.map(escapeCsvValue).join(","), // Add the headers
+    ...(data ? data.map((row) => row.map(escapeCsvValue).join(",")) : []), // Add the data rows
+  ].join("\n");
+
+  return csvContent;
+};
+
+export const downloadCsv = (csvContent: string, fileName: string): void => {
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+export const castTableData = (data: string[][]): (string | number)[][] => {
+  return data.map((row) => {
+    return row.map((cell, index) => {
+      if (index > 0) {
+        const num = Number(cell);
+        return isNaN(num) ? cell : num;
+      }
+      return cell;
+    });
+  });
 };
