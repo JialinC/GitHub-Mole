@@ -15,7 +15,7 @@ const CardButton: React.FC<CardButtonProps> = ({ icon, text, navigateTo }) => {
     >
       <div className="flex flex-col items-center">
         {icon}
-        <h5 className="mb-2 text-2xl font-bold tracking-tight text-white">
+        <h5 className="mb-2 text-l font-bold tracking-tight text-white">
           {text}
         </h5>
       </div>
