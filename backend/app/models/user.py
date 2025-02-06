@@ -7,7 +7,9 @@ class User(db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
-    github_id = db.Column(db.String(80), unique=True, nullable=False)
+    github_id = db.Column(
+        db.String(80), unique=True, nullable=False
+    )  # github user node_id
     github_login = db.Column(db.String(80), unique=True, nullable=False)
     personal_access_token = db.Column(db.String(255), nullable=False)
     api_url = db.Column(db.String(255), nullable=True)
@@ -20,7 +22,9 @@ class User(db.Model):
         return f"<User {self.github_id}>"
 
     @classmethod
-    def create(cls, github_id, github_login, personal_access_token, api_url):
+    def create(
+        cls, github_id: str, github_login: str, personal_access_token: str, api_url: str
+    ) -> "User":
         user = cls(
             github_id=github_id,
             github_login=github_login,
@@ -32,22 +36,14 @@ class User(db.Model):
         return user
 
     @classmethod
-    def read(cls, user_id):
-        return cls.query.get(user_id)
+    def read(cls, value: str) -> "User":
+        return cls.query.filter_by(github_login=value).first()
 
-    @classmethod
-    def update(cls, user_id, **kwargs):
-        user = cls.query.get(user_id)
-        if user:
-            for key, value in kwargs.items():
-                setattr(user, key, value)
-            db.session.commit()
-        return user
+    def update(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        db.session.commit()
 
-    @classmethod
-    def delete(cls, user_id):
-        user = cls.query.get(user_id)
-        if user:
-            db.session.delete(user)
-            db.session.commit()
-        return user
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
