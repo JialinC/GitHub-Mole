@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import CommitsHistPie from "../components/CommitsHistPie";
 import ErrorMessage from "../components/ErrorMessage";
@@ -15,16 +16,18 @@ import { commitTableHeaders } from "../constants/constants";
 import githubIDs from "../assets/github_ids.png";
 import {
   downloadCsv,
+  fetchWithRateLimit,
   generateCsvContent,
   getUserAvatarUrl,
   handleFileChange as handleFileChangeUtil,
   handleWaitTime as handleWaitTimeUtil,
+  validateCsvFile,
 } from "../utils/helpers";
 import {
   checkDuplicate,
   fetchBranches,
   fetchBranchCommits,
-  fetchCommits,
+  fetchCommitDetails,
   fetchRateLimit,
   saveToDatabase,
 } from "../utils/queries";
@@ -37,6 +40,7 @@ const Contributions: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const navigate = useNavigate();
   const [queryOption, setQueryOption] = useState<string>("allBranches");
 
   const [noRateLimit, setNoRateLimit] = useState<boolean>(false);
@@ -67,6 +71,8 @@ const Contributions: React.FC = () => {
     abortControllerRef.current = new AbortController();
     if (avatarUrl) {
       setAvatarUrl(avatarUrl);
+    } else {
+      navigate("/login");
     }
     loadRateLimit();
     return () => {
@@ -85,49 +91,6 @@ const Contributions: React.FC = () => {
 
   const handleWaitTime = (waitTime: number) => {
     return handleWaitTimeUtil(waitTime, setTotTime, setRemTime, setNoRateLimit);
-  };
-
-  const validateCsvFile = (file: File): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      Papa.parse(file, {
-        complete: (results) => {
-          const data = results.data as string[][];
-
-          if (data.length === 0 || data[0].indexOf("Repository URL") === -1) {
-            return reject(
-              new Error(
-                'The file must include a title row with the column title "Repository URL".'
-              )
-            );
-          }
-
-          for (let i = 1; i < data.length; i++) {
-            const url = data[i][data[0].indexOf("Repository URL")];
-            try {
-              const parsedUrl = new URL(url);
-              const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
-
-              if (pathParts.length < 2) {
-                return reject(
-                  new Error(`Invalid URL found in row ${i + 1}: ${url}`)
-                );
-              }
-            } catch (error) {
-              return reject(
-                new Error(`Invalid URL found in row ${i + 1}: ${url}`)
-              );
-            }
-          }
-
-          resolve();
-        },
-        error: (error) => {
-          reject(new Error(`Failed to parse CSV file: ${error.message}`));
-        },
-        header: false,
-        skipEmptyLines: true,
-      });
-    });
   };
 
   const addTableRow = (rowData: string[]) => {
@@ -154,87 +117,167 @@ const Contributions: React.FC = () => {
     }
   };
 
-  const processBranch = async (
-    owner: string,
+  const gatherCommits = async (
     repo: string,
-    branch: string = "default branch"
+    owner: string,
+    branch: string,
+    useDefault: boolean = false
   ) => {
+    let commits: string[] = [];
     let endCursor: string | null = null;
-    let hasNextPage: boolean = false;
+    let hasNextPage: boolean;
     do {
-      let response: any =
-        queryOption === "allBranches"
-          ? await fetchBranchCommits(
-              owner,
-              repo,
-              `"${branch}"`,
-              setFatal,
-              endCursor
-            )
-          : await fetchCommits(owner, repo, setFatal, endCursor);
-
-      if ("no_limit" in response) {
-        await handleWaitTime(response.wait_seconds);
-        response =
-          queryOption === "allBranches"
-            ? await fetchBranchCommits(
-                owner,
-                repo,
-                `"${branch}"`,
-                setFatal,
-                endCursor
-              )
-            : await fetchCommits(owner, repo, setFatal, endCursor);
-      }
-
-      const { pageInfo, commits } = response;
+      let commitsPage = await fetchWithRateLimit(
+        fetchBranchCommits,
+        handleWaitTime,
+        owner,
+        repo,
+        branch,
+        useDefault,
+        setFatal,
+        endCursor
+      );
+      const pageInfo = commitsPage.pageInfo;
       endCursor = pageInfo?.endCursor || null;
       hasNextPage = pageInfo?.hasNextPage || false;
-      for (const commit of commits) {
+      commitsPage.commits.forEach((repo: any) => {
+        commits.push(repo.oid);
+      });
+    } while (hasNextPage);
+    return commits;
+  };
+
+  const gatherRepoBranches = async (repo: string, owner: string) => {
+    let branchNames: string[] = [];
+    let endCursor: string | null = null;
+    let hasNextPage: boolean;
+    do {
+      let branchesPage = await fetchWithRateLimit(
+        fetchBranches,
+        handleWaitTime,
+        owner,
+        repo,
+        setFatal,
+        endCursor
+      );
+      if ("error" in branchesPage) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          repo: `Invalid repo ${repo} and owner ${owner}`,
+        }));
+        setTableData(null);
+        setFile(null);
+        setLoading(false);
+        return null;
+      }
+      const pageInfo = branchesPage.pageInfo;
+      endCursor = pageInfo?.endCursor || null;
+      hasNextPage = pageInfo?.hasNextPage || false;
+      branchesPage.nodes.forEach((repo: any) => {
+        branchNames.push(repo.name);
+      });
+    } while (hasNextPage);
+    return branchNames;
+  };
+
+  const processRepoURL = async (url: string, signal: AbortSignal) => {
+    const { owner, repo } = parseGithubUrl(url);
+    if (queryOption === "allBranches") {
+      const repoBranches = await gatherRepoBranches(repo, owner);
+      if (!repoBranches) {
+        return;
+      }
+      for (const branch of repoBranches) {
+        if (signal.aborted) {
+          return;
+        }
+        const repoContributions = await gatherCommits(
+          repo,
+          owner,
+          branch,
+          false
+        );
+        for (const oid of repoContributions) {
+          if (signal.aborted) {
+            return;
+          }
+          let commitResponse = await fetchWithRateLimit(
+            fetchCommitDetails,
+            handleWaitTime,
+            owner,
+            repo,
+            oid,
+            setFatal
+          );
+          let commit = commitResponse.commit;
+          const row = [
+            repo,
+            commit.author || "N/A",
+            commit.author_email || "N/A",
+            commit.author_login || "N/A",
+            branch,
+            commit.authoredDate,
+            commit.changedFilesIfAvailable,
+            commit.additions,
+            commit.deletions,
+            commit.message,
+            commit.parents,
+            JSON.stringify(commit.lang_stats),
+          ];
+          addTableRow(row);
+        }
+      }
+    } else {
+      const repoContributions = await gatherCommits(repo, owner, "", true);
+      for (const oid of repoContributions) {
+        if (signal.aborted) {
+          return;
+        }
+        let commitResponse = await fetchWithRateLimit(
+          fetchCommitDetails,
+          handleWaitTime,
+          owner,
+          repo,
+          oid,
+          setFatal
+        );
+        let commit = commitResponse.commit;
         const row = [
           repo,
           commit.author || "N/A",
           commit.author_email || "N/A",
-          commit.author_id || "N/A",
-          branch,
+          commit.author_login || "N/A",
+          "default",
           commit.authoredDate,
           commit.changedFilesIfAvailable,
           commit.additions,
           commit.deletions,
           commit.message,
           commit.parents,
+          JSON.stringify(commit.lang_stats),
         ];
         addTableRow(row);
       }
-    } while (hasNextPage);
+    }
+    loadRateLimit();
   };
 
-  const processRepoURL = async (data: string[][], signal: AbortSignal) => {
-    setLoading(true);
+  const processRepoURLs = async (
+    data: string[][] | string,
+    signal: AbortSignal
+  ) => {
     for (let i = 1; i < data.length; i++) {
       if (signal.aborted) {
         return;
       }
-      const { owner, repo } = parseGithubUrl(data[i][0]);
-
-      if (queryOption === "allBranches") {
-        let branches = await fetchBranches(owner, repo, setFatal);
-        for (const branch of branches) {
-          if (signal.aborted) {
-            return;
-          }
-          await processBranch(owner, repo, branch);
-        }
-      } else {
-        await processBranch(owner, repo);
-      }
-
+      const repoUrl = data[i][0];
+      await processRepoURL(repoUrl, signal);
       loadRateLimit();
     }
-    setLoading(false);
   };
 
   const handleSubmit = async () => {
+    const signal = abortControllerRef.current?.signal;
     if (!file) {
       setErrors((prevErrors) => ({
         ...prevErrors,
@@ -251,20 +294,21 @@ const Contributions: React.FC = () => {
           ...prevErrors,
           file: error.message,
         }));
-        return;
       } else {
         setErrors((prevErrors) => ({
           ...prevErrors,
           file: "An unknown error occurred",
         }));
-        return;
       }
+      return;
     }
 
     try {
       Papa.parse(file, {
         complete: async (result: Papa.ParseResult<string[]>) => {
-          await processRepoURL(result.data as string[][], signal!);
+          setLoading(true);
+          await processRepoURLs(result.data as string[][], signal!);
+          setLoading(false);
         },
         header: false,
       });
@@ -274,17 +318,15 @@ const Contributions: React.FC = () => {
           ...prevErrors,
           file: error.message,
         }));
-        return;
       } else {
         setErrors((prevErrors) => ({
           ...prevErrors,
           file: "An unknown error occurred",
         }));
-        return;
       }
+      setLoading(false);
+      return;
     }
-
-    const signal = abortControllerRef.current?.signal;
   };
 
   const handleExport = () => {
@@ -302,7 +344,10 @@ const Contributions: React.FC = () => {
   };
 
   const handleSave = async (name: string) => {
-    const response = await checkDuplicate({ name, type: "Commits" }, setFatal);
+    const response = await checkDuplicate(
+      { name, type: "Repo Commits" },
+      setFatal
+    );
 
     if (response.exists) {
       setErrors((prevErrors) => ({
@@ -315,7 +360,7 @@ const Contributions: React.FC = () => {
       await saveToDatabase(
         {
           name,
-          type: "Commits",
+          type: "Repo Commits",
           tableHeader: tableHeader,
           tableData: tableData || [],
         },
@@ -382,7 +427,12 @@ const Contributions: React.FC = () => {
             </>
           ) : (
             <>
-              <CommitsHistPie headers={tableHeader} data={tableData} />
+              <h2 className="text-2xl font-bold text-white mb-4">
+                Commits in Given Repositories
+              </h2>
+              {!loading && (
+                <CommitsHistPie headers={tableHeader} data={tableData} />
+              )}
               <Table
                 headers={tableHeader}
                 data={tableData}
