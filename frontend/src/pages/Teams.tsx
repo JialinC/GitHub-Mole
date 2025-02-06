@@ -1,43 +1,47 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Papa from "papaparse";
+
+import ava from "../assets/app_logo.png";
 import githubIDs from "../assets/github_ids.png";
 import selfData from "../assets/self_data.png";
-import ava from "../assets/app_logo.png";
 
+import Button from "../components/Button";
+import ErrorMessage from "../components/ErrorMessage";
+import ErrorPage from "../components/Error";
+import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import OptionSelector from "../components/OptionSelector";
-import { selfDataFile, gitHubCSV, langsDesc } from "../constants/Descriptions";
-import UploadSection from "../components/UploadSection";
-import ErrorMessage from "../components/ErrorMessage";
 import SelectionSection from "../components/SelectionSection";
-import Button from "../components/Button";
 import Table from "../components/Table";
-import Footer from "../components/Footer";
+import TotalHistogram from "../components/TotalHistogram";
+import UploadSection from "../components/UploadSection";
 
-import ErrorPage from "../components/Error";
-import axiosInstance from "../utils/axiosConfig";
+import { gitHubCSV, langsDesc, selfDataFile } from "../constants/Descriptions";
 import { languages, teamTableHeaders } from "../constants/constants";
+
 import {
+  addLoadingRow,
+  calLangStats,
+  calculateLifetime,
+  castTableData,
+  chunkArray,
+  fetchWithRateLimit,
+  getUserAvatarUrl,
   handleFileChange as handleFileChangeUtil,
   handleWaitTime as handleWaitTimeUtil,
-  chunkArray,
-  addLoadingRow,
-  getUserAvatarUrl,
-  calculateLifetime,
-  calLangStats,
   validateGitHubIdsFile,
   validateSelfDataFile,
-  fetchWithRateLimit,
 } from "../utils/helpers";
 import {
-  fetchRateLimit,
-  fetchProfile,
-  fetchContributions,
   fetchARepos,
+  fetchContributions,
+  fetchProfile,
+  fetchRateLimit,
   formTeam,
 } from "../utils/queries";
-import "./styles.css";
+
+import "../styles/styles.css";
 
 const Teams: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -45,9 +49,11 @@ const Teams: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [fatal, setFatal] = useState<string | null>(null);
 
-  const [uploadOption, setUploadOption] = useState<string>("githubIds");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const navigate = useNavigate();
+  const [uploadOption, setUploadOption] = useState<string>("githubIds");
   const [selectedLangs, setSelectedLangs] = useState<Set<string>>(new Set());
+
   const [noRateLimit, setNoRateLimit] = useState<boolean>(false);
   const [totTime, setTotTime] = useState<number>(1000);
   const [remTime, setRemTime] = useState<number>(1000 - 1);
@@ -75,12 +81,8 @@ const Teams: React.FC = () => {
   const languageChunks = chunkArray(languages, Math.ceil(languages.length / 4));
 
   const loadRateLimit = async () => {
-    try {
-      const rateLimitData = await fetchRateLimit(setFatal);
-      setRateLimit(rateLimitData);
-    } catch (error) {
-      console.error("Error in loadRateLimit:", error);
-    }
+    const rateLimitData = await fetchRateLimit(setFatal);
+    setRateLimit(rateLimitData);
   };
 
   useEffect(() => {
@@ -88,6 +90,8 @@ const Teams: React.FC = () => {
     abortControllerRef.current = new AbortController();
     if (avatarUrl) {
       setAvatarUrl(avatarUrl);
+    } else {
+      navigate("/login");
     }
     loadRateLimit();
     return () => {
@@ -104,7 +108,6 @@ const Teams: React.FC = () => {
       setTableHeader(teamTableHeaders);
     }
     setFile(null);
-    setFatal(null);
     setSelectedLangs(new Set());
     setTableData(null);
     setSelectedColumns([]);
@@ -234,6 +237,8 @@ const Teams: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    const signal = abortControllerRef.current?.signal;
+
     if (!file) {
       setErrors((prevErrors) => ({
         ...prevErrors,
@@ -287,9 +292,8 @@ const Teams: React.FC = () => {
         ...prevErrors,
         file: "Error processing the input file",
       }));
+      return;
     }
-
-    const signal = abortControllerRef.current?.signal;
   };
 
   const handleBackToOptions = () => {
@@ -347,8 +351,6 @@ const Teams: React.FC = () => {
     );
     const teams = response.teams;
     const leftOvers = response.left_over ? response.left_over : [];
-    console.log("Response from backend:", teams);
-    console.log("Response from backend:", leftOvers);
     setTeams(teams);
     setLeftOvers(leftOvers);
     setProcessing(false);
@@ -365,6 +367,8 @@ const Teams: React.FC = () => {
     link.click();
     document.body.removeChild(link);
   };
+
+  const castedTableData = tableData ? castTableData(tableData) : [];
 
   if (fatal) {
     return <ErrorPage message={fatal} />;
@@ -460,6 +464,9 @@ const Teams: React.FC = () => {
                   distributed among the existing teams.
                 </div>
               </div>
+              {!loading && (
+                <TotalHistogram headers={tableHeader} data={castedTableData} />
+              )}
               <Table
                 headers={tableHeader}
                 data={tableData}
