@@ -1,0 +1,28 @@
+rect {
+  stroke: #ccc;
+  stroke-width: 1;
+}
+
+.heatmap-container {
+    overflow-x: auto;
+  }
+  
+.color-empty {
+  fill: #f0f0f044;
+}
+
+.color-scale-1 {
+  fill: #acd5f2;
+}
+
+.color-scale-2 {
+  fill: #7fa8d1;
+}
+
+.color-scale-3 {
+  fill: #49729b;
+}
+
+.color-scale-4 {
+  fill: #2c4a6b;
+}
