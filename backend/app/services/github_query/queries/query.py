@@ -88,6 +88,8 @@ class QueryNode:
                 args_list.append(f'{key}: "{value}"')
             elif key == "name":
                 args_list.append(f'{key}: "{value}"')
+            elif key == "qualifiedName":
+                args_list.append(f'{key}: "{value}"')
             elif isinstance(value, list):
                 args_list.append(f'{key}: [{", ".join(value)}]')
             elif isinstance(value, dict):
