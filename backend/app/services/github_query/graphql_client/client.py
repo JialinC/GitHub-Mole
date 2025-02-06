@@ -1,7 +1,8 @@
 """The module defines a client class that executes the given GraphQL query string."""
 
 import re
-import time
+
+# import time
 from datetime import datetime, timezone
 from typing import Union, Optional, Dict, Any, Generator, Tuple
 import requests
