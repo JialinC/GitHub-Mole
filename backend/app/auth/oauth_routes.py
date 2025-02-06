@@ -67,8 +67,6 @@ def callback():
     # Generate JWT token
     access_token = create_access_token(identity=github_id)
     refresh_token = create_refresh_token(identity=github_id)
-    print("acc:" + access_token)
-    print("ref:" + refresh_token)
 
     # Redirect to the frontend with the token included in the URL
     return redirect(
