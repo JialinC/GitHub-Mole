@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import logoImage from "../assets/app_logo.png";
 import { Link, useNavigate } from "react-router-dom";
+import logoutImage from "../assets/logout.png";
 
 interface NavbarProps {
   children?: React.ReactNode;
@@ -79,7 +80,16 @@ const Navbar: React.FC<NavbarProps> = ({ children, avatarUrl, rateLimit }) => {
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-200"
+                    style={{
+                      fontSize: "1.3em",
+                    }}
                   >
+                    <img
+                      src={logoutImage}
+                      alt="Logout"
+                      className="inline-block mr-2"
+                      style={{ height: "1.3em" }}
+                    />
                     Log Out
                   </button>
                 </div>
