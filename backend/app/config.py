@@ -15,9 +15,6 @@ class Config:
     DEBUG = True
     JWT_SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key_here")
     SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key_here")
-    # SESSION_COOKIE_HTTPONLY = True
-    # SESSION_COOKIE_SAMESITE = "Lax"
-    # SESSION_COOKIE_SECURE = False
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 

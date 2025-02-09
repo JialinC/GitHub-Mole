@@ -20,7 +20,7 @@ const Login: React.FC = () => {
   useEffect(() => {
     const fetchSSOConfig = async () => {
       try {
-        const response = await axios.get("/api/helper/sso", { timeout: 5000 });
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/helper/sso`, { timeout: 5000 });
         setSsoEnabled(response.data.sso_config);
         setError(null);
       } catch (error) {
@@ -49,7 +49,7 @@ const Login: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post("/api/helper/validate-pat", {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/helper/validate-pat`, {
         pat,
         accountType,
         apiUrl:
