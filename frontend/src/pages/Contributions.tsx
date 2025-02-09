@@ -210,29 +210,29 @@ const Contributions: React.FC = () => {
     );
   };
 
-  const nameIndex = tableHeader.indexOf("Name");
-  const emailIndex = tableHeader.indexOf("Email");
-  const createdAtIndex = tableHeader.indexOf("Created At");
-  const ageIndex = tableHeader.indexOf("Age (days)");
-  const bioIndex = tableHeader.indexOf("Bio");
-  const companyIndex = tableHeader.indexOf("Company");
-  const watchingIndex = tableHeader.indexOf("Watching");
-  const starredRepoIndex = tableHeader.indexOf("Starred Repositories");
-  const followingIndex = tableHeader.indexOf("Following");
-  const followersIndex = tableHeader.indexOf("Followers");
-  const privateContribIndex = tableHeader.indexOf("Private Contributions");
-  const commitsIndex = tableHeader.indexOf("Commits");
-  const gistsIndex = tableHeader.indexOf("Gists");
-  const issuesIndex = tableHeader.indexOf("Issues");
-  const projectsIndex = tableHeader.indexOf("Projects");
-  const prIndex = tableHeader.indexOf("Pull Requests");
-  const prReviewsIndex = tableHeader.indexOf("Pull Request Reviews");
-  const repoIndex = tableHeader.indexOf("Repositories");
-  const repoDiscussionsIndex = tableHeader.indexOf("Repository Discussions");
-  const commitCommentsIndex = tableHeader.indexOf("Commit Comments");
-  const issueCommentsIndex = tableHeader.indexOf("Issue Comments");
-  const gistCommentsIndex = tableHeader.indexOf("Gist Comments");
-  const repoDiscussionCommentsIndex = tableHeader.indexOf(
+  const nameIndex = tableHeader?.indexOf("Name");
+  const emailIndex = tableHeader?.indexOf("Email");
+  const createdAtIndex = tableHeader?.indexOf("Created At");
+  const ageIndex = tableHeader?.indexOf("Age (days)");
+  const bioIndex = tableHeader?.indexOf("Bio");
+  const companyIndex = tableHeader?.indexOf("Company");
+  const watchingIndex = tableHeader?.indexOf("Watching");
+  const starredRepoIndex = tableHeader?.indexOf("Starred Repositories");
+  const followingIndex = tableHeader?.indexOf("Following");
+  const followersIndex = tableHeader?.indexOf("Followers");
+  const privateContribIndex = tableHeader?.indexOf("Private Contributions");
+  const commitsIndex = tableHeader?.indexOf("Commits");
+  const gistsIndex = tableHeader?.indexOf("Gists");
+  const issuesIndex = tableHeader?.indexOf("Issues");
+  const projectsIndex = tableHeader?.indexOf("Projects");
+  const prIndex = tableHeader?.indexOf("Pull Requests");
+  const prReviewsIndex = tableHeader?.indexOf("Pull Request Reviews");
+  const repoIndex = tableHeader?.indexOf("Repositories");
+  const repoDiscussionsIndex = tableHeader?.indexOf("Repository Discussions");
+  const commitCommentsIndex = tableHeader?.indexOf("Commit Comments");
+  const issueCommentsIndex = tableHeader?.indexOf("Issue Comments");
+  const gistCommentsIndex = tableHeader?.indexOf("Gist Comments");
+  const repoDiscussionCommentsIndex = tableHeader?.indexOf(
     "Repository Discussion Comments"
   );
 
