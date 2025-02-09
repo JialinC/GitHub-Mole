@@ -25,6 +25,8 @@ services:
       GITHUB_API_URL :  "https://api.github.com"
       NCSU_GITHUB_HOSTNAME : "https://github.ncsu.edu"
       NCSU_GITHUB_API_URL : "https://api.github.ncsu.edu"
+    networks:
+      - test-network
       
   db:
     image: mysql:8.0
@@ -35,6 +37,25 @@ services:
       - db_data:/var/lib/mysql
     ports:
       - "3306:3306"
+    networks:
+      - test-network
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - db
+      - backend
+    environment:
+      VITE_BACKEND_URL: "http://localhost:5000"
+    networks:
+      - test-network
 
 volumes:
   db_data:
+
+networks:
+  test-network:
+    driver: bridge
