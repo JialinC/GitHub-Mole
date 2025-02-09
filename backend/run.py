@@ -34,3 +34,11 @@ def test_db():
     except Exception as e:
         # If an error occurs, it means the connection was unsuccessful
         return f"Failed to connect to database. Error: {e}"
+
+
+if __name__ == "__main__":
+    # Iterate over the rules of the URL map and print them
+    print("Accessible endpoints:")
+    for rule in app.url_map.iter_rules():
+        print(f"{rule.endpoint}: {rule}")
+    app.run(debug=True)
