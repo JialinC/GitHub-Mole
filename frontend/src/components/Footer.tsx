@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
         </p>
         <p>
           <a
-            href="https://github.com/JialinC/GHTeam"
+            href="https://github.com/JialinC/GitHub-Mole"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-400 hover:text-blue-600 underline"
