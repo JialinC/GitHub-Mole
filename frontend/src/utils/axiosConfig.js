@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create an Axios instance
 const axiosInstance = axios.create({
-  baseURL: 'http://127.0.0.1:5000'
+  baseURL: import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000'
 });
 
 // Request interceptor to add the access token to headers
