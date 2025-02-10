@@ -28,17 +28,17 @@ def show_session():
 def test_db():
     try:
         with db.engine.connect() as connection:
-            result = connection.execute(text("SELECT VERSION()"))
-            version = result.fetchone()[0]
-            return f"Successfully connected to MySQL database. Version: {version}"
+            # Fetch all table names from the database
+            result = connection.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE()"))
+            tables = [row[0] for row in result.fetchall()]
+            return f"Successfully connected to MySQL database. Tables: {', '.join(tables)}"
     except Exception as e:
         # If an error occurs, it means the connection was unsuccessful
         return f"Failed to connect to database. Error: {e}"
 
 
 if __name__ == "__main__":
-    # Iterate over the rules of the URL map and print them
     print("Accessible endpoints:")
     for rule in app.url_map.iter_rules():
         print(f"{rule.endpoint}: {rule}")
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
