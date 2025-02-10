@@ -11,7 +11,7 @@ from sqlalchemy import text
 # from sqlalchemy import text
 
 app = create_app()
-CORS(app)
+CORS(app, resources={r"/*": {"origins": ["http://152.7.177.158:3000", "http://localhost:3000"]}}) #CORS(app)
 jwt = JWTManager(app)
 
 

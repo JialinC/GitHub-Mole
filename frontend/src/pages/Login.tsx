@@ -163,7 +163,7 @@ const Login: React.FC = () => {
               <button
                 onClick={() =>
                   (window.location.href =
-                    "http://127.0.0.1:5000/oauth/authorize")
+                    `${import.meta.env.VITE_BACKEND_URL}/oauth/authorize`)
                 }
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full focus:outline-none focus:shadow-outline flex items-center justify-center"
               >

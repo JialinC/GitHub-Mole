@@ -11,16 +11,16 @@ services:
     depends_on:
       - db
     environment:
-      SECRET_KEY : ""
+      SECRET_KEY : "36c0087a5a1263e1225be81ab64325851d26d9ec3267077dbb58cf39eac5e168"
       FRONTEND_URL: "http://localhost:3000"
       MYSQL_DATABASE_USER: "root"
       MYSQL_DATABASE_PASSWORD : "password"
       MYSQL_DATABASE_DB : "ghtest"
       MYSQL_DATABASE_HOST: "db"
       NCSU_GITHUB_OAUTH_CLIENT_ID : "56a0cc74d6071c16d4df"
-      NCSU_GITHUB_OAUTH_CLIENT_SECRET : ""
+      NCSU_GITHUB_OAUTH_CLIENT_SECRET : "77293fb07777612a56def82ede48f89c65cd8895"
       GITHUB_OAUTH_CLIENT_ID : "918ef50cd94282d71b1b"
-      GITHUB_OAUTH_CLIENT_SECRET : ""
+      GITHUB_OAUTH_CLIENT_SECRET : "9d8242fe2293c6d8784f48ee6ba6117d1cb4e748"
       GITHUB_HOSTNAME : "https://github.com"
       GITHUB_API_URL :  "https://api.github.com"
       NCSU_GITHUB_HOSTNAME : "https://github.ncsu.edu"
@@ -49,7 +49,7 @@ services:
       - db
       - backend
     environment:
-      VITE_BACKEND_URL: "http://localhost:5000"
+      VITE_BACKEND_URL: "http://152.7.177.158:5000"
     networks:
       - test-network
 
