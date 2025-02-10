@@ -1,14 +1,9 @@
 from app import create_app
 from flask_cors import CORS
 from app.database import db
-from flask import session, jsonify
-from app.models.user import User
-from datetime import datetime, timedelta
+from flask import session
 from flask_jwt_extended import JWTManager
 from sqlalchemy import text
-
-
-# from sqlalchemy import text
 
 app = create_app()
 CORS(app)

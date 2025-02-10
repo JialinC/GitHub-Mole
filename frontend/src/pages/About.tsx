@@ -62,8 +62,88 @@ const About: React.FC = () => {
       <main className="flex-grow container mx-auto p-4">
         <div className="p-6 bg-gray-800 text-white rounded-lg shadow-md">
           <h2 className="text-2xl font-bold mb-4">About GitHub-Mole:</h2>
+          <p>
+            <strong>GitHub-Mole</strong> is a hybrid web/local application that
+            can be deployed for collaborative use or operated locally for
+            individual analysis. It enables users to mine and analyze
+            comprehensive contribution histories of GitHub users of interest
+            while also assisting in the formation of software development teams
+            using research-backed algorithms. The application leverages the{" "}
+            <strong>GitHub GraphQL and REST APIs</strong> to retrieve detailed
+            information about users' contributions, including repositories,
+            commits, and other key activities. It features an intuitive,
+            user-friendly interface that facilitates efficient data management
+            and analysis. Additionally, it incorporates a{" "}
+            <strong>backend database</strong> to store mined data, allowing
+            users to retrieve their results at any time.
+          </p>
 
-          <h2 className="text-2xl font-bold mb-4">
+          <h2 className="text-l font-bold mt-4 mb-2">Key Features</h2>
+          <ul className="list-disc list-inside mb-4">
+            <li>
+              <strong>User Authentication:</strong> Secure OAuth-based
+              authentication via GitHub, enabling users to log in and access
+              their GitHub data safely.
+            </li>
+            <li>
+              <strong>Dashboard:</strong> A central dashboard providing an
+              overview of a user's GitHub activity, including recent commits,
+              contributions, and repository statistics.
+            </li>
+            <li>
+              <strong>Repositories:</strong> A dedicated section displaying
+              detailed repository information, including language statistics,
+              commit history, and other metadata.
+            </li>
+            <li>
+              <strong>Commits:</strong> A comprehensive commit history view with
+              filtering and analysis capabilities.
+            </li>
+            <li>
+              <strong>Contributions:</strong> A breakdown of user contributions
+              across repositories, including issues, pull requests, and
+              comments.
+            </li>
+            <li>
+              <strong>Software Development Team Formation:</strong> An
+              intelligent feature for forming software development teams based
+              on GitHub metrics and research-backed algorithms.
+            </li>
+            <li>
+              <strong>Responsive Design:</strong> A fully responsive design
+              ensuring an optimal user experience across various devices and
+              screen sizes.
+            </li>
+          </ul>
+
+          <h2 className="text-l font-bold mb-2">Technologies Used</h2>
+          <ul className="list-disc list-inside">
+            <li>
+              <strong>React + Vite + TypeScript:</strong> A high-performance
+              frontend framework for an interactive user experience.
+            </li>
+            <li>
+              <strong>Flask:</strong> A lightweight Python-based backend
+              framework handling API requests and authentication.
+            </li>
+            <li>
+              <strong>GraphQL & REST API:</strong> Integration with GitHub's
+              APIs for flexible and efficient data retrieval.
+            </li>
+            <li>
+              <strong>OAuth:</strong> Secure user authentication via GitHub
+              login.
+            </li>
+            <li>
+              <strong>Tailwind CSS:</strong> A modern utility-first CSS
+              framework for consistent and stylish UI design.
+            </li>
+            <li>
+              <strong>MySQL:</strong> A robust storage solution that allows
+              users to persist mining results for future analysis.
+            </li>
+          </ul>
+          <h2 className="text-2xl font-bold mt-4 mb-4">
             The following papers have been published based on the data collected
             by GitHub-Mole:
           </h2>
