@@ -20,7 +20,7 @@ const Login: React.FC = () => {
   useEffect(() => {
     const fetchSSOConfig = async () => {
       try {
-        const response = await axios.get("/api/helper/sso", { timeout: 5000 });
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/helper/sso`, { timeout: 5000 });
         setSsoEnabled(response.data.sso_config);
         setError(null);
       } catch (error) {
@@ -49,7 +49,7 @@ const Login: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post("/api/helper/validate-pat", {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/helper/validate-pat`, {
         pat,
         accountType,
         apiUrl:
@@ -163,7 +163,7 @@ const Login: React.FC = () => {
               <button
                 onClick={() =>
                   (window.location.href =
-                    "http://127.0.0.1:5000/oauth/authorize")
+                    `${import.meta.env.VITE_BACKEND_URL}/oauth/authorize`)
                 }
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full focus:outline-none focus:shadow-outline flex items-center justify-center"
               >

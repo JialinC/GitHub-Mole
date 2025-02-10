@@ -1,12 +1,7 @@
-import React, { useState } from "react";
-import { FaArrowLeft, FaArrowRight, FaHeart } from "react-icons/fa";
+import React from "react";
+import { FaHeart } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
 import "./CustomHeatmap.css";
-
-interface Contribution {
-  date: string;
-  count: number;
-}
 
 interface CustomHeatmapProps {
   joinDate: string | null;

@@ -210,6 +210,7 @@ const Contributions: React.FC = () => {
     );
   };
 
+
   const nameIndex = getHeaderIndex(tableHeader, "Name");
   const emailIndex = getHeaderIndex(tableHeader, "Email");
   const createdAtIndex = getHeaderIndex(tableHeader, "Created At");
