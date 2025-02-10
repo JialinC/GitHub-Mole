@@ -123,7 +123,7 @@ const Contributions: React.FC = () => {
   }, []);
 
   const getHeaderIndex = (headers: string[], field: string): number => {
-    return headers.indexOf(field);
+    return headers?.indexOf(field) ?? -1;
   };
 
   const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -210,29 +210,37 @@ const Contributions: React.FC = () => {
     );
   };
 
-  const nameIndex = tableHeader?.indexOf("Name");
-  const emailIndex = tableHeader?.indexOf("Email");
-  const createdAtIndex = tableHeader?.indexOf("Created At");
-  const ageIndex = tableHeader?.indexOf("Age (days)");
-  const bioIndex = tableHeader?.indexOf("Bio");
-  const companyIndex = tableHeader?.indexOf("Company");
-  const watchingIndex = tableHeader?.indexOf("Watching");
-  const starredRepoIndex = tableHeader?.indexOf("Starred Repositories");
-  const followingIndex = tableHeader?.indexOf("Following");
-  const followersIndex = tableHeader?.indexOf("Followers");
-  const privateContribIndex = tableHeader?.indexOf("Private Contributions");
-  const commitsIndex = tableHeader?.indexOf("Commits");
-  const gistsIndex = tableHeader?.indexOf("Gists");
-  const issuesIndex = tableHeader?.indexOf("Issues");
-  const projectsIndex = tableHeader?.indexOf("Projects");
-  const prIndex = tableHeader?.indexOf("Pull Requests");
-  const prReviewsIndex = tableHeader?.indexOf("Pull Request Reviews");
-  const repoIndex = tableHeader?.indexOf("Repositories");
-  const repoDiscussionsIndex = tableHeader?.indexOf("Repository Discussions");
-  const commitCommentsIndex = tableHeader?.indexOf("Commit Comments");
-  const issueCommentsIndex = tableHeader?.indexOf("Issue Comments");
-  const gistCommentsIndex = tableHeader?.indexOf("Gist Comments");
-  const repoDiscussionCommentsIndex = tableHeader?.indexOf(
+
+  const nameIndex = getHeaderIndex(tableHeader, "Name");
+  const emailIndex = getHeaderIndex(tableHeader, "Email");
+  const createdAtIndex = getHeaderIndex(tableHeader, "Created At");
+  const ageIndex = getHeaderIndex(tableHeader, "Age (days)");
+  const bioIndex = getHeaderIndex(tableHeader, "Bio");
+  const companyIndex = getHeaderIndex(tableHeader, "Company");
+  const watchingIndex = getHeaderIndex(tableHeader, "Watching");
+  const starredRepoIndex = getHeaderIndex(tableHeader, "Starred Repositories");
+  const followingIndex = getHeaderIndex(tableHeader, "Following");
+  const followersIndex = getHeaderIndex(tableHeader, "Followers");
+  const privateContribIndex = getHeaderIndex(
+    tableHeader,
+    "Private Contributions"
+  );
+  const commitsIndex = getHeaderIndex(tableHeader, "Commits");
+  const gistsIndex = getHeaderIndex(tableHeader, "Gists");
+  const issuesIndex = getHeaderIndex(tableHeader, "Issues");
+  const projectsIndex = getHeaderIndex(tableHeader, "Projects");
+  const prIndex = getHeaderIndex(tableHeader, "Pull Requests");
+  const prReviewsIndex = getHeaderIndex(tableHeader, "Pull Request Reviews");
+  const repoIndex = getHeaderIndex(tableHeader, "Repositories");
+  const repoDiscussionsIndex = getHeaderIndex(
+    tableHeader,
+    "Repository Discussions"
+  );
+  const commitCommentsIndex = getHeaderIndex(tableHeader, "Commit Comments");
+  const issueCommentsIndex = getHeaderIndex(tableHeader, "Issue Comments");
+  const gistCommentsIndex = getHeaderIndex(tableHeader, "Gist Comments");
+  const repoDiscussionCommentsIndex = getHeaderIndex(
+    tableHeader,
     "Repository Discussion Comments"
   );
 
