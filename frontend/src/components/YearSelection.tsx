@@ -33,7 +33,8 @@ const YearSelection: React.FC<YearSelectionProps> = ({
       >
         <FaArrowLeft />
       </button>
-      <div className="flex space-x-4 mx-4">
+      {/* <div className="flex space-x-4 mx-4"> */}
+      <div className="flex overflow-x-auto scrollbar-hide mx-4 space-x-4 px-2 w-full max-w-xs sm:max-w-md md:max-w-lg justify-center">
         {visibleYears.map((year) => (
           <button
             key={year}
