@@ -13,7 +13,7 @@ import Table from "../components/Table";
 import UploadSection from "../components/UploadSection";
 import { repoURLCSV } from "../constants/Descriptions";
 import { commitTableHeaders } from "../constants/constants";
-import githubIDs from "../assets/github_ids.png";
+import repoURL from "../assets/repo_url.png";
 import {
   downloadCsv,
   fetchWithRateLimit,
@@ -410,7 +410,7 @@ const Contributions: React.FC = () => {
                 labelText="Query commits and statistics from the default branch (e.g., main or master branch) in the specified repository."
               />
               <UploadSection
-                demoImage={githubIDs}
+                demoImage={repoURL}
                 handleFileChange={handleFileChange}
                 title="Upload Repository URLs"
                 description={repoURLCSV}
@@ -423,7 +423,11 @@ const Contributions: React.FC = () => {
                 number of repositories or very large repositories, it is
                 recommended to query a smaller number of repositories at a time.
               </div>
-              <Button handleAction={handleSubmit} text={"Submit"} />
+              <Button
+                handleAction={handleSubmit}
+                text={"Submit"}
+                disabled={loading}
+              />
             </>
           ) : (
             <>
