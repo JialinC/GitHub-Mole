@@ -35,7 +35,6 @@ const renderCustomizedLabel = ({
   innerRadius,
   outerRadius,
   percent,
-  index,
 }: any) => {
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
@@ -216,7 +215,7 @@ const CommitsHistPie: React.FC<GraphComponentProps> = ({ headers, data }) => {
                     <YAxis stroke="#ffffff" tickFormatter={formatYAxis} />
                     <Tooltip />
                     <Bar dataKey="additions">
-                      {sortedAdditionsData.map((entry, index) => (
+                      {sortedAdditionsData.map((item, index) => (
                         <Cell key={`cell-${index}`} fill={getColor(index)} />
                       ))}
                     </Bar>
@@ -248,7 +247,7 @@ const CommitsHistPie: React.FC<GraphComponentProps> = ({ headers, data }) => {
                     <YAxis stroke="#ffffff" tickFormatter={formatYAxis} />
                     <Tooltip />
                     <Bar dataKey="deletions">
-                      {sortedDeletionsData.map((entry, index) => (
+                      {sortedDeletionsData.map((item, index) => (
                         <Cell key={`cell-${index}`} fill={getColor(index)} />
                       ))}
                     </Bar>
@@ -280,7 +279,7 @@ const CommitsHistPie: React.FC<GraphComponentProps> = ({ headers, data }) => {
                     <YAxis stroke="#ffffff" tickFormatter={formatYAxis} />
                     <Tooltip />
                     <Bar dataKey="commits">
-                      {sortedCommitsData.map((entry, index) => (
+                      {sortedCommitsData.map((item, index) => (
                         <Cell key={`cell-${index}`} fill={getColor(index)} />
                       ))}
                     </Bar>
@@ -314,7 +313,7 @@ const CommitsHistPie: React.FC<GraphComponentProps> = ({ headers, data }) => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {sortedAdditionsData.map((entry, index) => (
+                  {sortedAdditionsData.map((item, index) => (
                     <Cell key={`cell-${index}`} fill={getColor(index)} />
                   ))}
                 </Pie>
@@ -339,7 +338,7 @@ const CommitsHistPie: React.FC<GraphComponentProps> = ({ headers, data }) => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {sortedDeletionsData.map((entry, index) => (
+                  {sortedDeletionsData.map((item, index) => (
                     <Cell key={`cell-${index}`} fill={getColor(index)} />
                   ))}
                 </Pie>
@@ -364,7 +363,7 @@ const CommitsHistPie: React.FC<GraphComponentProps> = ({ headers, data }) => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {sortedCommitsData.map((entry, index) => (
+                  {sortedCommitsData.map((item, index) => (
                     <Cell key={`cell-${index}`} fill={getColor(index)} />
                   ))}
                 </Pie>

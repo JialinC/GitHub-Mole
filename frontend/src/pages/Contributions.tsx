@@ -43,6 +43,7 @@ import {
   generateCsvContent,
   handleFileChange as handleFileChangeUtil,
   handleWaitTime as handleWaitTimeUtil,
+  parseCSV,
   toCamelCase,
 } from "../utils/helpers";
 import {
@@ -55,11 +56,13 @@ import {
 const Contributions: React.FC = () => {
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const navigate = useNavigate();
-  const [queryOption, setQueryOption] = useState<string>("totalContributions");
-  const [file, setFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [fatal, setFatal] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [file, setFile] = useState<File | null>(null);
+  const [githubId, setGithubId] = useState("");
+  const [inputOption, setInputOption] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [queryOption, setQueryOption] = useState<string>("totalContributions");
   const [selectedLangs, setSelectedLangs] = useState<Set<string>>(new Set());
   const [selectedContribution, setSelectedContribution] = useState<string>("");
 
@@ -147,6 +150,10 @@ const Contributions: React.FC = () => {
 
   const handleTimeRangeChange = () => {
     updateTimeRange("isTimeRangeSelected", !timeRange.isTimeRangeSelected);
+  };
+
+  const handleInputChange = () => {
+    setInputOption(!inputOption);
   };
 
   const handleStartDateChange = (
@@ -340,21 +347,17 @@ const Contributions: React.FC = () => {
     updateTableData(index, ageIndex, Math.floor(differenceInDays).toString());
     updateTableData(index, bioIndex, profile.bio?.toString() || "N/A");
     updateTableData(index, companyIndex, profile.company?.toString() || "N/A");
-    updateTableData(index, watchingIndex, "Not trackable within time range.");
-    updateTableData(
-      index,
-      starredRepoIndex,
-      "Not trackable within time range."
-    );
-    updateTableData(index, followingIndex, "Not trackable within time range.");
-    updateTableData(index, followersIndex, "Not trackable within time range.");
+    updateTableData(index, watchingIndex, "0");
+    updateTableData(index, starredRepoIndex, "0");
+    updateTableData(index, followingIndex, "0");
+    updateTableData(index, followersIndex, "0");
     updateTableData(
       index,
       privateContribIndex,
       userContribution.res_con.toString()
     );
     updateTableData(index, commitsIndex, userContribution.commit.toString());
-    updateTableData(index, projectsIndex, "Not trackable within time range.");
+    updateTableData(index, projectsIndex, "0");
     updateTableData(
       index,
       prReviewsIndex,
@@ -442,157 +445,242 @@ const Contributions: React.FC = () => {
     return ccCnt;
   }
 
+  const totalContriID = async (githubID: string, i: number) => {
+    addLoadingRow(setTableData, tableHeader.length);
+    let profile = await fetchWithRateLimit(
+      fetchFunctions["Profile"],
+      handleWaitTime,
+      githubID,
+      setFatal
+    );
+
+    setAvatarMap((prevAvatarMap) => ({
+      ...prevAvatarMap,
+      [githubID]: profile.avatarUrl,
+    }));
+
+    updateTableData(i - 1, 0, githubID);
+
+    if (!timeRange.isTimeRangeSelected) {
+      let userContribution = await fetchWithRateLimit(
+        fetchFunctions["Contributions"],
+        handleWaitTime,
+        githubID,
+        setFatal
+      );
+
+      updateProfileData(i - 1, profile, userContribution);
+
+      const userALangs = await fetchAndProcessRepos(
+        githubID,
+        i - 1,
+        "Owned Original Repo",
+        24
+      );
+      const userBLangs = await fetchAndProcessRepos(
+        githubID,
+        i - 1,
+        "Owned Forked Repo",
+        28
+      );
+      const userCLangs = await fetchAndProcessRepos(
+        githubID,
+        i - 1,
+        "Collaborating Original Repo",
+        32
+      );
+      const userDLangs = await fetchAndProcessRepos(
+        githubID,
+        i - 1,
+        "Collaborating Forked Repo",
+        36
+      );
+
+      const totalLangs = new Set([
+        ...userALangs.userLangs,
+        ...userBLangs.userLangs,
+        ...userCLangs.userLangs,
+        ...userDLangs.userLangs,
+      ]);
+      updateTableData(i - 1, 40, totalLangs.size.toString() || "N/A");
+    } else {
+      const start = new Date(timeRange.startDate);
+      const end = new Date(timeRange.endDate);
+      let userContribution = await fetchWithRateLimit(
+        fetchFunctions["Contributions"],
+        handleWaitTime,
+        githubID,
+        setFatal,
+        timeRange.startDate,
+        timeRange.endDate
+      );
+      updateProfileDataTime(i - 1, profile, userContribution, end);
+
+      const list = [
+        "Commit Comments",
+        "Gist Comments",
+        "Issue Comments",
+        "Repository Discussion Comments",
+        "Gists",
+        "Issues",
+        "Pull Requests",
+        "Repository Discussions",
+      ];
+
+      for (const contributionType of list) {
+        const ccIndex = getHeaderIndex(tableHeader, contributionType);
+        const ccCnt = await countInTime(
+          "Commit Comments",
+          handleWaitTime,
+          githubID,
+          setFatal,
+          start,
+          end
+        );
+        updateTableData(i - 1, ccIndex, ccCnt.toString() || "N/A");
+      }
+      const userALangs = await fetchAndProcessRepos(
+        githubID,
+        i - 1,
+        "Owned Original Repo",
+        24
+      );
+      const userBLangs = await fetchAndProcessRepos(
+        githubID,
+        i - 1,
+        "Owned Forked Repo",
+        28
+      );
+      const userCLangs = await fetchAndProcessRepos(
+        githubID,
+        i - 1,
+        "Collaborating Original Repo",
+        32
+      );
+      const userDLangs = await fetchAndProcessRepos(
+        githubID,
+        i - 1,
+        "Collaborating Forked Repo",
+        36
+      );
+
+      const totalLangs = new Set([
+        ...userALangs.userLangs,
+        ...userBLangs.userLangs,
+        ...userCLangs.userLangs,
+        ...userDLangs.userLangs,
+      ]);
+      const repoCnt =
+        userALangs.repoCnt +
+        userBLangs.repoCnt +
+        userCLangs.repoCnt +
+        userDLangs.repoCnt;
+      updateTableData(i - 1, 40, totalLangs.size.toString() || "N/A");
+      updateTableData(i - 1, 18, repoCnt.toString());
+    }
+    loadRateLimit();
+  };
+
   const queryTotalContrib = async (data: string[][], signal: AbortSignal) => {
-    setLoading(true);
     for (let i = 1; i < data.length; i++) {
       if (signal.aborted) {
         console.log("aborted");
         break;
       }
       const githubID = data[i][0];
-      addLoadingRow(setTableData, tableHeader.length);
+      await totalContriID(githubID, i);
+    }
+  };
 
-      let profile = await fetchWithRateLimit(
-        fetchFunctions["Profile"],
+  const specificContribID = async (
+    githubID: string,
+    key: FetchFunctionKeys,
+    start: Date | null,
+    end: Date | null,
+    rowIndex: { value: number }
+  ) => {
+    let profile = await fetchWithRateLimit(
+      fetchFunctions["Profile"],
+      handleWaitTime,
+      githubID,
+      setFatal
+    );
+    setAvatarMap((prevAvatarMap) => ({
+      ...prevAvatarMap,
+      [githubID]: profile.avatarUrl,
+    }));
+
+    let endCursor: string | null = null;
+    let hasNextPage: boolean = false;
+    let hasContributions = false;
+    let inTimeRange = false;
+
+    do {
+      let response = await fetchWithRateLimit(
+        fetchFunctions[key],
         handleWaitTime,
         githubID,
-        setFatal
+        setFatal,
+        endCursor
       );
+      const { nodes, pageInfo } = response;
+      endCursor = pageInfo?.endCursor || null;
+      hasNextPage = pageInfo?.hasNextPage || false;
 
-      setAvatarMap((prevAvatarMap) => ({
-        ...prevAvatarMap,
-        [githubID]: profile.avatarUrl,
-      }));
-
-      updateTableData(i - 1, 0, githubID);
-
-      if (!timeRange.isTimeRangeSelected) {
-        let userContribution = await fetchWithRateLimit(
-          fetchFunctions["Contributions"],
-          handleWaitTime,
-          githubID,
-          setFatal
-        );
-
-        updateProfileData(i - 1, profile, userContribution);
-
-        const userALangs = await fetchAndProcessRepos(
-          githubID,
-          i - 1,
-          "Owned Original Repo",
-          24
-        );
-        const userBLangs = await fetchAndProcessRepos(
-          githubID,
-          i - 1,
-          "Owned Forked Repo",
-          28
-        );
-        const userCLangs = await fetchAndProcessRepos(
-          githubID,
-          i - 1,
-          "Collaborating Original Repo",
-          32
-        );
-        const userDLangs = await fetchAndProcessRepos(
-          githubID,
-          i - 1,
-          "Collaborating Forked Repo",
-          36
-        );
-
-        const totalLangs = new Set([
-          ...userALangs.userLangs,
-          ...userBLangs.userLangs,
-          ...userCLangs.userLangs,
-          ...userDLangs.userLangs,
-        ]);
-        updateTableData(i - 1, 40, totalLangs.size.toString() || "N/A");
-      } else {
-        const start = new Date(timeRange.startDate);
-        const end = new Date(timeRange.endDate);
-        let userContribution = await fetchWithRateLimit(
-          fetchFunctions["Contributions"],
-          handleWaitTime,
-          githubID,
-          setFatal,
-          timeRange.startDate,
-          timeRange.endDate
-        );
-        updateProfileDataTime(i - 1, profile, userContribution, end);
-
-        const list = [
-          "Commit Comments",
-          "Gist Comments",
-          "Issue Comments",
-          "Repository Discussion Comments",
-          "Gists",
-          "Issues",
-          "Pull Requests",
-          "Repository Discussions",
-        ];
-
-        for (const contributionType of list) {
-          const ccIndex = getHeaderIndex(tableHeader, contributionType);
-          const ccCnt = await countInTime(
-            "Commit Comments",
-            handleWaitTime,
-            githubID,
-            setFatal,
-            start,
-            end
-          );
-          updateTableData(i - 1, ccIndex, ccCnt.toString() || "N/A");
-        }
-        const userALangs = await fetchAndProcessRepos(
-          githubID,
-          i - 1,
-          "Owned Original Repo",
-          24
-        );
-        const userBLangs = await fetchAndProcessRepos(
-          githubID,
-          i - 1,
-          "Owned Forked Repo",
-          28
-        );
-        const userCLangs = await fetchAndProcessRepos(
-          githubID,
-          i - 1,
-          "Collaborating Original Repo",
-          32
-        );
-        const userDLangs = await fetchAndProcessRepos(
-          githubID,
-          i - 1,
-          "Collaborating Forked Repo",
-          36
-        );
-
-        const totalLangs = new Set([
-          ...userALangs.userLangs,
-          ...userBLangs.userLangs,
-          ...userCLangs.userLangs,
-          ...userDLangs.userLangs,
-        ]);
-        const repoCnt =
-          userALangs.repoCnt +
-          userBLangs.repoCnt +
-          userCLangs.repoCnt +
-          userDLangs.repoCnt;
-        updateTableData(i - 1, 40, totalLangs.size.toString() || "N/A");
-        updateTableData(i - 1, 18, repoCnt.toString());
+      if (nodes.length === 0) {
+        addNARow(setTableData, tableHeader.length);
+        updateTableData(rowIndex.value, 0, githubID);
+        rowIndex.value++;
+        break;
       }
-      loadRateLimit();
+
+      hasContributions = true;
+      nodes.forEach((node: any) => {
+        if (timeRange.isTimeRangeSelected) {
+          const createdAt = new Date(node.createdAt);
+          if (start && end && (createdAt < start || createdAt > end)) {
+            return;
+          }
+        }
+        inTimeRange = true;
+        addLoadingRow(setTableData, tableHeader.length);
+        updateTableData(rowIndex.value, 0, githubID);
+        tableHeader.forEach((header, index) => {
+          if (index === 0) return; // Skip GitHub ID column
+          const value =
+            header === "Primary Language"
+              ? node.primaryLanguage?.name || "N/A"
+              : header === "Language Stats"
+              ? JSON.stringify(
+                  node.languages.edges.reduce((acc: any, item: any) => {
+                    const key = item.node.name;
+                    const value = item.size;
+                    if (!acc[key]) {
+                      acc[key] = 0;
+                    }
+                    acc[key] += value;
+                    return acc;
+                  }, {})
+                )
+              : node[toCamelCase(header)] || "N/A";
+          updateTableData(rowIndex.value, index, value);
+        });
+        rowIndex.value++;
+      });
+    } while (hasNextPage);
+
+    if (timeRange.isTimeRangeSelected && hasContributions && !inTimeRange) {
+      addNARow(setTableData, tableHeader.length);
+      updateTableData(rowIndex.value, 0, githubID);
+      rowIndex.value++;
     }
-    setLoading(false);
+    loadRateLimit();
   };
 
   const querySpecificContrib = async (
     data: string[][],
     signal: AbortSignal
   ) => {
-    setLoading(true);
     const key: FetchFunctionKeys = selectedContribution as FetchFunctionKeys;
     const start = timeRange.isTimeRangeSelected
       ? new Date(timeRange.startDate)
@@ -600,94 +688,15 @@ const Contributions: React.FC = () => {
     const end = timeRange.isTimeRangeSelected
       ? new Date(timeRange.endDate)
       : null;
-    let rowIndex = 0;
-
+    let rowIndex = { value: 0 };
     for (let i = 1; i < data.length; i++) {
       if (signal.aborted) {
         console.log("aborted");
         break;
       }
       const githubID = data[i][0];
-
-      let profile = await fetchWithRateLimit(
-        fetchFunctions["Profile"],
-        handleWaitTime,
-        githubID,
-        setFatal
-      );
-
-      setAvatarMap((prevAvatarMap) => ({
-        ...prevAvatarMap,
-        [githubID]: profile.avatarUrl,
-      }));
-
-      let endCursor: string | null = null;
-      let hasNextPage: boolean = false;
-      let hasContributions = false;
-      let inTimeRange = false;
-
-      do {
-        let response = await fetchWithRateLimit(
-          fetchFunctions[key],
-          handleWaitTime,
-          githubID,
-          setFatal,
-          endCursor
-        );
-        const { nodes, pageInfo } = response;
-        endCursor = pageInfo?.endCursor || null;
-        hasNextPage = pageInfo?.hasNextPage || false;
-
-        if (nodes.length === 0) {
-          addNARow(setTableData, tableHeader.length);
-          updateTableData(rowIndex, 0, githubID);
-          rowIndex++;
-          break;
-        }
-
-        hasContributions = true;
-        nodes.forEach((node: any) => {
-          if (timeRange.isTimeRangeSelected) {
-            const createdAt = new Date(node.createdAt);
-            if (start && end && (createdAt < start || createdAt > end)) {
-              return;
-            }
-          }
-          inTimeRange = true;
-          addLoadingRow(setTableData, tableHeader.length);
-          updateTableData(rowIndex, 0, githubID);
-          tableHeader.forEach((header, index) => {
-            if (index === 0) return; // Skip GitHub ID column
-            const value =
-              header === "Primary Language"
-                ? node.primaryLanguage?.name || "N/A"
-                : header === "Language Stats"
-                ? JSON.stringify(
-                    node.languages.edges.reduce((acc: any, item: any) => {
-                      const key = item.node.name;
-                      const value = item.size;
-                      if (!acc[key]) {
-                        acc[key] = 0;
-                      }
-                      acc[key] += value;
-                      return acc;
-                    }, {})
-                  )
-                : node[toCamelCase(header)] || "N/A";
-            updateTableData(rowIndex, index, value);
-          });
-          rowIndex++;
-        });
-      } while (hasNextPage);
-
-      if (timeRange.isTimeRangeSelected && hasContributions && !inTimeRange) {
-        addNARow(setTableData, tableHeader.length);
-        updateTableData(rowIndex, 0, githubID);
-        rowIndex++;
-      }
-      loadRateLimit();
+      await specificContribID(githubID, key, start, end, rowIndex);
     }
-    setLoading(false);
   };
 
   const validateInputs = () => {
@@ -729,35 +738,64 @@ const Contributions: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!validateInputs()) {
-      return;
-    }
-
-    const signal = abortControllerRef.current?.signal;
-
-    file &&
-      Papa.parse(file, {
-        complete: async (result: Papa.ParseResult<string[]>) => {
-          try {
-            if (queryOption === "totalContributions") {
-              await queryTotalContrib(result.data as string[][], signal!);
-            } else if (queryOption === "specificContributions") {
-              await querySpecificContrib(result.data as string[][], signal!);
-            }
-          } catch (error) {
-            console.error("Error processing GitHub IDs:", error);
-            setFatal("Error processing GitHub IDs");
+    if (!inputOption) {
+      if (!validateInputs()) {
+        return;
+      }
+      setLoading(true);
+      const signal = abortControllerRef.current?.signal;
+      if (file) {
+        try {
+          const result = await parseCSV(file);
+          if (queryOption === "totalContributions") {
+            await queryTotalContrib(result.data, signal!);
+          } else if (queryOption === "specificContributions") {
+            await querySpecificContrib(result.data, signal!);
           }
-        },
-        header: false,
-        error: (error) => {
-          console.error("Error parsing file:", error);
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            file: "Error parsing file",
-          }));
-        },
-      });
+        } catch (error) {
+          console.error("Error processing GitHub IDs:", error);
+          setFatal("Error processing GitHub IDs");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    } else {
+      if (githubId === "") {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          githubId: "No GitHub ID entered",
+        }));
+        return;
+      }
+      setLoading(true);
+      try {
+        if (queryOption === "totalContributions") {
+          await totalContriID(githubId, 1);
+        } else if (queryOption === "specificContributions") {
+          const key: FetchFunctionKeys =
+            selectedContribution as FetchFunctionKeys;
+          const start = timeRange.isTimeRangeSelected
+            ? new Date(timeRange.startDate)
+            : null;
+          const end = timeRange.isTimeRangeSelected
+            ? new Date(timeRange.endDate)
+            : null;
+          let rowIndex = { value: 0 };
+
+          await specificContribID(githubId, key, start, end, rowIndex);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          fetch: "Failed to fetch contribution data",
+        }));
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const handleExport = () => {
@@ -830,6 +868,8 @@ const Contributions: React.FC = () => {
           tableHeader: tableHeader,
           tableData: tableData || [],
           ...(selectedLangs.size != 0 && { langs: langs }),
+          startTime: timeRange.startDate,
+          endTime: timeRange.endDate,
         },
         setFatal
       );
@@ -896,8 +936,41 @@ const Contributions: React.FC = () => {
                 optionValue="specificContributions"
                 labelText="Query and retrieve detailed information for a specific category of GitHub contributions (e.g., commit comments, pull requests, etc.) for the given GitHub IDs."
               />
-
-              {queryOption === "totalContributions" && (
+              <label className="text-white font-bold mb-2 block">
+                Only interested in a single user?
+              </label>
+              <div className="flex items-center mb-2">
+                <input
+                  type="checkbox"
+                  id="input"
+                  checked={inputOption}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                <label htmlFor="input" className="text-white">
+                  Yes
+                </label>
+              </div>
+              {inputOption && (
+                <div className="mb-4">
+                  <label
+                    htmlFor="githubId"
+                    className="text-lg font-bold text-white mb-4 block"
+                  >
+                    Enter GitHub ID
+                  </label>
+                  <input
+                    type="text"
+                    id="githubId"
+                    value={githubId}
+                    onChange={(e) => setGithubId(e.target.value)}
+                    placeholder="Please enter the GitHub ID you are curious about, e.g., JialinC."
+                    className="w-full px-3 py-2 text-gray-700 bg-gray-200 rounded-lg focus:outline-none"
+                  />
+                  {errors.githubId && <ErrorMessage error={errors.githubId} />}
+                </div>
+              )}
+              {!inputOption && (
                 <>
                   <UploadSection
                     demoImage={githubIDs}
@@ -905,28 +978,22 @@ const Contributions: React.FC = () => {
                     title="Upload GitHub IDs"
                     description={gitHubCSV}
                   />
-                  <div className="text-gray-300 mb-4">
-                    Note: The rate limit of 5000 requests should be sufficient
-                    to query the total contributions of over 200 average GitHub
-                    users. However, in cases where a user has an extensive and
-                    significant contribution history, the rate limit consumption
-                    may increase. Additionally, querying contributions for large
-                    number of users (i.e. 1000) at once can exceed the rate
-                    limit. We recommend breaking your input into smaller CSV
-                    files, each containing around 200 users, for optimal
-                    experience.
-                  </div>
+                  {queryOption === "totalContributions" && (
+                    <div className="text-gray-300 mb-4">
+                      Note: The rate limit of 5000 requests should be sufficient
+                      to query the total contributions of over 200 average
+                      GitHub users. However, in cases where a user has an
+                      extensive and significant contribution history, the rate
+                      limit consumption may increase. Additionally, querying
+                      contributions for large number of users (i.e. 1000) at
+                      once can exceed the rate limit. We recommend breaking your
+                      input into smaller CSV files, each containing around 200
+                      users, for optimal experience.
+                    </div>
+                  )}
+                  {errors.file && <ErrorMessage error={errors.file} />}
                 </>
               )}
-              {queryOption === "specificContributions" && (
-                <UploadSection
-                  demoImage={githubIDs}
-                  handleFileChange={handleFileChange}
-                  title="Upload GitHub IDs"
-                  description={gitHubCSV}
-                />
-              )}
-              {errors.file && <ErrorMessage error={errors.file} />}
               <div className="mb-6">
                 <label className="text-white font-bold mb-2 block">
                   Are you interested in querying the user contributions in a
@@ -949,8 +1016,9 @@ const Contributions: React.FC = () => {
                   account creation date until now. We recommend not selecting
                   this option unless you specifically need stats for a certain
                   period. Note that some data may not be available for a
-                  specific period, such as the number of followers during that
-                  time. If selected, the current implementation will query all
+                  specific period, they are the number of watchings, starred
+                  Repos, followings, followers, and projects during that time.
+                  If selected, the current implementation will query all
                   contributions from the account creation date and then filter
                   out those not within the selected period based on the{" "}
                   <span className="font-semibold text-white">"createdAt"</span>{" "}
@@ -1030,7 +1098,11 @@ const Contributions: React.FC = () => {
                 />
               )}
               {errors.contrib && <ErrorMessage error={errors.contrib} />}
-              <Button handleAction={handleSubmit} text={"Submit"} />
+              <Button
+                handleAction={handleSubmit}
+                text={"Submit"}
+                disabled={loading}
+              />
             </>
           ) : (
             <>

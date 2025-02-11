@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import logoImage from "../assets/app_logo.png";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import logoutImage from "../assets/logout.png";
 
 interface NavbarProps {

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Papa from "papaparse";
 
 import ava from "../assets/app_logo.png";
 import githubIDs from "../assets/github_ids.png";
@@ -13,6 +12,7 @@ import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import OptionSelector from "../components/OptionSelector";
 import SelectionSection from "../components/SelectionSection";
+import Spinner from "../components/Spinner";
 import Table from "../components/Table";
 import TotalHistogram from "../components/TotalHistogram";
 import UploadSection from "../components/UploadSection";
@@ -30,6 +30,7 @@ import {
   getUserAvatarUrl,
   handleFileChange as handleFileChangeUtil,
   handleWaitTime as handleWaitTimeUtil,
+  parseCSV,
   validateGitHubIdsFile,
   validateSelfDataFile,
 } from "../utils/helpers";
@@ -59,8 +60,9 @@ const Teams: React.FC = () => {
   const [remTime, setRemTime] = useState<number>(1000 - 1);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const [showTable, setShowTable] = useState<boolean>(false);
   const [tableHeader, setTableHeader] = useState<string[]>(teamTableHeaders);
-  const [tableData, setTableData] = useState<string[][] | null>(null);
+  const [tableData, setTableData] = useState<string[][] | null>([]);
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [teamSize, setTeamSize] = useState<number>(0);
   const [allowExceed, setAllowExceed] = useState<boolean>(true);
@@ -75,7 +77,7 @@ const Teams: React.FC = () => {
     limit: number;
     remaining: number;
   } | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [processing, setProcessing] = useState<boolean>(true);
 
   const languageChunks = chunkArray(languages, Math.ceil(languages.length / 4));
@@ -109,7 +111,7 @@ const Teams: React.FC = () => {
     }
     setFile(null);
     setSelectedLangs(new Set());
-    setTableData(null);
+    setTableData([]);
     setSelectedColumns([]);
   };
 
@@ -233,12 +235,10 @@ const Teams: React.FC = () => {
       updateTableData(i - 1, 7, userProfile.repositories.toString());
       loadRateLimit();
     }
-    setLoading(false);
   };
 
   const handleSubmit = async () => {
     const signal = abortControllerRef.current?.signal;
-
     if (!file) {
       setErrors((prevErrors) => ({
         ...prevErrors,
@@ -247,8 +247,6 @@ const Teams: React.FC = () => {
       return;
     }
 
-    setLoading(true);
-
     try {
       if (uploadOption === "ownDataset") {
         await validateSelfDataFile(file);
@@ -256,48 +254,64 @@ const Teams: React.FC = () => {
         await validateGitHubIdsFile(file);
       }
     } catch (error) {
-      if (error instanceof Error) {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          file: error.message,
-        }));
-      } else {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          file: "An unknown error occurred",
-        }));
-      }
-      setLoading(false);
-      return;
-    }
-
-    try {
-      Papa.parse(file, {
-        complete: (result: Papa.ParseResult<string[]>) => {
-          if (uploadOption === "ownDataset") {
-            const data = result.data as string[][];
-            const header = data[0];
-            const body = data.slice(1);
-            setTableHeader(header);
-            setTableData(body);
-            setLoading(false);
-          } else if (uploadOption === "githubIds") {
-            processGitHubIDs(result.data as string[][], signal!);
-          }
-        },
-        header: false,
-      });
-    } catch (error) {
       setErrors((prevErrors) => ({
         ...prevErrors,
-        file: "Error processing the input file",
+        file:
+          error instanceof Error ? error.message : "An unknown error occurred",
       }));
       return;
     }
+
+    setLoading(true);
+    setShowTable(true);
+    try {
+      const result = await parseCSV(file);
+      if (uploadOption === "ownDataset") {
+        const data = result.data as string[][];
+        const header = data[0];
+        const body = data.slice(1);
+        setTableHeader(header);
+        setTableData(body);
+      } else if (uploadOption === "githubIds") {
+        await processGitHubIDs(result.data as string[][], signal!);
+      }
+    } catch (error) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        processing: "Error processing the input file",
+      }));
+    } finally {
+      setLoading(false);
+    }
+    // try {
+    //   Papa.parse(file, {
+    //     complete: (result: Papa.ParseResult<string[]>) => {
+    //       if (uploadOption === "ownDataset") {
+    //         const data = result.data as string[][];
+    //         const header = data[0];
+    //         const body = data.slice(1);
+    //         setTableHeader(header);
+    //         setTableData(body);
+    //         setLoading(false);
+    //       } else if (uploadOption === "githubIds") {
+    //         processGitHubIDs(result.data as string[][], signal!);
+    //       }
+    //     },
+    //     header: false,
+    //   });
+    // } catch (error) {
+    //   setErrors((prevErrors) => ({
+    //     ...prevErrors,
+    //     file: "Error processing the input file",
+    //   }));
+    //   return;
+    // }
   };
 
   const handleBackToOptions = () => {
-    setTableData(null);
+    setShowTable(false);
+    setLoading(false);
+    setTableData([]);
     setFile(null);
     setSelectedLangs(new Set());
     setUploadOption("githubIds");
@@ -320,17 +334,31 @@ const Teams: React.FC = () => {
   };
 
   const handleColumnSubmit = async () => {
-    setProcessing(true);
-
+    let error = false;
     if (!tableData || teamSize <= 0 || teamSize > tableData.length - 1) {
       setErrors((prevErrors) => ({
         ...prevErrors,
         team: "Invalid team size. It must be greater than 0 and less than the number of rows in the uploaded file.",
       }));
-      return;
+      error = true;
     } else {
       setErrors((prevErrors) => ({ ...prevErrors, team: "" }));
     }
+    console.log(selectedColumns, error);
+    if (selectedColumns.length === 0) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        column: "Please select at least one column for team formation.",
+      }));
+      error = true;
+    } else {
+      setErrors((prevErrors) => ({ ...prevErrors, column: "" }));
+    }
+    if (error === true) {
+      return;
+    }
+
+    setProcessing(true);
     const selectedData: { [key: string]: string[] } = {};
     const ids = tableData.map((row) => row[0]);
     selectedData[tableHeader[0]] = ids;
@@ -386,10 +414,11 @@ const Teams: React.FC = () => {
       </Navbar>
       <main className="flex-grow container mx-auto p-4">
         <div className="p-6 bg-gray-800 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold text-white mb-4">
+          <h2 className="text-2xl font-bold text-white mb-4 flex items-center">
             Form Software Development Teams
+            {loading && <Spinner />}
           </h2>
-          {!tableData ? (
+          {!showTable ? (
             <>
               <OptionSelector
                 queryOption={uploadOption}
@@ -431,7 +460,11 @@ const Teams: React.FC = () => {
                 />
               )}
               {errors.langs && <ErrorMessage error={errors.langs} />}
-              <Button handleAction={handleSubmit} text={"Submit"} />
+              <Button
+                handleAction={handleSubmit}
+                text={"Submit"}
+                disabled={loading}
+              />
             </>
           ) : (
             <>
@@ -478,6 +511,8 @@ const Teams: React.FC = () => {
                 remainingTime={remTime}
                 totalTime={totTime}
               />
+              {errors.column && <ErrorMessage error={errors.column} />}
+              {errors.processing && <ErrorMessage error={errors.processing} />}
               {!loading && (
                 <>
                   <Button

@@ -9,6 +9,7 @@ import Modal from "../components/Modal";
 import Navbar from "../components/Navbar";
 import OptionSelector from "../components/OptionSelector";
 import Prompt from "../components/Prompt";
+import Spinner from "../components/Spinner";
 import Table from "../components/Table";
 import UploadSection from "../components/UploadSection";
 import { gitHubCSV } from "../constants/Descriptions";
@@ -21,6 +22,7 @@ import {
   getUserAvatarUrl,
   handleFileChange as handleFileChangeUtil,
   handleWaitTime as handleWaitTimeUtil,
+  parseCSV,
   validateGitHubIdsFile,
 } from "../utils/helpers";
 import {
@@ -51,8 +53,9 @@ const Commits: React.FC = () => {
   const [remTime, setRemTime] = useState<number>(1000 - 1);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const [showTable, setShowTable] = useState<boolean>(false);
   const [tableHeader, setTableHeader] = useState<string[]>([]);
-  const [tableData, setTableData] = useState<string[][] | null>(null);
+  const [tableData, setTableData] = useState<string[][] | null>([]);
 
   const [isPromptOpen, setIsPromptOpen] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -86,7 +89,7 @@ const Commits: React.FC = () => {
   const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setErrors({});
     setQueryOption(event.target.value);
-    setTableData(null);
+    setTableData([]);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,7 +126,7 @@ const Commits: React.FC = () => {
           ...prevErrors,
           githubId: `Invalid GitHub ID ${githubId}`,
         }));
-        setTableData(null);
+        setTableData([]);
         setFile(null);
         setLoading(false);
         return null;
@@ -307,29 +310,21 @@ const Commits: React.FC = () => {
         return;
       }
 
+      setLoading(true);
+      setShowTable(true);
       try {
-        Papa.parse(file, {
-          complete: async (result: Papa.ParseResult<string[]>) => {
-            setLoading(true);
-            await processGitHubIds(result.data as string[][], signal!);
-            setLoading(false);
-          },
-          header: false,
-        });
+        const result = await parseCSV(file);
+        await processGitHubIds(result.data as string[][], signal!);
       } catch (error) {
-        if (error instanceof Error) {
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            file: error.message,
-          }));
-        } else {
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            file: "An unknown error occurred",
-          }));
-        }
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          processing:
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred",
+        }));
+      } finally {
         setLoading(false);
-        return;
       }
     } else {
       if (!githubId) {
@@ -339,9 +334,22 @@ const Commits: React.FC = () => {
         }));
         return;
       }
+
       setLoading(true);
-      await processGitHubId(githubId, signal!);
-      setLoading(false);
+      setShowTable(true);
+      try {
+        await processGitHubId(githubId, signal!);
+      } catch (error) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          processing:
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred",
+        }));
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -356,7 +364,8 @@ const Commits: React.FC = () => {
 
   const handleBackToOptions = () => {
     setErrors({});
-    setTableData(null);
+    setShowTable(false);
+    setTableData([]);
     setFile(null);
   };
 
@@ -409,7 +418,7 @@ const Commits: React.FC = () => {
       </Navbar>
       <main className="flex-grow container mx-auto p-4">
         <div className="p-6 bg-gray-800 rounded-lg shadow-md">
-          {!tableData ? (
+          {!showTable ? (
             <>
               <h2 className="text-2xl font-bold text-white mb-4">
                 Mine ALL Commits by a User/a group of Users
@@ -428,9 +437,12 @@ const Commits: React.FC = () => {
               />
               {queryOption === "oneUser" && (
                 <div className="mb-4">
-                  <h3 className="text-lg font-bold text-white mb-4">
+                  <label
+                    htmlFor="githubId"
+                    className="text-lg font-bold text-white mb-4 block"
+                  >
                     Enter GitHub ID
-                  </h3>
+                  </label>
                   <input
                     type="text"
                     id="githubId"
@@ -488,8 +500,9 @@ const Commits: React.FC = () => {
             </>
           ) : (
             <>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="text-2xl font-bold text-white mb-4 flex items-center">
                 All Commits for Given User/Users
+                {loading && <Spinner />}
               </h2>
               {!loading && (
                 <UserCommitsHistPie headers={tableHeader} data={tableData} />
@@ -503,6 +516,7 @@ const Commits: React.FC = () => {
                 remainingTime={remTime}
                 totalTime={totTime}
               />
+              {errors.processing && <ErrorMessage error={errors.processing} />}
               {!loading && (
                 <>
                   <Button handleAction={handleExport} text={"Export Dataset"} />

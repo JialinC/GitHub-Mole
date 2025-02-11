@@ -28,8 +28,8 @@ const About: React.FC = () => {
       if (avatarUrl) {
         setAvatarUrl(avatarUrl);
         setLoggedIn(true);
+        await loadRateLimit();
       }
-      await loadRateLimit();
     };
     fetchData();
   }, []);
