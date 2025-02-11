@@ -94,8 +94,8 @@ def save_to_db():
             user_query = UserQuery.create(
                 user_login=user.github_login,
                 ds_name=ds_name,
-                start_time=start_time,
-                end_time=end_time,
+                start_time=start_time if start_time else None,
+                end_time=end_time if end_time else None,
                 data_type=dstype,
             )
             db.session.flush()

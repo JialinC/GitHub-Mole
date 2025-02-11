@@ -123,6 +123,16 @@ export const handleFileChange = ({
   }
 };
 
+export const parseCSV = (file: File): Promise<Papa.ParseResult<string[]>> => {
+  return new Promise((resolve, reject) => {
+    Papa.parse(file, {
+      complete: (result: Papa.ParseResult<string[]>) => resolve(result),
+      error: (error) => reject(error),
+      header: false, // Change to `true` if CSV has headers
+    });
+  });
+};
+
 
 export const validateSelfDataFile = (file: File): Promise<void> => {
   return new Promise((resolve, reject) => {
