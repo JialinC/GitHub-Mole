@@ -283,7 +283,6 @@ const Commits: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    setShowTable(true);
     const signal = abortControllerRef.current?.signal;
     if (queryOption === "groupUsers") {
       if (!file) {
@@ -312,13 +311,14 @@ const Commits: React.FC = () => {
       }
 
       setLoading(true);
+      setShowTable(true);
       try {
         const result = await parseCSV(file);
         await processGitHubIds(result.data as string[][], signal!);
       } catch (error) {
         setErrors((prevErrors) => ({
           ...prevErrors,
-          file:
+          processing:
             error instanceof Error
               ? error.message
               : "An unknown error occurred",
@@ -336,12 +336,13 @@ const Commits: React.FC = () => {
       }
 
       setLoading(true);
+      setShowTable(true);
       try {
         await processGitHubId(githubId, signal!);
       } catch (error) {
         setErrors((prevErrors) => ({
           ...prevErrors,
-          githubId:
+          processing:
             error instanceof Error
               ? error.message
               : "An unknown error occurred",
@@ -350,43 +351,6 @@ const Commits: React.FC = () => {
         setLoading(false);
       }
     }
-
-    // try {
-    //   Papa.parse(file, {
-    //     complete: async (result: Papa.ParseResult<string[]>) => {
-    //       setLoading(true);
-    //       await processGitHubIds(result.data as string[][], signal!);
-    //       setLoading(false);
-    //     },
-    //     header: false,
-    //   });
-    // } catch (error) {
-    //   if (error instanceof Error) {
-    //     setErrors((prevErrors) => ({
-    //       ...prevErrors,
-    //       file: error.message,
-    //     }));
-    //   } else {
-    //     setErrors((prevErrors) => ({
-    //       ...prevErrors,
-    //       file: "An unknown error occurred",
-    //     }));
-    //   }
-    //   setLoading(false);
-    //   return;
-    // }
-    // } else {
-    //   if (!githubId) {
-    //     setErrors((prevErrors) => ({
-    //       ...prevErrors,
-    //       githubId: "Please enter a GitHub ID",
-    //     }));
-    //     return;
-    //   }
-    //   setLoading(true);
-    //   await processGitHubId(githubId, signal!);
-    //   setLoading(false);
-    // }
   };
 
   const handleExport = () => {
@@ -552,6 +516,7 @@ const Commits: React.FC = () => {
                 remainingTime={remTime}
                 totalTime={totTime}
               />
+              {errors.processing && <ErrorMessage error={errors.processing} />}
               {!loading && (
                 <>
                   <Button handleAction={handleExport} text={"Export Dataset"} />
