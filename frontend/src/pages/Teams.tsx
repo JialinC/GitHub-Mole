@@ -337,7 +337,6 @@ const Teams: React.FC = () => {
     } else {
       setErrors((prevErrors) => ({ ...prevErrors, team: "" }));
     }
-    console.log(selectedColumns, error);
     if (selectedColumns.length === 0) {
       setErrors((prevErrors) => ({
         ...prevErrors,
