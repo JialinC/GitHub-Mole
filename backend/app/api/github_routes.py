@@ -111,6 +111,9 @@ def user_profile_stats(login):
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
     data = get_user_profile_stats(login, protocol, host, pat)
+    if "error" in data:
+        return jsonify({"error": "Not Found", "message": login})
+
     return jsonify(data)
 
 
@@ -448,13 +451,14 @@ def get_commit_details(owner, repo, sha):
             return (
                 jsonify(
                     {
+                        "no_limit": True,
                         "error": "Rate limit exceeded",
                         "wait_seconds": seconds + 2,
                         "reset_at": reset_at.isoformat(),
                         "message": "Try again after the reset time.",
                     }
                 ),
-                429,
+                200,
             )
 
         commit_url = f"{protocol}://{host}/repos/{owner}/{repo}/commits/{sha}"

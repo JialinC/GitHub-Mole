@@ -32,7 +32,7 @@ class UserGists(PaginatedQuery):
     multiple pages.
     """
 
-    def __init__(self, login: str, pg_size: int = 10) -> None:
+    def __init__(self, login: str, pg_size: int = 50) -> None:
         """Initializes a query for User Gists as a paginated query.
 
         This query is used to fetch a list of gists for a specific user,

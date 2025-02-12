@@ -117,9 +117,8 @@ def get_user_contributions_collection(
     login: str, protocol: str, host: str, token: str, start: str = None, end: str = None
 ):
     """ """
-    created_at = get_specific_user_login(login, protocol, host, token)["user"][
-        "createdAt"
-    ]
+    response = get_specific_user_login(login, protocol, host, token)
+    created_at = response["user"]["createdAt"]
     client = get_github_client(protocol=protocol, host=host, token=token)
     gh_start = (
         datetime.strptime(start, "%Y-%m-%d")

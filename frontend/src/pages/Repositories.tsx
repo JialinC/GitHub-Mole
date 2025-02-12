@@ -9,11 +9,12 @@ import Modal from "../components/Modal";
 import Navbar from "../components/Navbar";
 import OptionSelector from "../components/OptionSelector";
 import Prompt from "../components/Prompt";
+import Spinner from "../components/Spinner";
 import Table from "../components/Table";
 import UploadSection from "../components/UploadSection";
 import { repoURLCSV } from "../constants/Descriptions";
 import { commitTableHeaders } from "../constants/constants";
-import repoURL from "../assets/repo_url.png";
+import repoURLExample from "../assets/repo_url.png";
 import {
   downloadCsv,
   fetchWithRateLimit,
@@ -21,6 +22,7 @@ import {
   getUserAvatarUrl,
   handleFileChange as handleFileChangeUtil,
   handleWaitTime as handleWaitTimeUtil,
+  parseCSV,
   validateCsvFile,
 } from "../utils/helpers";
 import {
@@ -32,24 +34,26 @@ import {
   saveToDatabase,
 } from "../utils/queries";
 
-import Papa from "papaparse";
-
 const Contributions: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [fatal, setFatal] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [invalidURLs, setInvalidURLs] = useState<string[]>([]);
 
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [inputOption, setInputOption] = useState<boolean>(false);
   const navigate = useNavigate();
   const [queryOption, setQueryOption] = useState<string>("allBranches");
+  const [repoURL, setRepoURL] = useState("");
 
   const [noRateLimit, setNoRateLimit] = useState<boolean>(false);
   const [totTime, setTotTime] = useState<number>(1000);
   const [remTime, setRemTime] = useState<number>(1000 - 1);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const [showTable, setShowTable] = useState<boolean>(false);
   const [tableHeader, setTableHeader] = useState<string[]>([]);
-  const [tableData, setTableData] = useState<string[][] | null>(null);
+  const [tableData, setTableData] = useState<string[][] | null>([]);
 
   const [isPromptOpen, setIsPromptOpen] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -58,7 +62,7 @@ const Contributions: React.FC = () => {
     remaining: number;
   } | null>(null);
 
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const loadRateLimit = async () => {
     const rateLimitData = await fetchRateLimit(setFatal);
@@ -82,7 +86,11 @@ const Contributions: React.FC = () => {
 
   const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQueryOption(event.target.value);
-    setTableData(null);
+    setTableData([]);
+  };
+
+  const handleInputChange = () => {
+    setInputOption(!inputOption);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,6 +145,13 @@ const Contributions: React.FC = () => {
         setFatal,
         endCursor
       );
+      if ("error" in commitsPage) {
+        setInvalidURLs((prevInvalidURLs) => [
+          ...prevInvalidURLs,
+          "/" + owner + "/" + repo,
+        ]);
+        return [];
+      }
       const pageInfo = commitsPage.pageInfo;
       endCursor = pageInfo?.endCursor || null;
       hasNextPage = pageInfo?.hasNextPage || false;
@@ -161,14 +176,11 @@ const Contributions: React.FC = () => {
         endCursor
       );
       if ("error" in branchesPage) {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          repo: `Invalid repo ${repo} and owner ${owner}`,
-        }));
-        setTableData(null);
-        setFile(null);
-        setLoading(false);
-        return null;
+        setInvalidURLs((prevInvalidURLs) => [
+          ...prevInvalidURLs,
+          "/" + owner + "/" + repo,
+        ]);
+        return [];
       }
       const pageInfo = branchesPage.pageInfo;
       endCursor = pageInfo?.endCursor || null;
@@ -278,54 +290,67 @@ const Contributions: React.FC = () => {
 
   const handleSubmit = async () => {
     const signal = abortControllerRef.current?.signal;
-    if (!file) {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        file: "No file selected",
-      }));
-      return;
-    }
-
-    try {
-      await validateCsvFile(file);
-    } catch (error) {
-      if (error instanceof Error) {
+    if (!inputOption) {
+      if (!file) {
         setErrors((prevErrors) => ({
           ...prevErrors,
-          file: error.message,
+          file: "No file selected",
         }));
-      } else {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          file: "An unknown error occurred",
-        }));
+        return;
       }
-      return;
-    }
 
-    try {
-      Papa.parse(file, {
-        complete: async (result: Papa.ParseResult<string[]>) => {
-          setLoading(true);
-          await processRepoURLs(result.data as string[][], signal!);
-          setLoading(false);
-        },
-        header: false,
-      });
-    } catch (error) {
-      if (error instanceof Error) {
+      try {
+        await validateCsvFile(file);
+      } catch (error) {
         setErrors((prevErrors) => ({
           ...prevErrors,
-          file: error.message,
+          file:
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred",
         }));
-      } else {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          file: "An unknown error occurred",
-        }));
+        return;
       }
-      setLoading(false);
-      return;
+
+      setLoading(true);
+      setShowTable(true);
+      try {
+        const result = await parseCSV(file);
+        await processRepoURLs(result.data as string[][], signal!);
+      } catch (error) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          processing:
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred",
+        }));
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      if (repoURL === "") {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          repoURL: "No repoURL entered",
+        }));
+        return;
+      }
+      setLoading(true);
+      setShowTable(true);
+      try {
+        await processRepoURL(repoURL, signal!);
+      } catch (error) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          processing:
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred",
+        }));
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -339,7 +364,10 @@ const Contributions: React.FC = () => {
   };
 
   const handleBackToOptions = () => {
-    setTableData(null);
+    setErrors({});
+    setInvalidURLs([]);
+    setShowTable(false);
+    setTableData([]);
     setFile(null);
   };
 
@@ -392,7 +420,7 @@ const Contributions: React.FC = () => {
       </Navbar>
       <main className="flex-grow container mx-auto p-4">
         <div className="p-6 bg-gray-800 rounded-lg shadow-md">
-          {!tableData ? (
+          {!showTable ? (
             <>
               <h2 className="text-2xl font-bold text-white mb-4">
                 Mine Commits Data From Repositories
@@ -409,13 +437,51 @@ const Contributions: React.FC = () => {
                 optionValue="defaultBranch"
                 labelText="Query commits and statistics from the default branch (e.g., main or master branch) in the specified repository."
               />
-              <UploadSection
-                demoImage={repoURL}
-                handleFileChange={handleFileChange}
-                title="Upload Repository URLs"
-                description={repoURLCSV}
-              />
-              {errors.file && <ErrorMessage error={errors.file} />}
+              <label className="text-white font-bold mb-2 block">
+                Only interested in a single repository?
+              </label>
+              <div className="flex items-center mb-2">
+                <input
+                  type="checkbox"
+                  id="input"
+                  checked={inputOption}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                <label htmlFor="input" className="text-white">
+                  Yes
+                </label>
+              </div>
+              {inputOption && (
+                <div className="mb-4">
+                  <label
+                    htmlFor="repoURL"
+                    className="text-lg font-bold text-white mb-4 block"
+                  >
+                    Enter GitHub Repository URL
+                  </label>
+                  <input
+                    type="text"
+                    id="repoURL"
+                    value={repoURL}
+                    onChange={(e) => setRepoURL(e.target.value)}
+                    placeholder="Please enter the URL of the GitHub Repository you are curious about, e.g., https://github.com/JialinC/GitHub-Mole."
+                    className="w-full px-3 py-2 text-gray-700 bg-gray-200 rounded-lg focus:outline-none"
+                  />
+                  {errors.repoURL && <ErrorMessage error={errors.repoURL} />}
+                </div>
+              )}
+              {!inputOption && (
+                <>
+                  <UploadSection
+                    demoImage={repoURLExample}
+                    handleFileChange={handleFileChange}
+                    title="Upload Repository URLs"
+                    description={repoURLCSV}
+                  />
+                  {errors.file && <ErrorMessage error={errors.file} />}
+                </>
+              )}
               <div className="text-gray-300 mb-4">
                 Note: Querying all the commits from a repository is a very
                 resource-intensive operation. The rate limit of 5,000 requests
@@ -431,8 +497,9 @@ const Contributions: React.FC = () => {
             </>
           ) : (
             <>
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="text-2xl font-bold text-white mb-4 flex items-center">
                 Commits in Given Repositories
+                {loading && <Spinner />}
               </h2>
               {!loading && (
                 <CommitsHistPie headers={tableHeader} data={tableData} />
@@ -446,6 +513,15 @@ const Contributions: React.FC = () => {
                 remainingTime={remTime}
                 totalTime={totTime}
               />
+              {invalidURLs.length > 0 && (
+                <ErrorMessage
+                  error={
+                    "The following Repository URLs are invalid: " +
+                    invalidURLs.toString()
+                  }
+                />
+              )}
+              {errors.processing && <ErrorMessage error={errors.processing} />}
               {!loading && (
                 <>
                   <Button handleAction={handleExport} text={"Export Dataset"} />

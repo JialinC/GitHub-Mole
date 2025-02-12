@@ -58,7 +58,7 @@ class RepositoryContributorContributions(PaginatedQuery):
         repo_name: str,
         branch_name: str,
         github_id: str,
-        pg_size: int = 10,
+        pg_size: int = 50,
     ) -> None:
         """
         Initializes a paginated query to extract contributions made by contributors in a specific repository.

@@ -35,12 +35,11 @@ import {
   saveToDatabase,
 } from "../utils/queries";
 
-import Papa from "papaparse";
-
 const Commits: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [fatal, setFatal] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [invalidIDs, setInvalidIDs] = useState<string[]>([]);
 
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const navigate = useNavigate();
@@ -122,13 +121,7 @@ const Commits: React.FC = () => {
         endCursor
       );
       if ("error" in userRepoNamesPage) {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          githubId: `Invalid GitHub ID ${githubId}`,
-        }));
-        setTableData([]);
-        setFile(null);
-        setLoading(false);
+        setInvalidIDs((prevInvalidIDs) => [...prevInvalidIDs, githubId]);
         return null;
       }
       ghid = userRepoNamesPage.id;
@@ -296,17 +289,13 @@ const Commits: React.FC = () => {
       try {
         await validateGitHubIdsFile(file);
       } catch (error) {
-        if (error instanceof Error) {
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            file: error.message,
-          }));
-        } else {
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            file: "An unknown error occurred",
-          }));
-        }
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          file:
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred",
+        }));
         return;
       }
 
@@ -364,6 +353,7 @@ const Commits: React.FC = () => {
 
   const handleBackToOptions = () => {
     setErrors({});
+    setInvalidIDs([]);
     setShowTable(false);
     setTableData([]);
     setFile(null);
@@ -451,7 +441,6 @@ const Commits: React.FC = () => {
                     placeholder="Please enter the GitHub ID you are curious about, e.g., JialinC."
                     className="w-full px-3 py-2 text-gray-700 bg-gray-200 rounded-lg focus:outline-none"
                   />
-                  {errors.githubId && <ErrorMessage error={errors.githubId} />}
                 </div>
               )}
               {queryOption === "groupUsers" && (
@@ -497,6 +486,64 @@ const Commits: React.FC = () => {
                 text={"Submit"}
                 disabled={loading}
               />
+              <div className="bg-gray-800 rounded-lg shadow-md mt-4 text-white">
+                <h2 className="text-2xl font-bold mb-4">
+                  How GitHub Calculates Commit Contributions
+                </h2>
+                <p className="mb-2">
+                  GitHub contributions are counted in the "Contributions" graph
+                  on a user's profile. The key rules for counting commits are:
+                </p>
+                <ul className="list-disc list-inside mb-4">
+                  <li className="mb-2">
+                    <span className="font-semibold">
+                      ✅ Commits That Count Towards Contributions
+                    </span>
+                    <ul className="list-disc list-inside ml-6">
+                      <li>
+                        Must be in the default branch (usually main or master,
+                        but can be changed by repo settings).
+                      </li>
+                      <li>
+                        Must be in a forked repo where the commit is in the
+                        default branch and the fork has at least one star.
+                      </li>
+                      <li>
+                        The user must be the author of the commit (i.e., the
+                        email in the commit must match their GitHub account).
+                      </li>
+                      <li>
+                        Commits must be pushed to GitHub (local commits don't
+                        count).
+                      </li>
+                      <li>
+                        The repository must be public OR the user must be a
+                        contributor to a private repo.
+                      </li>
+                    </ul>
+                  </li>
+                  <li className="mb-2">
+                    <span className="font-semibold">
+                      ❌ Commits That Do NOT Count
+                    </span>
+                    <ul className="list-disc list-inside ml-6">
+                      <li>
+                        Commits in non-default branches (e.g., feature-branch,
+                        develop) do not count towards profile contributions.
+                      </li>
+                      <li>
+                        Commits in forks (unless the fork has at least one
+                        star).
+                      </li>
+                      <li>
+                        Commits made using an email that is not associated with
+                        the user's GitHub account.
+                      </li>
+                      <li>Commits that are not pushed to GitHub.</li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
             </>
           ) : (
             <>
@@ -516,6 +563,14 @@ const Commits: React.FC = () => {
                 remainingTime={remTime}
                 totalTime={totTime}
               />
+              {invalidIDs.length > 0 && (
+                <ErrorMessage
+                  error={
+                    "The following GitHub IDs are invalid: " +
+                    invalidIDs.toString()
+                  }
+                />
+              )}
               {errors.processing && <ErrorMessage error={errors.processing} />}
               {!loading && (
                 <>

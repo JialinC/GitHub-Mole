@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import CardButton from "../components/CardButton";
 import CustomHeatmap from "../components/CustomHeatmap";
-import YearSelection from "../components/YearSelection";
+import ErrorPage from "../components/Error";
+import ErrorMessage from "../components/ErrorMessage";
 import {
   FaDatabase,
   FaGithub,
@@ -9,13 +11,16 @@ import {
   FaCodeBranch,
   FaBomb,
 } from "react-icons/fa";
-import CardButton from "../components/CardButton";
-import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Loading from "../components/Loading";
-import ErrorPage from "../components/Error";
-import ErrorMessage from "../components/ErrorMessage";
-import { formatDate, convertToLocalTime } from "../utils/helpers";
+import Navbar from "../components/Navbar";
+import YearSelection from "../components/YearSelection";
+import {
+  convertToLocalTime,
+  fetchWithRateLimit,
+  formatDate,
+  handleWaitTime as handleWaitTimeUtil,
+} from "../utils/helpers";
 import { CurUser, Contributions } from "../types/Types";
 import {
   fetchCurUser,
@@ -27,8 +32,10 @@ import {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [rateLimit, setRateLimit] = useState<any>(null);
   const [curUser, setCurUser] = useState<CurUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [rateLimit, setRateLimit] = useState<any>(null);
+
   const [contributions, setContributions] = useState<Contributions | null>(
     null
   );
@@ -39,12 +46,27 @@ const Dashboard: React.FC = () => {
   } | null>(null);
   const [joinDate, setJoinDate] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const [noRateLimit, setNoRateLimit] = useState<boolean>(false);
+  const [totTime, setTotTime] = useState<number>(1000);
+  const [remTime, setRemTime] = useState<number>(1000 - 1);
+
+  const handleWaitTime = (waitTime: number) => {
+    return handleWaitTimeUtil(waitTime, setTotTime, setRemTime, setNoRateLimit);
+  };
 
   const getContribWeeks = async (login: string, year: number) => {
     const januaryFirst = new Date(Date.UTC(year, 0, 1));
     const start = januaryFirst.toISOString();
-    const [join, weeks] = await fetchCalendar(login, setError, start);
+
+    const [join, weeks] = await fetchWithRateLimit(
+      fetchCalendar,
+      handleWaitTime,
+      login,
+      setError,
+      start
+    );
+
     if (join) {
       setJoinDate(join.occurredAt.split("T")[0]);
     }
@@ -86,6 +108,10 @@ const Dashboard: React.FC = () => {
       ];
     }
     setContribDates(contributionsDict);
+    localStorage.setItem(
+      "contributionsDict",
+      JSON.stringify(contributionsDict)
+    );
   };
 
   useEffect(() => {
@@ -115,7 +141,6 @@ const Dashboard: React.FC = () => {
           navigate("/login");
           return null;
         }
-        // localStorage.setItem("curUser", JSON.stringify(user));
         return user;
       }
     };
@@ -125,7 +150,12 @@ const Dashboard: React.FC = () => {
       if (storedContribution) {
         setContributions(JSON.parse(storedContribution));
       } else {
-        const contribs = await fetchContributions(login, setError);
+        const contribs = await fetchWithRateLimit(
+          fetchContributions,
+          handleWaitTime,
+          login,
+          setError
+        );
         setContributions(contribs);
         localStorage.setItem("contributions", JSON.stringify(contribs));
       }
@@ -135,13 +165,29 @@ const Dashboard: React.FC = () => {
       const storedYears = localStorage.getItem("years");
       if (storedYears) {
         setContribYears(JSON.parse(storedYears));
-        setSelectedYear(JSON.parse(storedYears)[0]);
-        return JSON.parse(storedYears)[0];
+        //setSelectedYear(JSON.parse(storedYears)[0]);
+        //return JSON.parse(storedYears)[0];
       } else {
-        const years = await fetchContribYears(login, setError);
+        const years = await fetchWithRateLimit(
+          fetchContribYears,
+          handleWaitTime,
+          login,
+          setError
+        );
+        //const years = await fetchContribYears(login, setError);
         setContribYears(years);
-        setSelectedYear(years[0]);
+        //setSelectedYear(years[0]);
         localStorage.setItem("years", JSON.stringify(years));
+        //return years[0];
+      }
+      const storedYear = localStorage.getItem("year");
+      if (storedYear) {
+        setSelectedYear(JSON.parse(storedYear));
+        return JSON.parse(storedYear);
+      } else {
+        const years = JSON.parse(localStorage.getItem("years"));
+        setSelectedYear(years[0]);
+        localStorage.setItem("year", JSON.stringify(years[0]));
         return years[0];
       }
     };
@@ -154,7 +200,14 @@ const Dashboard: React.FC = () => {
       }
       await getContributions(user.login);
       const year = await getContribYears(user.login);
-      await getContribWeeks(user.login, year);
+      const contributionsDict = JSON.parse(
+        localStorage.getItem("contributionsDict")
+      );
+      if (contributionsDict == null) {
+        await getContribWeeks(user.login, year);
+      } else {
+        setContribDates(contributionsDict);
+      }
       setRateLimit(await fetchRateLimit(setError));
       setLoading(false);
     };
@@ -165,6 +218,7 @@ const Dashboard: React.FC = () => {
   const handleYearClick = async (year: number) => {
     setContribDates(null);
     setSelectedYear(year);
+    localStorage.setItem("year", JSON.stringify(year));
     if (curUser?.login) {
       await getContribWeeks(curUser.login, year);
     }
@@ -286,7 +340,26 @@ const Dashboard: React.FC = () => {
             selectedYear={selectedYear}
             handleYearClick={handleYearClick}
           />
-          {/* Action Buttons */}
+          {noRateLimit && (
+            <>
+              <div className="mt-2 text-m text-yellow-300">
+                No rate limit remaining.{" "}
+                {remTime !== null && (
+                  <span>Wait time remaining: {remTime}s</span>
+                )}{" "}
+                For more information, see{" "}
+                <a
+                  href="https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#primary-rate-limit"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 underline"
+                >
+                  GitHub GraphQL API Rate Limits
+                </a>
+                .
+              </div>
+            </>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
             <CardButton
               icon={<FaDatabase className="text-6xl mb-4 text-blue-400" />}
