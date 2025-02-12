@@ -15,6 +15,7 @@ import OptionSelector from "../components/OptionSelector";
 import Prompt from "../components/Prompt";
 import RepoHistPie from "../components/RepoHistPie";
 import SelectionSection from "../components/SelectionSection";
+import Spinner from "../components/Spinner";
 import Table from "../components/Table";
 import TotalHistogram from "../components/TotalHistogram";
 import UploadSection from "../components/UploadSection";
@@ -57,6 +58,7 @@ const Contributions: React.FC = () => {
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const navigate = useNavigate();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [invalidIDs, setInvalidIDs] = useState<string[]>([]);
   const [fatal, setFatal] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [githubId, setGithubId] = useState("");
@@ -71,8 +73,9 @@ const Contributions: React.FC = () => {
   const [remTime, setRemTime] = useState<number>(1000 - 1);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const [showTable, setShowTable] = useState<boolean>(false);
   const [tableHeader, setTableHeader] = useState<string[]>([]);
-  const [tableData, setTableData] = useState<string[][] | null>(null);
+  const [tableData, setTableData] = useState<string[][] | null>([]);
   const [avatarMap, setAvatarMap] = useState<{ [key: string]: string }>({});
 
   const [timeRange, setTimeRange] = useState({
@@ -134,7 +137,7 @@ const Contributions: React.FC = () => {
     setErrors({});
     setSelectedLangs(new Set());
     setSelectedContribution("");
-    setTableData(null);
+    setTableData([]);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -446,13 +449,18 @@ const Contributions: React.FC = () => {
   }
 
   const totalContriID = async (githubID: string, i: number) => {
-    addLoadingRow(setTableData, tableHeader.length);
     let profile = await fetchWithRateLimit(
       fetchFunctions["Profile"],
       handleWaitTime,
       githubID,
       setFatal
     );
+    if (profile.error) {
+      setInvalidIDs((prevInvalidIDs) => [...prevInvalidIDs, profile.message]);
+      globalThis.invalidCount += 1;
+      return;
+    }
+    addLoadingRow(setTableData, tableHeader.length);
 
     setAvatarMap((prevAvatarMap) => ({
       ...prevAvatarMap,
@@ -582,13 +590,14 @@ const Contributions: React.FC = () => {
   };
 
   const queryTotalContrib = async (data: string[][], signal: AbortSignal) => {
+    globalThis.invalidCount = 0;
     for (let i = 1; i < data.length; i++) {
       if (signal.aborted) {
         console.log("aborted");
         break;
       }
       const githubID = data[i][0];
-      await totalContriID(githubID, i);
+      await totalContriID(githubID, i - globalThis.invalidCount);
     }
   };
 
@@ -605,6 +614,10 @@ const Contributions: React.FC = () => {
       githubID,
       setFatal
     );
+    if (profile.error) {
+      setInvalidIDs((prevInvalidIDs) => [...prevInvalidIDs, profile.message]);
+      return;
+    }
     setAvatarMap((prevAvatarMap) => ({
       ...prevAvatarMap,
       [githubID]: profile.avatarUrl,
@@ -743,6 +756,7 @@ const Contributions: React.FC = () => {
         return;
       }
       setLoading(true);
+      setShowTable(true);
       const signal = abortControllerRef.current?.signal;
       if (file) {
         try {
@@ -753,8 +767,13 @@ const Contributions: React.FC = () => {
             await querySpecificContrib(result.data, signal!);
           }
         } catch (error) {
-          console.error("Error processing GitHub IDs:", error);
-          setFatal("Error processing GitHub IDs");
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            processing:
+              error instanceof Error
+                ? error.message
+                : "An unknown error occurred",
+          }));
         } finally {
           setLoading(false);
         }
@@ -770,6 +789,7 @@ const Contributions: React.FC = () => {
         return;
       }
       setLoading(true);
+      setShowTable(true);
       try {
         if (queryOption === "totalContributions") {
           await totalContriID(githubId, 1);
@@ -787,10 +807,12 @@ const Contributions: React.FC = () => {
           await specificContribID(githubId, key, start, end, rowIndex);
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
         setErrors((prevErrors) => ({
           ...prevErrors,
-          fetch: "Failed to fetch contribution data",
+          processing:
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred",
         }));
       } finally {
         setLoading(false);
@@ -816,8 +838,10 @@ const Contributions: React.FC = () => {
   };
 
   const handleBackToOptions = () => {
+    setInvalidIDs([]);
     setAvatarMap({});
-    setTableData(null);
+    setShowTable(false);
+    setTableData([]);
     setErrors({});
     setFile(null);
     setSelectedLangs(new Set());
@@ -907,22 +931,23 @@ const Contributions: React.FC = () => {
       </Navbar>
       <main className="flex-grow container mx-auto p-4">
         <div className="p-6 bg-gray-800 rounded-lg shadow-md">
-          {!tableData ? (
+          {!showTable ? (
             <>
               <h2 className="text-2xl font-bold text-white mb-4">
                 Mine User GitHub Contributions
               </h2>
             </>
           ) : (
-            <h2 className="text-2xl font-bold text-white mb-4">
+            <h2 className="text-2xl font-bold text-white mb-4 flex items-center">
               User{" "}
               {queryOption === "totalContributions"
                 ? "Total GitHub"
                 : selectedContribution}{" "}
               Contributions
+              {loading && <Spinner />}
             </h2>
           )}
-          {!tableData ? (
+          {!showTable ? (
             <>
               <OptionSelector
                 queryOption={queryOption}
@@ -1106,22 +1131,31 @@ const Contributions: React.FC = () => {
             </>
           ) : (
             <>
-              {!loading && queryOption === "totalContributions" && (
-                <TotalHistogram headers={totHistHeaders} data={totHistData} />
+              {tableData.length > 0 && (
+                <>
+                  {!loading && queryOption === "totalContributions" && (
+                    <TotalHistogram
+                      headers={totHistHeaders}
+                      data={totHistData}
+                    />
+                  )}
+
+                  {!loading && repoTypes.includes(selectedContribution) && (
+                    <RepoHistPie headers={tableHeader} data={tableData} />
+                  )}
+
+                  {!loading &&
+                    !repoTypes.includes(selectedContribution) &&
+                    queryOption === "specificContributions" && (
+                      <>
+                        <h2 className="text-xl font-bold text-white text-center">
+                          Number of {selectedContribution} by GitHub ID
+                        </h2>
+                        <Histogram headers={tableHeader} data={tableData} />
+                      </>
+                    )}
+                </>
               )}
-              {!loading && repoTypes.includes(selectedContribution) && (
-                <RepoHistPie headers={tableHeader} data={tableData} />
-              )}
-              {!loading &&
-                !repoTypes.includes(selectedContribution) &&
-                queryOption === "specificContributions" && (
-                  <>
-                    <h2 className="text-xl font-bold text-white text-center">
-                      Number of {selectedContribution} by GitHub ID
-                    </h2>
-                    <Histogram headers={tableHeader} data={tableData} />
-                  </>
-                )}
               <Table
                 headers={tableHeader}
                 data={tableData}
@@ -1132,6 +1166,15 @@ const Contributions: React.FC = () => {
                 remainingTime={remTime}
                 totalTime={totTime}
               />
+              {invalidIDs.length > 0 && (
+                <ErrorMessage
+                  error={
+                    "The following GitHub IDs are invalid: " +
+                    invalidIDs.toString()
+                  }
+                />
+              )}
+              {errors.processing && <ErrorMessage error={errors.processing} />}
               {!loading && (
                 <>
                   <Button handleAction={handleExport} text={"Export Dataset"} />

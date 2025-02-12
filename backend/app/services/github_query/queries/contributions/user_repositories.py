@@ -52,7 +52,7 @@ class UserRepositories(PaginatedQuery):
         login: str,
         is_fork: bool = False,
         ownership: str = "[OWNER]",
-        pg_size: int = 10,
+        pg_size: int = 50,
         repo_order_field: str = "CREATED_AT",
         repo_order_dir: str = "DESC",
         lag_order_field: str = "SIZE",

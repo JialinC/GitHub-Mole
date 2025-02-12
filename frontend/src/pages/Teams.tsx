@@ -43,12 +43,14 @@ import {
 } from "../utils/queries";
 
 import "../styles/styles.css";
+import { Stringifier } from "postcss";
 
 const Teams: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [fatal, setFatal] = useState<string | null>(null);
+  const [invalidIDs, setInvalidIDs] = useState<string[]>([]);
 
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const navigate = useNavigate();
@@ -165,75 +167,88 @@ const Teams: React.FC = () => {
     );
   };
 
+  const processGitHubID = async (githubID: string, i: number) => {
+    let userProfile = await fetchWithRateLimit(
+      fetchProfile,
+      handleWaitTime,
+      githubID,
+      setFatal
+    );
+    if (userProfile.error) {
+      setInvalidIDs((prevInvalidIDs) => [
+        ...prevInvalidIDs,
+        userProfile.message,
+      ]);
+      globalThis.invalidCount += 1;
+      return;
+    }
+    addLoadingRow(setTableData, tableHeader.length);
+    setAvatarMap((prevAvatarMap) => ({
+      ...prevAvatarMap,
+      [githubID]: userProfile.avatarUrl,
+    }));
+    updateTableData(i - 1, 0, githubID);
+    updateTableData(
+      i - 1,
+      1,
+      calculateLifetime(userProfile.created_at).toString()
+    );
+
+    let userContribution = await fetchWithRateLimit(
+      fetchContributions,
+      handleWaitTime,
+      githubID,
+      setFatal
+    );
+    updateTableData(i - 1, 2, userContribution.commit.toString());
+
+    const totalComments =
+      userProfile.commit_comments +
+      userProfile.issue_comments +
+      userProfile.gist_comments +
+      userProfile.repository_discussion_comments;
+    updateTableData(i - 1, 3, totalComments.toString());
+
+    const issuesPRs = userProfile.issues + userProfile.pull_requests;
+    updateTableData(i - 1, 4, issuesPRs.toString());
+    let endCursor: string | null = null;
+    let hasNextPage: boolean;
+    let size: number = 0;
+    const userLangs = new Set<string>();
+    do {
+      let userReposPage = await fetchWithRateLimit(
+        fetchARepos,
+        handleWaitTime,
+        githubID,
+        setFatal,
+        endCursor
+      );
+      const pageInfo = userReposPage.pageInfo;
+      endCursor = pageInfo?.endCursor || null;
+      hasNextPage = pageInfo?.hasNextPage || false;
+
+      const { selectedSize } = calLangStats(
+        userReposPage.nodes,
+        selectedLangs,
+        userLangs
+      );
+      size += selectedSize;
+    } while (hasNextPage);
+
+    updateTableData(i - 1, 5, userLangs.size.toString());
+    updateTableData(i - 1, 6, size.toString());
+    updateTableData(i - 1, 7, userProfile.repositories.toString());
+    loadRateLimit();
+  };
+
   const processGitHubIDs = async (data: string[][], signal: AbortSignal) => {
+    globalThis.invalidCount = 0;
     for (let i = 1; i < data.length; i++) {
       if (signal.aborted) {
         return;
       }
       const githubID = data[i][0];
-      addLoadingRow(setTableData, tableHeader.length);
-      let userProfile = await fetchWithRateLimit(
-        fetchProfile,
-        handleWaitTime,
-        githubID,
-        setFatal
-      );
-      setAvatarMap((prevAvatarMap) => ({
-        ...prevAvatarMap,
-        [githubID]: userProfile.avatarUrl,
-      }));
-      updateTableData(i - 1, 0, githubID);
-      updateTableData(
-        i - 1,
-        1,
-        calculateLifetime(userProfile.created_at).toString()
-      );
-
-      let userContribution = await fetchWithRateLimit(
-        fetchContributions,
-        handleWaitTime,
-        githubID,
-        setFatal
-      );
-      updateTableData(i - 1, 2, userContribution.commit.toString());
-
-      const totalComments =
-        userProfile.commit_comments +
-        userProfile.issue_comments +
-        userProfile.gist_comments +
-        userProfile.repository_discussion_comments;
-      updateTableData(i - 1, 3, totalComments.toString());
-
-      const issuesPRs = userProfile.issues + userProfile.pull_requests;
-      updateTableData(i - 1, 4, issuesPRs.toString());
-      let endCursor: string | null = null;
-      let hasNextPage: boolean;
-      let size: number = 0;
-      const userLangs = new Set<string>();
-      do {
-        let userReposPage = await fetchWithRateLimit(
-          fetchARepos,
-          handleWaitTime,
-          githubID,
-          setFatal,
-          endCursor
-        );
-        const pageInfo = userReposPage.pageInfo;
-        endCursor = pageInfo?.endCursor || null;
-        hasNextPage = pageInfo?.hasNextPage || false;
-
-        const { selectedSize } = calLangStats(
-          userReposPage.nodes,
-          selectedLangs,
-          userLangs
-        );
-        size += selectedSize;
-      } while (hasNextPage);
-
-      updateTableData(i - 1, 5, userLangs.size.toString());
-      updateTableData(i - 1, 6, size.toString());
-      updateTableData(i - 1, 7, userProfile.repositories.toString());
-      loadRateLimit();
+      await processGitHubID(githubID, i - globalThis.invalidCount);
     }
   };
 
@@ -283,32 +298,10 @@ const Teams: React.FC = () => {
     } finally {
       setLoading(false);
     }
-    // try {
-    //   Papa.parse(file, {
-    //     complete: (result: Papa.ParseResult<string[]>) => {
-    //       if (uploadOption === "ownDataset") {
-    //         const data = result.data as string[][];
-    //         const header = data[0];
-    //         const body = data.slice(1);
-    //         setTableHeader(header);
-    //         setTableData(body);
-    //         setLoading(false);
-    //       } else if (uploadOption === "githubIds") {
-    //         processGitHubIDs(result.data as string[][], signal!);
-    //       }
-    //     },
-    //     header: false,
-    //   });
-    // } catch (error) {
-    //   setErrors((prevErrors) => ({
-    //     ...prevErrors,
-    //     file: "Error processing the input file",
-    //   }));
-    //   return;
-    // }
   };
 
   const handleBackToOptions = () => {
+    setInvalidIDs([]);
     setShowTable(false);
     setLoading(false);
     setTableData([]);
@@ -344,7 +337,6 @@ const Teams: React.FC = () => {
     } else {
       setErrors((prevErrors) => ({ ...prevErrors, team: "" }));
     }
-    console.log(selectedColumns, error);
     if (selectedColumns.length === 0) {
       setErrors((prevErrors) => ({
         ...prevErrors,
@@ -511,6 +503,14 @@ const Teams: React.FC = () => {
                 remainingTime={remTime}
                 totalTime={totTime}
               />
+              {invalidIDs.length > 0 && (
+                <ErrorMessage
+                  error={
+                    "The following GitHub IDs are invalid: " +
+                    invalidIDs.toString()
+                  }
+                />
+              )}
               {errors.column && <ErrorMessage error={errors.column} />}
               {errors.processing && <ErrorMessage error={errors.processing} />}
               {!loading && (

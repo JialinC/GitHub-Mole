@@ -32,7 +32,7 @@ class UserRepositoryDiscussionComments(PaginatedQuery):
     queries that expect a large amount of data that might be delivered in multiple pages.
     """
 
-    def __init__(self, login: str, pg_size: int = 10) -> None:
+    def __init__(self, login: str, pg_size: int = 50) -> None:
         """
         Initializes the UserRepositoryDiscussionComments query with specific fields and arguments
         to retrieve user repository discussion comments, including pagination handling. The query is constructed

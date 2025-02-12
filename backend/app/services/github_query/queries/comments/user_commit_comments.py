@@ -32,7 +32,7 @@ class UserCommitComments(PaginatedQuery):
     queries that expect a large amount of data that might be delivered in multiple pages.
     """
 
-    def __init__(self, login: str, pg_size: int = 5) -> None:
+    def __init__(self, login: str, pg_size: int = 50) -> None:
         """
         Initializes the UserCommitComments query with specific fields and arguments
         to retrieve user commit comments including pagination handling.

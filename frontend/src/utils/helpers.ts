@@ -218,6 +218,9 @@ export const validateGitHubIdsFile = (file: File): Promise<void> => {
           if (!row[0] || typeof row[0] !== "string") {
             return reject(new Error(`Invalid GitHub ID in row ${i + 1}.`));
           }
+          if (!isValidGitHubId(row[0])) {
+            return reject(new Error(`Invalid GitHub ID in row ${i + 1}.`));
+          }
         }
 
         resolve();
@@ -356,3 +359,12 @@ export const castTableData = (data: string[][]): (string | number)[][] => {
     });
   });
 };
+
+
+export function isValidGitHubId(username) {
+  // Regular expression for a valid GitHub ID
+  const githubRegex = /^[a-zA-Z0-9](-?[a-zA-Z0-9]){0,38}$/;
+
+  // Check if the username is a string and matches the GitHub ID pattern
+  return typeof username === "string" && githubRegex.test(username);
+}

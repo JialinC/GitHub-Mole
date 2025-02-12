@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
 interface YearSelectionProps {
@@ -12,7 +12,8 @@ const YearSelection: React.FC<YearSelectionProps> = ({
   selectedYear,
   handleYearClick,
 }) => {
-  const [startIndex, setStartIndex] = useState(0);
+  const selectedYearIndex = years.indexOf(selectedYear);
+  const [startIndex, setStartIndex] = useState(selectedYearIndex);
 
   const handlePrevClick = () => {
     setStartIndex((prevIndex) => Math.max(prevIndex - 1, 0));
@@ -22,7 +23,10 @@ const YearSelection: React.FC<YearSelectionProps> = ({
     setStartIndex((prevIndex) => Math.min(prevIndex + 1, years.length - 5));
   };
 
-  const visibleYears = years.slice(startIndex, startIndex + 5);
+  const visibleYears = years.slice(
+    Math.min(startIndex, years.length - 5),
+    startIndex + 5
+  );
 
   return (
     <div className="flex items-center justify-center mb-4 overflow-hidden w-full">

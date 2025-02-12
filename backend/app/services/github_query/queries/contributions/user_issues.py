@@ -32,7 +32,7 @@ class UserIssues(PaginatedQuery):
     It is designed to navigate through potentially large sets of issues data.
     """
 
-    def __init__(self, login: str, pg_size: int = 10) -> None:
+    def __init__(self, login: str, pg_size: int = 50) -> None:
         """
         Initializes the UserIssues query with necessary fields and pagination support.
         """
