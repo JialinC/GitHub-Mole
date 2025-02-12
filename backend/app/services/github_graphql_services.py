@@ -97,7 +97,6 @@ def get_specific_user_login(login: str, protocol: str, host: str, token: str):
 
     try:
         response = client.execute(query=UserLogin(login=login))
-        print(response)
         return response
     except QueryFailedException as e:
         return {"error": str(e)}
