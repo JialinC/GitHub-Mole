@@ -30,7 +30,7 @@ class RepositoryBranches(PaginatedQuery):
         owner: str,
         repo_name: str,
         prefix: str = '"refs/heads/"',
-        pg_size: int = 10,
+        pg_size: int = 50,
     ) -> None:
         super().__init__(
             fields=[

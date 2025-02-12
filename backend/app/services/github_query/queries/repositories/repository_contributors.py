@@ -37,7 +37,7 @@ class RepositoryContributors(PaginatedQuery):
     It locates the repository base on the owner GitHub ID and the repository's name.
     """
 
-    def __init__(self, owner: str, repo_name: str, pg_size: int = 10) -> None:
+    def __init__(self, owner: str, repo_name: str, pg_size: int = 50) -> None:
         super().__init__(
             fields=[
                 QueryNode(

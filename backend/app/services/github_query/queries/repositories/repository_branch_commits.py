@@ -47,7 +47,7 @@ class RepositoryBranchCommits(PaginatedQuery):
         repo_name: str,
         branch_name: str,
         use_default: bool,
-        pg_size: int = 10,
+        pg_size: int = 50,
     ) -> None:
         """Initializes a paginated query for repository commits with specific fields and pagination controls."""
 

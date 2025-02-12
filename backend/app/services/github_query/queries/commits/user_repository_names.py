@@ -33,7 +33,7 @@ class UserRepositoryNames(PaginatedQuery):
     def __init__(
         self,
         login: str,
-        pg_size: int = 10,
+        pg_size: int = 50,
     ) -> None:
         """
         Initializes a query for a user's repositories with various filtering and ordering options.

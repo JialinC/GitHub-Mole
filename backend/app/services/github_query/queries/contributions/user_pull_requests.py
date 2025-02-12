@@ -31,7 +31,7 @@ class UserPullRequests(PaginatedQuery):
     It navigates through potentially large sets of pull request data with pagination.
     """
 
-    def __init__(self, login: str, pg_size: int = 10) -> None:
+    def __init__(self, login: str, pg_size: int = 50) -> None:
         """
         Initializes the UserPullRequests query with necessary fields and pagination support.
         """

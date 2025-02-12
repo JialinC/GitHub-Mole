@@ -32,7 +32,7 @@ class UserRepositoryDiscussions(PaginatedQuery):
     It extends PaginatedQuery to handle potentially large numbers of repositories.
     """
 
-    def __init__(self, login: str, pg_size: int = 10) -> None:
+    def __init__(self, login: str, pg_size: int = 50) -> None:
         """Initializes a paginated query for GitHub user repository discussions."""
         super().__init__(
             fields=[
