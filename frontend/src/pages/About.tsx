@@ -75,7 +75,12 @@ const About: React.FC = () => {
             user-friendly interface that facilitates efficient data management
             and analysis. Additionally, it incorporates a{" "}
             <strong>backend database</strong> to store mined data, allowing
-            users to retrieve their results at any time.
+            users to retrieve their results at any time.{" "}
+            <strong>
+              GitHub-Mole has been used in the graduate-level course CSC/ECE
+              517: Object-Oriented Design and Development at North Carolina
+              State University for forming software development project teams.
+            </strong>
           </p>
 
           <h2 className="text-l font-bold mt-4 mb-2">Key Features</h2>
