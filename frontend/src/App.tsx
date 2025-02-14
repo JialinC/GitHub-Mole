@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
 import Repositories from "./pages/Repositories";
 import Teams from "./pages/Teams";
 
@@ -22,6 +23,7 @@ const App: React.FC = () => {
       <Route path="/repositories" element={<Repositories />} />
       <Route path="/teams" element={<Teams />} />
       <Route path="/commits" element={<Commits />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
