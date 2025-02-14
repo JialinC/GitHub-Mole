@@ -207,6 +207,7 @@ export const validateGitHubIdsFile = (file: File): Promise<void> => {
 
         for (let i = 1; i < data.length; i++) {
           const row = data[i];
+          console.log(i,row);
 
           if (row.length !== headers.length) {
             return reject(
@@ -221,6 +222,9 @@ export const validateGitHubIdsFile = (file: File): Promise<void> => {
           if (!isValidGitHubId(row[0])) {
             return reject(new Error(`Invalid GitHub ID in row ${i + 1}.`));
           }
+          if (row[0]==="") {
+            return reject(new Error(`Invalid GitHub ID in row ${i + 1}.`));
+          }
         }
 
         resolve();
@@ -229,7 +233,7 @@ export const validateGitHubIdsFile = (file: File): Promise<void> => {
         reject(new Error(`Failed to parse CSV file: ${error.message}`));
       },
       header: false,
-      skipEmptyLines: true,
+      skipEmptyLines: false,
     });
   });
 };
@@ -272,7 +276,7 @@ export const validateCsvFile = (file: File): Promise<void> => {
         reject(new Error(`Failed to parse CSV file: ${error.message}`));
       },
       header: false,
-      skipEmptyLines: true,
+      skipEmptyLines: false,
     });
   });
 };
@@ -313,6 +317,7 @@ export const fetchWithRateLimit = async (
   ...args: any[]
 ): Promise<any> => {
   let response = await fetchFunction(...args);
+  //console.log(response);
   if ("no_limit" in response) {
     await handleWaitTime(response.wait_seconds, ...args);
     response = await fetchFunction(...args);
@@ -367,4 +372,15 @@ export function isValidGitHubId(username) {
 
   // Check if the username is a string and matches the GitHub ID pattern
   return typeof username === "string" && githubRegex.test(username);
+}
+
+export function isValidURL(url) {
+  const parsedUrl = new URL(url);
+  console.log(parsedUrl);
+  const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+  console.log(pathParts);
+  if (pathParts.length < 2) {
+    return false;
+  };
+  return true;
 }
