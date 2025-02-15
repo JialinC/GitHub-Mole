@@ -343,7 +343,10 @@ export const generateCsvContent = (headers: string[], data: any[][]): string => 
 };
 
 export const downloadCsv = (csvContent: string, fileName: string): void => {
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const bom = "\uFEFF"; 
+  const blob = new Blob([bom + csvContent], { type: "text/csv;charset=utf-8;" });
+  //const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -375,12 +378,17 @@ export function isValidGitHubId(username) {
 }
 
 export function isValidURL(url) {
-  const parsedUrl = new URL(url);
-  console.log(parsedUrl);
-  const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
-  console.log(pathParts);
-  if (pathParts.length < 2) {
+  try {
+    console.log(url);
+    const parsedUrl = new URL(url);
+    console.log(parsedUrl);
+    const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+    console.log(pathParts);
+    if (pathParts.length < 2) {
+      return false;
+    };
+  } catch (error) {
     return false;
-  };
+  }
   return true;
 }
