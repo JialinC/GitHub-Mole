@@ -22,6 +22,7 @@ import {
   getUserAvatarUrl,
   handleFileChange as handleFileChangeUtil,
   handleWaitTime as handleWaitTimeUtil,
+  isValidGitHubId,
   parseCSV,
   validateGitHubIdsFile,
 } from "../utils/helpers";
@@ -29,6 +30,7 @@ import {
   checkDuplicate,
   fetchRepoNames,
   fetchBranches,
+  fetchDefaultBranch,
   fetchContributorContributions,
   fetchCommitDetails,
   fetchRateLimit,
@@ -44,7 +46,10 @@ const Commits: React.FC = () => {
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const navigate = useNavigate();
 
-  const [queryOption, setQueryOption] = useState<string>("oneUser");
+  // const [queryOption, setQueryOption] = useState<string>("oneUser");
+  // const [githubId, setGithubId] = useState("");
+  const [inputOption, setInputOption] = useState<boolean>(false);
+  const [queryOption, setQueryOption] = useState<string>("allBranches");
   const [githubId, setGithubId] = useState("");
 
   const [noRateLimit, setNoRateLimit] = useState<boolean>(false);
@@ -93,6 +98,10 @@ const Commits: React.FC = () => {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleFileChangeUtil({ event, setErrors, setFile });
+  };
+
+  const handleInputChange = () => {
+    setInputOption(!inputOption);
   };
 
   const handleWaitTime = (waitTime: number) => {
@@ -159,6 +168,21 @@ const Commits: React.FC = () => {
     return branchNames;
   };
 
+  const gatherRepoDefaultBranch = async (repo: string, owner: string) => {
+    let branchNames: string[] = [];
+    const defaultBranche = await fetchWithRateLimit(
+      fetchDefaultBranch,
+      handleWaitTime,
+      owner,
+      repo,
+      setFatal
+    );
+    if (defaultBranche.name) {
+      branchNames.push(defaultBranche.name);
+    }
+    return branchNames;
+  };
+
   const gatherContributorContributions = async (
     repo: string,
     owner: string,
@@ -201,7 +225,10 @@ const Commits: React.FC = () => {
       if (signal.aborted) {
         return;
       }
-      const repoBranches = await gatherRepoBranches(repo, owner);
+      const repoBranches =
+        queryOption === "defaultBranch"
+          ? await gatherRepoDefaultBranch(repo, owner)
+          : await gatherRepoBranches(repo, owner);
       for (const branch of repoBranches) {
         if (signal.aborted) {
           return;
@@ -277,53 +304,57 @@ const Commits: React.FC = () => {
 
   const handleSubmit = async () => {
     const signal = abortControllerRef.current?.signal;
-    if (queryOption === "groupUsers") {
-      if (!file) {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          file: "No file selected",
-        }));
-        return;
+    if (!inputOption) {
+      if (file) {
+        try {
+          await validateGitHubIdsFile(file);
+        } catch (error) {
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            file:
+              error instanceof Error
+                ? error.message
+                : "An unknown error occurred",
+          }));
+          return;
+        }
       }
-
-      try {
-        await validateGitHubIdsFile(file);
-      } catch (error) {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          file:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred",
-        }));
-        return;
-      }
-
       setLoading(true);
       setShowTable(true);
-      try {
-        const result = await parseCSV(file);
-        await processGitHubIds(result.data as string[][], signal!);
-      } catch (error) {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          processing:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred",
-        }));
-      } finally {
+
+      if (file) {
+        try {
+          const result = await parseCSV(file);
+          await processGitHubIds(result.data as string[][], signal!);
+        } catch (error) {
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            processing:
+              error instanceof Error
+                ? error.message
+                : "An unknown error occurred",
+          }));
+        } finally {
+          setLoading(false);
+        }
+      } else {
         setLoading(false);
       }
     } else {
-      if (!githubId) {
+      if (githubId === "") {
         setErrors((prevErrors) => ({
           ...prevErrors,
-          githubId: "Please enter a GitHub ID",
+          githubId: "No GitHub ID entered",
         }));
         return;
       }
-
+      if (!isValidGitHubId(githubId)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          githubId: "Invalid GitHub ID entered",
+        }));
+        return;
+      }
       setLoading(true);
       setShowTable(true);
       try {
@@ -416,16 +447,31 @@ const Commits: React.FC = () => {
               <OptionSelector
                 queryOption={queryOption}
                 handleOptionChange={handleOptionChange}
-                optionValue="oneUser"
-                labelText="Query all commits made by a single user."
+                optionValue="allBranches"
+                labelText="Query all commits made by the given user(s) to all branches (e.g., the main branch, feature branches, etc.) in every repository on GitHub."
               />
               <OptionSelector
                 queryOption={queryOption}
                 handleOptionChange={handleOptionChange}
-                optionValue="groupUsers"
-                labelText="Query all commits made by a group of users."
+                optionValue="defaultBranch"
+                labelText="Query all commits made by the given user(s) to the default branch (e.g., the main or master branch) in every repository on GitHub."
               />
-              {queryOption === "oneUser" && (
+              <label className="text-white font-bold mb-2 block">
+                Only interested in a single user?
+              </label>
+              <div className="flex items-center mb-2">
+                <input
+                  type="checkbox"
+                  id="input"
+                  checked={inputOption}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                <label htmlFor="input" className="text-white">
+                  Yes
+                </label>
+              </div>
+              {inputOption && (
                 <div className="mb-4">
                   <label
                     htmlFor="githubId"
@@ -441,9 +487,10 @@ const Commits: React.FC = () => {
                     placeholder="Please enter the GitHub ID you are curious about, e.g., JialinC."
                     className="w-full px-3 py-2 text-gray-700 bg-gray-200 rounded-lg focus:outline-none"
                   />
+                  {errors.githubId && <ErrorMessage error={errors.githubId} />}
                 </div>
               )}
-              {queryOption === "groupUsers" && (
+              {!inputOption && (
                 <>
                   <UploadSection
                     demoImage={githubIDs}
@@ -451,11 +498,23 @@ const Commits: React.FC = () => {
                     title="Upload GitHub IDs"
                     description={gitHubCSV}
                   />
-                  {errors.githubId && <ErrorMessage error={errors.githubId} />}
+                  {queryOption === "totalContributions" && (
+                    <div className="text-gray-300 mb-4">
+                      Note: The rate limit of 5000 requests should be sufficient
+                      to query the total contributions of over 200 average
+                      GitHub users. However, in cases where a user has an
+                      extensive and significant contribution history, the rate
+                      limit consumption may increase. Additionally, querying
+                      contributions for large number of users (i.e. 1000) at
+                      once can exceed the rate limit. We recommend breaking your
+                      input into smaller CSV files, each containing around 200
+                      users, for optimal experience.
+                    </div>
+                  )}
+                  {errors.file && <ErrorMessage error={errors.file} />}
                 </>
               )}
 
-              {errors.file && <ErrorMessage error={errors.file} />}
               <div className="text-gray-300 mb-4">
                 <span className="font-semibold text-white">WARNING:</span>{" "}
                 Querying all commits made by a single user or a group of users
@@ -566,7 +625,7 @@ const Commits: React.FC = () => {
               {invalidIDs.length > 0 && (
                 <ErrorMessage
                   error={
-                    "The following GitHub IDs are invalid: " +
+                    "The following GitHub ID(s) do not exist: " +
                     invalidIDs.toString()
                   }
                 />

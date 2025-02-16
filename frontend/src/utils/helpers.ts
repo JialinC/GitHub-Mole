@@ -207,7 +207,6 @@ export const validateGitHubIdsFile = (file: File): Promise<void> => {
 
         for (let i = 1; i < data.length; i++) {
           const row = data[i];
-
           if (row.length !== headers.length) {
             return reject(
               new Error(`Row ${i + 1} does not match the header length.`)
@@ -221,6 +220,9 @@ export const validateGitHubIdsFile = (file: File): Promise<void> => {
           if (!isValidGitHubId(row[0])) {
             return reject(new Error(`Invalid GitHub ID in row ${i + 1}.`));
           }
+          if (row[0]==="") {
+            return reject(new Error(`Invalid GitHub ID in row ${i + 1}.`));
+          }
         }
 
         resolve();
@@ -229,7 +231,7 @@ export const validateGitHubIdsFile = (file: File): Promise<void> => {
         reject(new Error(`Failed to parse CSV file: ${error.message}`));
       },
       header: false,
-      skipEmptyLines: true,
+      skipEmptyLines: false,
     });
   });
 };
@@ -272,7 +274,7 @@ export const validateCsvFile = (file: File): Promise<void> => {
         reject(new Error(`Failed to parse CSV file: ${error.message}`));
       },
       header: false,
-      skipEmptyLines: true,
+      skipEmptyLines: false,
     });
   });
 };
@@ -338,7 +340,10 @@ export const generateCsvContent = (headers: string[], data: any[][]): string => 
 };
 
 export const downloadCsv = (csvContent: string, fileName: string): void => {
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const bom = "\uFEFF"; 
+  const blob = new Blob([bom + csvContent], { type: "text/csv;charset=utf-8;" });
+  //const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -367,4 +372,17 @@ export function isValidGitHubId(username) {
 
   // Check if the username is a string and matches the GitHub ID pattern
   return typeof username === "string" && githubRegex.test(username);
+}
+
+export function isValidURL(url) {
+  try {
+    const parsedUrl = new URL(url);
+    const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+    if (pathParts.length < 2) {
+      return false;
+    };
+  } catch (error) {
+    return false;
+  }
+  return true;
 }

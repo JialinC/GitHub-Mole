@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import avatar from "../assets/avatar.png";
 import logoImage from "../assets/app_logo.png";
-import { useNavigate } from "react-router-dom";
 import logoutImage from "../assets/logout.png";
+import { useNavigate } from "react-router-dom";
 
 interface NavbarProps {
   children?: React.ReactNode;
@@ -27,7 +28,6 @@ const Navbar: React.FC<NavbarProps> = ({ children, avatarUrl, rateLimit }) => {
 
   const handleLogout = () => {
     localStorage.clear();
-    console.log("User logged out");
     navigate("/login");
   };
 
@@ -60,6 +60,10 @@ const Navbar: React.FC<NavbarProps> = ({ children, avatarUrl, rateLimit }) => {
                 <img
                   src={avatarUrl}
                   alt="User Avatar"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).onerror = null;
+                    (e.target as HTMLImageElement).src = avatar;
+                  }}
                   className="w-8 h-8 rounded-full border-2 border-white"
                 />
                 {rateLimit && (

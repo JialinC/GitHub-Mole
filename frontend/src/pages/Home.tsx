@@ -29,7 +29,7 @@ const Home: React.FC = () => {
             This is an open-source APP designed to help you collect GitHub user
             contribution stats and form SDE teams. For details, please check the
             <a
-              href="https://github.com/yourusername/your-repo/blob/main/README.md"
+              href="https://github.com/JialinC/GitHub-Mole/blob/main/README.md"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-400 hover:text-blue-600 underline mx-1"
@@ -38,7 +38,7 @@ const Home: React.FC = () => {
             </a>
             file and the
             <a
-              href="https://yourdocumentationlink.com"
+              href="https://jialinc.github.io/GitHub-Mole/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-400 hover:text-blue-600 underline mx-1"

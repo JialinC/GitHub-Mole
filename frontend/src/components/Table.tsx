@@ -1,4 +1,5 @@
 import React from "react";
+import defaultAvatar from "../assets/avatar.png";
 import loading from "../assets/load.gif";
 import ProgressBar from "./ProgressBar";
 
@@ -106,6 +107,11 @@ const Table: React.FC<TableProps> = ({
                               <img
                                 src={avatar[cell]}
                                 alt="..."
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).onerror = null;
+                                  (e.target as HTMLImageElement).src =
+                                    defaultAvatar;
+                                }}
                                 className="w-10 h-10 rounded-full mr-2 inline-block"
                               />
                             ) : null}

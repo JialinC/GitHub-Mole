@@ -1,16 +1,18 @@
 """This file defines the URLs for various GraphQL endpoints."""
 
-from urllib.parse import urlparse
+import logging
+import time
 from datetime import datetime, timezone
-from pygments.lexers import guess_lexer_for_filename
-from pygments.lexers.special import TextLexer
+from urllib.parse import urlparse
+
+import requests
+from requests.exceptions import Timeout, RequestException
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models.user import User
-import logging
-import requests
+from pygments.lexers import guess_lexer_for_filename
+from pygments.lexers.special import TextLexer
 
-# Import service methods
+from app.models.user import User
 from ..services.github_graphql_services import (
     get_rate_limit,
     get_current_user_login,
@@ -29,6 +31,7 @@ from ..services.github_graphql_services import (
     get_user_pull_requests_page,
     get_user_repository_discussions_page,
     get_repository_branches_page,
+    get_repository_default_branch,
     get_repository_contributors_page,
     get_repository_branch_commits_page,
     get_repository_contributor_contributions_page,
@@ -350,6 +353,19 @@ def repository_branches(owner, repo):
     return jsonify(data)
 
 
+@github_bp.route("/graphql/repository_default_branch/<owner>/<repo>", methods=["GET"])
+@jwt_required()
+def repository_default_branch(owner, repo):
+    """
+    Route:
+    Method: GET
+    """
+    user = check_user()
+    pat, protocol, host = extract_user_credentials_and_host(user)
+    data = get_repository_default_branch(owner, repo, protocol, host, pat)
+    return jsonify(data)
+
+
 @github_bp.route("/graphql/repository_contributors/<owner>/<repo>", methods=["GET"])
 @jwt_required()
 def repository_contributors(owner, repo):
@@ -423,96 +439,195 @@ def repository_contributor_contributions(owner, repo, login):
     return jsonify(data)
 
 
-@github_bp.route(
-    "/rest/commits/<owner>/<repo>/<sha>",
-    methods=["GET"],
-)
+MAX_RETRIES = 3
+INITIAL_RETRY_DELAY = 2
+
+
+def fetch_with_retries(url, headers, max_retries=MAX_RETRIES, timeout=15):
+    """Fetch data with retry logic and exponential backoff."""
+    last_exception = None
+    response = None
+
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, headers=headers, timeout=timeout)
+            if response.status_code in {403, 429}:
+                current_time = datetime.now(timezone.utc)
+                reset_timestamp = int(response.headers.get("X-RateLimit-Reset"))
+                reset_at = datetime.fromtimestamp(reset_timestamp, tz=timezone.utc)
+                time_diff = reset_at - current_time
+                seconds = time_diff.total_seconds()
+
+                return {
+                    "no_limit": True,
+                    "wait_seconds": seconds + 3,
+                    "reset_at": reset_at.isoformat(),
+                }
+            response.raise_for_status()
+            if response.status_code == 200:
+                return response.json()
+            response.raise_for_status()
+
+        except Timeout as e:
+            last_exception = e
+            logging.warning(
+                "Request timed out. Retrying in %d seconds...",
+                INITIAL_RETRY_DELAY * (2**attempt),
+            )
+            time.sleep(INITIAL_RETRY_DELAY * (2**attempt))
+
+        except RequestException as e:
+            last_exception = e
+            logging.error("Request failed: %s. Retrying...", str(e))
+            time.sleep(INITIAL_RETRY_DELAY * (2**attempt))
+    raise Timeout("All retry attempts exhausted.") from last_exception
+
+
+@github_bp.route("/rest/commits/<owner>/<repo>/<sha>", methods=["GET"])
 @jwt_required()
 def get_commit_details(owner, repo, sha):
-    """
-    Route:
-    Method: GET
-    """
+    """Fetch commit details from GitHub with rate limiting and retry logic."""
     user = check_user()
     token, protocol, host = extract_user_credentials_and_host(user)
-    rate_limit_url = f"{protocol}://{host}/rate_limit"
     headers = {"Authorization": f"token {token}"}
-    try:
-        response = requests.get(rate_limit_url, headers=headers, timeout=10)
-        response.raise_for_status()
-        rate_limit_data = response.json()
-        remaining_requests = rate_limit_data["rate"]["remaining"]
-        reset_time = rate_limit_data["rate"]["reset"]
-        reset_at = datetime.fromtimestamp(reset_time, tz=timezone.utc)
-        current_time = datetime.now(timezone.utc)
-        time_diff = reset_at - current_time
-        seconds = time_diff.total_seconds()
-        if remaining_requests == 0:
-            return (
-                jsonify(
-                    {
-                        "no_limit": True,
-                        "error": "Rate limit exceeded",
-                        "wait_seconds": seconds + 2,
-                        "reset_at": reset_at.isoformat(),
-                        "message": "Try again after the reset time.",
-                    }
-                ),
-                200,
-            )
 
-        commit_url = f"{protocol}://{host}/repos/{owner}/{repo}/commits/{sha}"
-        retries = 3
-        for attempt in range(retries):
-            try:
-                response = requests.get(commit_url, headers=headers, timeout=10)
-                response.raise_for_status()
-                break
-            except requests.exceptions.RequestException as e:
-                if attempt < retries - 1:
-                    logging.warning(
-                        "Attempt %d failed: %s. Retrying...", attempt + 1, str(e)
-                    )
-                    continue
-                else:
-                    logging.error("All retry attempts failed: %s", str(e))
-                    return (
-                        jsonify(
-                            {
-                                "error": "Failed to fetch commit details after multiple attempts"
-                            }
-                        ),
-                        500,
-                    )
-        commit = response.json()
-        res = {
-            "author": commit["commit"]["author"]["name"],
-            "author_email": commit["commit"]["author"]["email"],
-            "authoredDate": commit["commit"]["author"]["date"],
-            "message": commit["commit"]["message"],
-            "author_login": commit["author"]["login"] if commit["author"] else None,
-            "parents": len(commit["parents"]),
-            "additions": commit["stats"]["additions"],
-            "deletions": commit["stats"]["deletions"],
-            "changedFilesIfAvailable": len(commit["files"]),
-            "lang_stats": {},
-        }
-        # Calculate language statistics
-        for file in commit["files"]:
-            try:
-                lexer = guess_lexer_for_filename(file["filename"], file["patch"])
-            except Exception:
-                lexer = TextLexer()  # Default to plain text lexer if no lexer is found
+    # Fetch commit details with retry logic
+    commit_url = f"{protocol}://{host}/repos/{owner}/{repo}/commits/{sha}"
+    commit = fetch_with_retries(commit_url, headers)
+    if isinstance(commit, dict) and commit.get("no_limit"):
+        return jsonify(commit)
 
-            if lexer.name in res["lang_stats"]:
-                res["lang_stats"][lexer.name]["additions"] += file["additions"]
-                res["lang_stats"][lexer.name]["deletions"] += file["deletions"]
-            else:
-                res["lang_stats"][lexer.name] = {
-                    "additions": file["additions"],
-                    "deletions": file["deletions"],
-                }
+    if not commit:
+        return (
+            jsonify(
+                {"error": "Failed to fetch commit details after multiple attempts"}
+            ),
+            500,
+        )
 
-        return jsonify({"commit": res})
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+    # Process commit details
+    res = {
+        "author": commit["commit"]["author"]["name"],
+        "author_email": commit["commit"]["author"]["email"],
+        "authoredDate": commit["commit"]["author"]["date"],
+        "message": commit["commit"]["message"],
+        "author_login": commit["author"]["login"] if commit["author"] else None,
+        "parents": len(commit["parents"]),
+        "additions": commit["stats"]["additions"],
+        "deletions": commit["stats"]["deletions"],
+        "changedFilesIfAvailable": len(commit["files"]),
+        "lang_stats": {},
+    }
+
+    # Calculate language statistics
+    for file in commit["files"]:
+        try:
+            lexer = guess_lexer_for_filename(file["filename"], file["patch"])
+        except Exception:
+            lexer = TextLexer()  # Default to plain text lexer if no lexer is found
+
+        if lexer.name in res["lang_stats"]:
+            res["lang_stats"][lexer.name]["additions"] += file["additions"]
+            res["lang_stats"][lexer.name]["deletions"] += file["deletions"]
+        else:
+            res["lang_stats"][lexer.name] = {
+                "additions": file["additions"],
+                "deletions": file["deletions"],
+            }
+
+    return jsonify({"commit": res})
+
+
+# @github_bp.route(
+#     "/rest/commits/<owner>/<repo>/<sha>",
+#     methods=["GET"],
+# )
+# @jwt_required()
+# def get_commit_details(owner, repo, sha):
+#     """
+#     Route:
+#     Method: GET
+#     """
+#     user = check_user()
+#     token, protocol, host = extract_user_credentials_and_host(user)
+#     rate_limit_url = f"{protocol}://{host}/rate_limit"
+#     headers = {"Authorization": f"token {token}"}
+#     try:
+#         response = requests.get(rate_limit_url, headers=headers, timeout=10)
+#         response.raise_for_status()
+#         rate_limit_data = response.json()
+#         remaining_requests = rate_limit_data["rate"]["remaining"]
+#         reset_time = rate_limit_data["rate"]["reset"]
+#         reset_at = datetime.fromtimestamp(reset_time, tz=timezone.utc)
+#         current_time = datetime.now(timezone.utc)
+#         time_diff = reset_at - current_time
+#         seconds = time_diff.total_seconds()
+#         if remaining_requests == 0:
+#             return (
+#                 jsonify(
+#                     {
+#                         "no_limit": True,
+#                         "error": "Rate limit exceeded",
+#                         "wait_seconds": seconds + 2,
+#                         "reset_at": reset_at.isoformat(),
+#                         "message": "Try again after the reset time.",
+#                     }
+#                 ),
+#                 200,
+#             )
+
+#         commit_url = f"{protocol}://{host}/repos/{owner}/{repo}/commits/{sha}"
+#         retries = 3
+#         for attempt in range(retries):
+#             try:
+#                 response = requests.get(commit_url, headers=headers, timeout=10)
+#                 response.raise_for_status()
+#                 break
+#             except requests.exceptions.RequestException as e:
+#                 if attempt < retries - 1:
+#                     logging.warning(
+#                         "Attempt %d failed: %s. Retrying...", attempt + 1, str(e)
+#                     )
+#                     continue
+#                 else:
+#                     logging.error("All retry attempts failed: %s", str(e))
+#                     return (
+#                         jsonify(
+#                             {
+#                                 "error": "Failed to fetch commit details after multiple attempts"
+#                             }
+#                         ),
+#                         500,
+#                     )
+#         commit = response.json()
+#         res = {
+#             "author": commit["commit"]["author"]["name"],
+#             "author_email": commit["commit"]["author"]["email"],
+#             "authoredDate": commit["commit"]["author"]["date"],
+#             "message": commit["commit"]["message"],
+#             "author_login": commit["author"]["login"] if commit["author"] else None,
+#             "parents": len(commit["parents"]),
+#             "additions": commit["stats"]["additions"],
+#             "deletions": commit["stats"]["deletions"],
+#             "changedFilesIfAvailable": len(commit["files"]),
+#             "lang_stats": {},
+#         }
+#         # Calculate language statistics
+#         for file in commit["files"]:
+#             try:
+#                 lexer = guess_lexer_for_filename(file["filename"], file["patch"])
+#             except Exception:
+#                 lexer = TextLexer()  # Default to plain text lexer if no lexer is found
+
+#             if lexer.name in res["lang_stats"]:
+#                 res["lang_stats"][lexer.name]["additions"] += file["additions"]
+#                 res["lang_stats"][lexer.name]["deletions"] += file["deletions"]
+#             else:
+#                 res["lang_stats"][lexer.name] = {
+#                     "additions": file["additions"],
+#                     "deletions": file["deletions"],
+#                 }
+
+#         return jsonify({"commit": res})
+#     except requests.exceptions.RequestException as e:
+#         return jsonify({"error": str(e)}), 500

@@ -44,8 +44,10 @@ import {
   generateCsvContent,
   handleFileChange as handleFileChangeUtil,
   handleWaitTime as handleWaitTimeUtil,
+  isValidGitHubId,
   parseCSV,
   toCamelCase,
+  validateGitHubIdsFile,
 } from "../utils/helpers";
 import {
   checkDuplicate,
@@ -461,7 +463,6 @@ const Contributions: React.FC = () => {
       return;
     }
     addLoadingRow(setTableData, tableHeader.length);
-
     setAvatarMap((prevAvatarMap) => ({
       ...prevAvatarMap,
       [githubID]: profile.avatarUrl,
@@ -593,7 +594,6 @@ const Contributions: React.FC = () => {
     globalThis.invalidCount = 0;
     for (let i = 1; i < data.length; i++) {
       if (signal.aborted) {
-        console.log("aborted");
         break;
       }
       const githubID = data[i][0];
@@ -704,7 +704,6 @@ const Contributions: React.FC = () => {
     let rowIndex = { value: 0 };
     for (let i = 1; i < data.length; i++) {
       if (signal.aborted) {
-        console.log("aborted");
         break;
       }
       const githubID = data[i][0];
@@ -715,7 +714,6 @@ const Contributions: React.FC = () => {
   const validateInputs = () => {
     let isValid = true;
     const newErrors: { [key: string]: string } = {};
-
     if (queryOption === "totalContributions" && selectedLangs.size === 0) {
       newErrors.langs = "No languages selected";
       isValid = false;
@@ -741,7 +739,7 @@ const Contributions: React.FC = () => {
       isValid = false;
     }
 
-    if (!file) {
+    if (!inputOption && !file) {
       newErrors.file = "No file selected";
       isValid = false;
     }
@@ -751,9 +749,23 @@ const Contributions: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    if (!validateInputs()) {
+      return;
+    }
     if (!inputOption) {
-      if (!validateInputs()) {
-        return;
+      if (file) {
+        try {
+          await validateGitHubIdsFile(file);
+        } catch (error) {
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            file:
+              error instanceof Error
+                ? error.message
+                : "An unknown error occurred",
+          }));
+          return;
+        }
       }
       setLoading(true);
       setShowTable(true);
@@ -785,6 +797,13 @@ const Contributions: React.FC = () => {
         setErrors((prevErrors) => ({
           ...prevErrors,
           githubId: "No GitHub ID entered",
+        }));
+        return;
+      }
+      if (!isValidGitHubId(githubId)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          githubId: "Invalid GitHub ID entered",
         }));
         return;
       }
@@ -953,13 +972,13 @@ const Contributions: React.FC = () => {
                 queryOption={queryOption}
                 handleOptionChange={handleOptionChange}
                 optionValue="totalContributions"
-                labelText="Query the total number of each type of GitHub contribution (e.g., commits, pull requests, issues, etc.) for the given GitHub IDs."
+                labelText="Query the total number of each type of GitHub contribution (e.g., commits, pull requests, issues, etc.) for the specified GitHub ID(s)."
               />
               <OptionSelector
                 queryOption={queryOption}
                 handleOptionChange={handleOptionChange}
                 optionValue="specificContributions"
-                labelText="Query and retrieve detailed information for a specific category of GitHub contributions (e.g., commit comments, pull requests, etc.) for the given GitHub IDs."
+                labelText="Query and retrieve detailed information for a specific category of GitHub contributions (e.g., commit comments, pull requests, etc.) for the specified GitHub ID(s)."
               />
               <label className="text-white font-bold mb-2 block">
                 Only interested in a single user?
@@ -1169,7 +1188,7 @@ const Contributions: React.FC = () => {
               {invalidIDs.length > 0 && (
                 <ErrorMessage
                   error={
-                    "The following GitHub IDs are invalid: " +
+                    "The following GitHub ID(s) do not exist: " +
                     invalidIDs.toString()
                   }
                 />
