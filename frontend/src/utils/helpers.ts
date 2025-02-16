@@ -207,8 +207,6 @@ export const validateGitHubIdsFile = (file: File): Promise<void> => {
 
         for (let i = 1; i < data.length; i++) {
           const row = data[i];
-          console.log(i,row);
-
           if (row.length !== headers.length) {
             return reject(
               new Error(`Row ${i + 1} does not match the header length.`)
@@ -317,7 +315,6 @@ export const fetchWithRateLimit = async (
   ...args: any[]
 ): Promise<any> => {
   let response = await fetchFunction(...args);
-  //console.log(response);
   if ("no_limit" in response) {
     await handleWaitTime(response.wait_seconds, ...args);
     response = await fetchFunction(...args);
@@ -379,11 +376,8 @@ export function isValidGitHubId(username) {
 
 export function isValidURL(url) {
   try {
-    console.log(url);
     const parsedUrl = new URL(url);
-    console.log(parsedUrl);
     const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
-    console.log(pathParts);
     if (pathParts.length < 2) {
       return false;
     };
