@@ -20,7 +20,10 @@ const Login: React.FC = () => {
   useEffect(() => {
     const fetchSSOConfig = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/helper/sso`, { timeout: 5000 });
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/helper/sso`,
+          { timeout: 5000 }
+        );
         setSsoEnabled(response.data.sso_config);
         setError(null);
       } catch (error) {
@@ -49,16 +52,20 @@ const Login: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/helper/validate-pat`, {
-        pat,
-        accountType,
-        apiUrl:
-          accountType === "enterprise"
-            ? enterpriseUrl
-            : "https://api.github.com",
-      });
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/helper/validate-pat`,
+        {
+          pat,
+          accountType,
+          apiUrl:
+            accountType === "enterprise"
+              ? enterpriseUrl
+              : "https://api.github.com",
+        }
+      );
       if (response.data.valid) {
         const { access_token, refresh_token } = response.data;
+        localStorage.setItem("accountType", accountType);
         navigate(
           `/dashboard?access_token=${access_token}&refresh_token=${refresh_token}`
         );
@@ -162,8 +169,9 @@ const Login: React.FC = () => {
             <div className="mt-4">
               <button
                 onClick={() =>
-                  (window.location.href =
-                    `${import.meta.env.VITE_BACKEND_URL}/oauth/authorize`)
+                  (window.location.href = `${
+                    import.meta.env.VITE_BACKEND_URL
+                  }/oauth/authorize`)
                 }
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full focus:outline-none focus:shadow-outline flex items-center justify-center"
               >
