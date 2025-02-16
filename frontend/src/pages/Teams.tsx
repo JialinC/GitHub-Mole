@@ -506,7 +506,7 @@ const Teams: React.FC = () => {
               {invalidIDs.length > 0 && (
                 <ErrorMessage
                   error={
-                    "The following GitHub IDs are invalid: " +
+                    "The following GitHub ID(s) do not exist: " +
                     invalidIDs.toString()
                   }
                 />
