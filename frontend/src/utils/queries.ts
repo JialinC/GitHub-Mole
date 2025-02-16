@@ -227,6 +227,15 @@ export const fetchBranches = async (
     return response ? response.data : null;
 };
 
+export const fetchDefaultBranch = async (
+  owner: string,
+  repo: string,
+  setError: (error: string | null) => void,
+) => {
+    const response = await fetchData(`/api/graphql/repository_default_branch/${owner}/${repo}`, setError);
+    return response ? response.data : null;
+};
+
 export const fetchBranchCommits = async (
   owner: string,
   repo: string,
@@ -330,6 +339,13 @@ export const deleteUserContribution = async (queryId: string, contributionId: st
   return response ? response.data : null;
 };
 
-
+export const fetchImageBlob = async (avatarUrl) => {
+  try {
+    const response = await axiosInstance.get("/api/helper/avatar");
+  } catch (error) {
+    console.error("Error fetching avatar:", error);
+    return ""; 
+  }
+};
 
 
