@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import avatar from "../assets/avatar.png";
 import CardButton from "../components/CardButton";
 import CustomHeatmap from "../components/CustomHeatmap";
 import ErrorPage from "../components/Error";
@@ -128,6 +129,7 @@ const Dashboard: React.FC = () => {
 
     const getCurUser = async () => {
       const storedUser = localStorage.getItem("curUser");
+      const accountType = localStorage.getItem("accountType");
       if (storedUser) {
         setCurUser(JSON.parse(storedUser));
         return JSON.parse(storedUser);
@@ -286,6 +288,10 @@ const Dashboard: React.FC = () => {
                   <img
                     src={curUser?.avatarUrl || ""}
                     alt="User Profile"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).onerror = null;
+                      (e.target as HTMLImageElement).src = avatar;
+                    }}
                     className="rounded-full w-32 h-32 border-4 border-white shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out transform hover:scale-105"
                   />
                   <div className="absolute bottom-0 right-0 bg-green-500 border-2 border-white rounded-full w-6 h-6"></div>
