@@ -1,8 +1,8 @@
 """The module defines a client class that executes the given GraphQL query string."""
 
+import logging
 import re
-
-# import time
+import time
 from datetime import datetime, timezone
 from typing import Union, Optional, Dict, Any, Generator, Tuple
 import requests
@@ -18,6 +18,9 @@ from app.services.github_query.queries.costs.query_cost import (
 from .authentication import (
     Authenticator,
 )
+
+MAX_RETRIES = 3
+INITIAL_RETRY_DELAY = 2
 
 
 class InvalidAuthenticationError(Exception):
@@ -55,6 +58,13 @@ class Client:
     It supports both public GitHub and GitHub Enterprise.
     """
 
+    def debug_response(self, response: Response) -> None:
+        print(response.json())
+        print(f"Status Code: {response.status_code}")
+        print("Response Headers:")
+        for key, value in response.headers.items():
+            print(f"{key}: {value}")
+
     def __init__(
         self,
         protocol: str = "https",
@@ -62,7 +72,7 @@ class Client:
         is_enterprise: bool = False,
         authenticator: Optional[Authenticator] = None,
         retry_attempts: int = 3,
-        timeout_seconds: int = 10,
+        timeout_seconds: int = 15,
     ) -> None:
         """
         Initializes the client with the necessary configuration and authentication.
@@ -120,18 +130,22 @@ class Client:
         Tries to send a request multiple times until it succeeds or the retry limit is reached.
 
         Args:
-            query (Union[str, Query]): The GraphQL query to execute.
+            query (str): The GraphQL query to execute.
+
         Returns:
             Response: The server's response to the HTTP request.
 
         Raises:
+            QueryFailedException: If all retry attempts fail due to API errors.
             Timeout: If all retry attempts are exhausted and the request keeps timing out.
         """
         if isinstance(query, Query):
             query = query.get_query()
+
         last_exception = None
         response = None
-        for _ in range(self._retry_attempts):
+
+        for attempt in range(MAX_RETRIES):
             try:
                 response = requests.post(
                     self._base_path(),
@@ -139,30 +153,39 @@ class Client:
                     headers=self._generate_headers(),
                     timeout=self._timeout_seconds,
                 )
+                # self.debug_response(response)
+                res = response.json()
+                if "errors" in res and res["errors"][0]["type"] == "RATE_LIMITED":
+                    current_time = datetime.now(timezone.utc)
+                    reset_timestamp = int(response.headers.get("X-RateLimit-Reset"))
+                    reset_at = datetime.fromtimestamp(reset_timestamp, tz=timezone.utc)
+                    time_diff = reset_at - current_time
+                    seconds = time_diff.total_seconds()
+
+                    return {
+                        "no_limit": True,
+                        "wait_seconds": seconds + 3,
+                        "reset_at": reset_at.isoformat(),
+                    }
+
                 if response.status_code == 200:
                     return response
+
             except Timeout as e:
                 last_exception = e
-                print("Request timed out. Retrying...")
-        # If this point is reached, all retries have been exhausted
-        if not last_exception:
-            raise QueryFailedException(query=query, response=response)
-        raise Timeout("All retry attempts exhausted.")
+                logging.warning(
+                    "Request timed out. Retrying in %d seconds...",
+                    INITIAL_RETRY_DELAY * (2**attempt),
+                )
+                time.sleep(INITIAL_RETRY_DELAY * (2**attempt))
 
-    def _have_limit(self, query: Union[str, Query]) -> Tuple[bool, str]:
-        if isinstance(query, Query):
-            query = query.get_query()
-        match = re.search(r"query\s*{(?P<content>.+)}", query)
-        # pre-calculate the cost of the upcoming graphql query
-        rate_query = QueryCost(match.group("content"), dryrun=True).get_query()
-        rate_limit = self._retry_request(rate_query)
-        rate_limit = rate_limit.json()["data"]["rateLimit"]
-        cost, remaining, reset_at = (
-            rate_limit["cost"],
-            rate_limit["remaining"],
-            rate_limit["resetAt"],
-        )
-        return (self._retry_attempts * cost > remaining, reset_at)
+            except RequestException as e:
+                last_exception = e
+                logging.error("Request failed: %s. Retrying...", str(e))
+                time.sleep(INITIAL_RETRY_DELAY * (2**attempt))
+        if not response:
+            raise Timeout("All retry attempts exhausted.") from last_exception
+        raise QueryFailedException(query=query, response=response)
 
     def _execute(self, query: Union[str, Query]) -> Dict[str, Any]:
         """
@@ -177,30 +200,10 @@ class Client:
         Raises:
             QueryFailedException: If the query execution fails or returns errors.
         """
-        no_limit, reset_at = self._have_limit(query)
-        # if the cost of the upcoming graphql query larger than avaliable ratelimit,
-        # wait till ratelimit reset
-        if no_limit:
-            current_time = datetime.now(timezone.utc)
-            reset_at = datetime.strptime(reset_at, "%Y-%m-%dT%H:%M:%SZ").replace(
-                tzinfo=timezone.utc
-            )
-            time_diff = reset_at - current_time
-            seconds = time_diff.total_seconds()
-            print("GitHub GraphQL API Rate Limit Exceeded.")
-            print(f"Stop at {current_time}s.")
-            print(f"Waiting for {seconds}s.")
-            print(f"Reset at {reset_at}s.")
-            return {
-                "query": query,
-                "no_limit": no_limit,
-                "wait_seconds": seconds + 3,
-                "reset_at": reset_at.isoformat(),
-            }
-            # time.sleep(seconds + 5)
-            # TBD: display the reset time in the frontend
 
         response = self._retry_request(query)
+        if isinstance(response, dict) and response.get("no_limit"):
+            return response
         try:
             json_response = response.json()
         except RequestException as e:
@@ -257,3 +260,18 @@ class Client:
         if isinstance(query, PaginatedQuery):
             return self._execution_generator(query)
         return self._execute(query)
+
+    def _have_limit(self, query: Union[str, Query]) -> Tuple[bool, str]:
+        if isinstance(query, Query):
+            query = query.get_query()
+        match = re.search(r"query\s*{(?P<content>.+)}", query)
+        # pre-calculate the cost of the upcoming graphql query
+        rate_query = QueryCost(match.group("content"), dryrun=True).get_query()
+        rate_limit = self._retry_request(rate_query)
+        rate_limit = rate_limit.json()["data"]["rateLimit"]
+        cost, remaining, reset_at = (
+            rate_limit["cost"],
+            rate_limit["remaining"],
+            rate_limit["resetAt"],
+        )
+        return (self._retry_attempts * cost > remaining, reset_at)

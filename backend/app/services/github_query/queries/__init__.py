@@ -19,6 +19,7 @@ from .repositories import (
     RepositoryBranches,
     RepositoryBranchCommits,
     RepositoryContributors,
+    RepositoryDefaultBranch,
 )
 from .time_range_contributions import (
     UserContributionsCollection,
@@ -38,6 +39,7 @@ __all__ = [
     "UserRepositories",
     "UserRepositoryDiscussions",
     "RepositoryBranches",
+    "RepositoryDefaultBranch",
     "RepositoryBranchCommits",
     "RepositoryContributors",
     "UserContributionsCollection",

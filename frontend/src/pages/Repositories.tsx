@@ -22,6 +22,7 @@ import {
   getUserAvatarUrl,
   handleFileChange as handleFileChangeUtil,
   handleWaitTime as handleWaitTimeUtil,
+  isValidURL,
   parseCSV,
   validateCsvFile,
 } from "../utils/helpers";
@@ -30,6 +31,7 @@ import {
   fetchBranches,
   fetchBranchCommits,
   fetchCommitDetails,
+  fetchDefaultBranch,
   fetchRateLimit,
   saveToDatabase,
 } from "../utils/queries";
@@ -162,6 +164,19 @@ const Contributions: React.FC = () => {
     return commits;
   };
 
+  const gatherRepoDefaultBranch = async (repo: string, owner: string) => {
+    let branchNames: string[] = [];
+    const defaultBranche = await fetchWithRateLimit(
+      fetchDefaultBranch,
+      handleWaitTime,
+      owner,
+      repo,
+      setFatal
+    );
+    branchNames.push(defaultBranche.name);
+    return branchNames;
+  };
+
   const gatherRepoBranches = async (repo: string, owner: string) => {
     let branchNames: string[] = [];
     let endCursor: string | null = null;
@@ -194,53 +209,18 @@ const Contributions: React.FC = () => {
 
   const processRepoURL = async (url: string, signal: AbortSignal) => {
     const { owner, repo } = parseGithubUrl(url);
-    if (queryOption === "allBranches") {
-      const repoBranches = await gatherRepoBranches(repo, owner);
-      if (!repoBranches) {
+    const repoBranches =
+      queryOption === "defaultBranch"
+        ? await gatherRepoDefaultBranch(repo, owner)
+        : await gatherRepoBranches(repo, owner);
+    if (!repoBranches) {
+      return;
+    }
+    for (const branch of repoBranches) {
+      if (signal.aborted) {
         return;
       }
-      for (const branch of repoBranches) {
-        if (signal.aborted) {
-          return;
-        }
-        const repoContributions = await gatherCommits(
-          repo,
-          owner,
-          branch,
-          false
-        );
-        for (const oid of repoContributions) {
-          if (signal.aborted) {
-            return;
-          }
-          let commitResponse = await fetchWithRateLimit(
-            fetchCommitDetails,
-            handleWaitTime,
-            owner,
-            repo,
-            oid,
-            setFatal
-          );
-          let commit = commitResponse.commit;
-          const row = [
-            repo,
-            commit.author || "N/A",
-            commit.author_email || "N/A",
-            commit.author_login || "N/A",
-            branch,
-            commit.authoredDate,
-            commit.changedFilesIfAvailable,
-            commit.additions,
-            commit.deletions,
-            commit.message,
-            commit.parents,
-            JSON.stringify(commit.lang_stats),
-          ];
-          addTableRow(row);
-        }
-      }
-    } else {
-      const repoContributions = await gatherCommits(repo, owner, "", true);
+      const repoContributions = await gatherCommits(repo, owner, branch, false);
       for (const oid of repoContributions) {
         if (signal.aborted) {
           return;
@@ -259,7 +239,7 @@ const Contributions: React.FC = () => {
           commit.author || "N/A",
           commit.author_email || "N/A",
           commit.author_login || "N/A",
-          "default",
+          branch,
           commit.authoredDate,
           commit.changedFilesIfAvailable,
           commit.additions,
@@ -336,6 +316,14 @@ const Contributions: React.FC = () => {
         }));
         return;
       }
+      if (!isValidURL(repoURL)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          repoURL: "Invalid Repository URL entered",
+        }));
+        return;
+      }
+
       setLoading(true);
       setShowTable(true);
       try {

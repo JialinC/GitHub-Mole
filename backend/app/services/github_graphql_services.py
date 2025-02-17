@@ -21,6 +21,7 @@ from app.services.github_query.queries import (
     RepositoryContributors,
     RepositoryBranches,
     RepositoryBranchCommits,
+    RepositoryDefaultBranch,
     RepositoryContributorContributions,
     UserRepositoryNames,
 )
@@ -78,6 +79,8 @@ def get_current_user_login(protocol: str, host: str, token: str):
 
     try:
         response = client.execute(query=UserLoginViewer())
+        if "no_limit" in response:
+            return response
         return UserLoginViewer.profile_stats(response)
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -97,6 +100,8 @@ def get_specific_user_login(login: str, protocol: str, host: str, token: str):
 
     try:
         response = client.execute(query=UserLogin(login=login))
+        if "no_limit" in response:
+            return response
         return response
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -108,6 +113,8 @@ def get_user_profile_stats(login: str, protocol: str, host: str, token: str):
 
     try:
         response = client.execute(query=UserProfileStats(login=login))
+        if "no_limit" in response:
+            return response
         return UserProfileStats.profile_stats(response)
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -118,6 +125,8 @@ def get_user_contributions_collection(
 ):
     """ """
     response = get_specific_user_login(login, protocol, host, token)
+    if "no_limit" in response:
+        return response
     created_at = response["user"]["createdAt"]
     client = get_github_client(protocol=protocol, host=host, token=token)
     gh_start = (
@@ -160,6 +169,8 @@ def get_user_contribution_years(login: str, protocol: str, host: str, token: str
     client = get_github_client(protocol=protocol, host=host, token=token)
     try:
         response = client.execute(query=UserContributionCalendar(login=login))
+        if "no_limit" in response:
+            return response
         _, _, years = UserContributionCalendar.user_contribution_calendar(response)
         return years
     except QueryFailedException as e:
@@ -178,6 +189,8 @@ def get_user_contribution_calendar(
         query_args["end"] = f'"{end}"'
     try:
         response = client.execute(query=UserContributionCalendar(**query_args))
+        if "no_limit" in response:
+            return response
         join_date, calendar, _ = UserContributionCalendar.user_contribution_calendar(
             response
         )
@@ -219,6 +232,8 @@ def get_user_repositories_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         return UserRepositories.user_repository_page(response)
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -239,6 +254,8 @@ def get_user_commit_comments_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         return UserCommitComments.user_commit_comments(response)
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -259,6 +276,8 @@ def get_user_gist_comments_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         return UserGistComments.user_gist_comments(response)
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -279,6 +298,8 @@ def get_user_issue_comments_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         return UserIssueComments.user_issue_comments(response)
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -299,6 +320,8 @@ def get_user_repository_discussion_comments_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         return UserRepositoryDiscussionComments.user_repository_discussion_comments(
             response
         )
@@ -321,6 +344,8 @@ def get_user_gists_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         return UserGists.user_gists(response)
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -341,6 +366,8 @@ def get_user_issues_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         return UserIssues.user_issues(response)
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -361,6 +388,8 @@ def get_user_pull_requests_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         return UserPullRequests.user_pull_requests(response)
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -381,6 +410,8 @@ def get_user_repository_discussions_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         return UserRepositoryDiscussions.user_repository_discussions(response)
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -401,7 +432,28 @@ def get_repository_branches_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         return RepositoryBranches.branches(response)
+    except QueryFailedException as e:
+        return {"error": str(e)}
+
+
+def get_repository_default_branch(
+    owner: str,
+    repo_name: str,
+    protocol: str,
+    host: str,
+    token: str,
+):
+    client = get_github_client(protocol=protocol, host=host, token=token)
+    try:
+        response = client.execute(
+            query=RepositoryDefaultBranch(owner=owner, repo_name=repo_name)
+        )
+        if "no_limit" in response:
+            return response
+        return RepositoryDefaultBranch.default_branch(response)
     except QueryFailedException as e:
         return {"error": str(e)}
 
@@ -423,6 +475,8 @@ def get_repository_contributors_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         return response
     except QueryFailedException as e:
         return {"error": str(e)}
@@ -454,6 +508,8 @@ def get_repository_branch_commits_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         history = query.commits_list(response)
         page_info = history["pageInfo"]
         commits = history["nodes"]
@@ -488,7 +544,8 @@ def get_repository_contributor_contributions_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
-
+        if "no_limit" in response:
+            return response
         history = RepositoryContributorContributions.commits_list(response)
         page_info = history["pageInfo"]
         commits = history["nodes"]
@@ -514,6 +571,8 @@ def get_user_repository_names_page(
             pagination="frontend",
             end_cursor=end_cursor,
         )
+        if "no_limit" in response:
+            return response
         repos, ghid = UserRepositoryNames.user_repository_names(response)
         page_info = repos["pageInfo"]
         nodes = repos["nodes"]

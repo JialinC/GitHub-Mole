@@ -207,8 +207,6 @@ export const validateGitHubIdsFile = (file: File): Promise<void> => {
 
         for (let i = 1; i < data.length; i++) {
           const row = data[i];
-          console.log(i,row);
-
           if (row.length !== headers.length) {
             return reject(
               new Error(`Row ${i + 1} does not match the header length.`)
@@ -317,7 +315,6 @@ export const fetchWithRateLimit = async (
   ...args: any[]
 ): Promise<any> => {
   let response = await fetchFunction(...args);
-  //console.log(response);
   if ("no_limit" in response) {
     await handleWaitTime(response.wait_seconds, ...args);
     response = await fetchFunction(...args);
@@ -343,7 +340,10 @@ export const generateCsvContent = (headers: string[], data: any[][]): string => 
 };
 
 export const downloadCsv = (csvContent: string, fileName: string): void => {
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const bom = "\uFEFF"; 
+  const blob = new Blob([bom + csvContent], { type: "text/csv;charset=utf-8;" });
+  //const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -375,12 +375,14 @@ export function isValidGitHubId(username) {
 }
 
 export function isValidURL(url) {
-  const parsedUrl = new URL(url);
-  console.log(parsedUrl);
-  const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
-  console.log(pathParts);
-  if (pathParts.length < 2) {
+  try {
+    const parsedUrl = new URL(url);
+    const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+    if (pathParts.length < 2) {
+      return false;
+    };
+  } catch (error) {
     return false;
-  };
+  }
   return true;
 }
