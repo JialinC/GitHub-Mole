@@ -1,5 +1,21 @@
-"""The module defines the UserRepositoryDiscussionComments class, which formulates the GraphQL query string
-to extract repository discussion comments created by the user based on a given user ID."""
+"""
+This module defines the UserRepositoryDiscussionComments class, which constructs and handles
+paginated GraphQL queries for retrieving user repository discussion comments from GitHub.
+It includes methods for extracting and processing the comments data, such as counting comments
+created before a specific time.
+
+Classes:
+    UserRepositoryDiscussionComments: Constructs and handles the paginated GraphQL query for
+    retrieving user repository discussion comments, and provides methods for data extraction
+    and processing.
+
+Functions:
+    user_repository_discussion_comments(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        Extracts and returns the repository discussion comments from the raw query data.
+
+    created_before_time(repository_discussion_comments: List[Dict[str, Any]], time: str) -> int:
+        Counts how many repository discussion comments were created before a specific time.
+"""
 
 from typing import Dict, Any, List
 from app.services.github_query.utils.helper import created_before
@@ -37,6 +53,10 @@ class UserRepositoryDiscussionComments(PaginatedQuery):
         Initializes the UserRepositoryDiscussionComments query with specific fields and arguments
         to retrieve user repository discussion comments, including pagination handling. The query is constructed
         to fetch various details about the comments, such as creation time and pagination info.
+
+        Args:
+            login (str): GitHub username.
+            pg_size (int): Number of comments per page (default: 50).
         """
         super().__init__(
             fields=[
