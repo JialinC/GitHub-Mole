@@ -1,5 +1,15 @@
-"""The module defines the UserCommitComments class, which formulates the GraphQL query string
-to extract commit comments created by the user based on a given user ID."""
+"""
+This module defines the UserCommitComments class, which constructs and handles
+paginated GraphQL queries for retrieving user commit comments from GitHub. It
+extends the PaginatedQuery class to manage large datasets that may be delivered
+in multiple pages.
+Classes:
+    UserCommitComments: A class to construct and handle paginated GraphQL queries
+                        for user commit comments.
+Functions:
+    user_commit_comments(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    created_before_time(commit_comments: List[Dict[str, Any]], time: str) -> int:
+"""
 
 from typing import Dict, Any, List
 from app.services.github_query.utils.helper import created_before
@@ -36,6 +46,10 @@ class UserCommitComments(PaginatedQuery):
         """
         Initializes the UserCommitComments query with specific fields and arguments
         to retrieve user commit comments including pagination handling.
+
+        Args:
+            login (str): GitHub username.
+            pg_size (int): Number of comments per page (default: 50).
         """
         super().__init__(
             fields=[
