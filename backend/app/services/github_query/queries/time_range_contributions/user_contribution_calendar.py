@@ -1,3 +1,16 @@
+"""
+This module defines a query class for fetching and processing a GitHub user's contribution calendar data
+over a specified time range using GitHub's GraphQL API.
+
+Classes:
+    UserContributionCalendar: A class to construct and execute a query to fetch a user's contributions
+                              and process the returned data into a structured format.
+
+Functions:
+    user_contribution_calendar: Static method to process raw data from the query and aggregate
+                                the contributions into a countable collection.
+"""
+
 from typing import Dict, Any
 from collections import Counter
 from ..query import Query, QueryNode
@@ -23,8 +36,7 @@ from ..constants import (
 
 class UserContributionCalendar(Query):
     """
-    UserContributionsCollection is a subclass of Query specifically designed to fetch a GitHub user's contributions
-    over a certain period. It includes detailed contribution counts like commits, issues, pull requests, etc.
+    UserContributionCalendar constructs a GraphQL query to fetch the contribution history of a GitHub user.
     """
 
     def __init__(
@@ -34,7 +46,12 @@ class UserContributionCalendar(Query):
         end: str = None,
     ) -> None:
         """
-        Initializes a UserContributionsCollection query object to fetch detailed contribution information of a user.
+        Initializes a GraphQL query to retrieve user contribution data.
+
+        Args:
+            login (str): The GitHub username of the user.
+            start (str): Optional start date for filtering contributions.
+            end (str): Optional end date for filtering contributions.
         """
 
         time_args = {}
@@ -89,15 +106,17 @@ class UserContributionCalendar(Query):
     @staticmethod
     def user_contribution_calendar(raw_data: Dict[str, Any]) -> Counter:
         """
-        Processes the raw data returned from a GraphQL query about a user's contributions collection
-        and aggregates the various types of contributions into a countable collection.
+        Processes the raw data returned from a GraphQL query about a user's contributions collection.
+        Extracts and organizes key contribution details.
 
         Args:
-            raw_data (dict): The raw data returned by the query,
-                            expected to contain nested contribution counts.
+            raw_data (Dict[str, Any]): The raw response data retrieved from the GitHub GraphQL API.
 
         Returns:
-            Counter: A collection counter aggregating the various types of contributions made by the user.
+            Tuple:
+                - join_date (dict): The date the user first contributed on GitHub.
+                - calendar (list): A structured list containing weekly contribution data.
+                - years (list): A list of years during which the user has made contributions.
         """
         contributions = raw_data.get(NODE_USER, {}).get(
             NODE_CONTRIBUTIONS_COLLECTION, {}
