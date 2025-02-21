@@ -1,5 +1,18 @@
-"""The module defines the UserGistComments class, which formulates the GraphQL query string
-to extract gist comments created by the user based on a given user ID."""
+"""
+This module defines the UserGistComments class, which constructs and executes a paginated GraphQL query
+to retrieve comments on a user's gists from GitHub. It includes methods to extract and process the 
+retrieved data, such as counting comments created before a specific time.
+
+Classes:
+    UserGistComments: Handles the construction and execution of the paginated GraphQL query for user gist comments.
+
+Functions:
+    user_gist_comments(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        Extracts and returns the gist comments from the raw query data.
+
+    created_before_time(gist_comments: List[Dict[str, Any]], time: str) -> int:
+        Counts how many gist comments were created before a specific time.
+"""
 
 from typing import Dict, Any, List
 from app.services.github_query.utils.helper import created_before
@@ -36,6 +49,10 @@ class UserGistComments(PaginatedQuery):
         """
         Initializes the UserGistComments query with specific fields and arguments
         to retrieve user gist comments including pagination handling.
+
+        Args:
+            login (str): GitHub username.
+            pg_size (int): Number of comments per page (default: 50).
         """
         super().__init__(
             fields=[
