@@ -1,5 +1,16 @@
-"""The module defines the UserRepositories class, which formulates the GraphQL query string
-to extract repositories created by the user based on a given user ID."""
+"""
+This module defines the UserRepositories class for querying a user's repositories on GitHub using GraphQL.
+It includes methods for extracting repository data and aggregating statistics based on various criteria.
+Classes:
+    UserRepositories: A class for querying a user's repositories including details like language statistics,
+                      fork count, stargazer count, etc. It extends PaginatedQuery to handle potentially large
+                      numbers of repositories.
+Methods:
+    __init__: Initializes a query for a user's repositories with various filtering and ordering options.
+    user_repository_page: Extracts and returns the list of repositories from the raw GraphQL query response data.
+    cumulated_repository_stats: Aggregates statistics for repositories created before, after a certain time or
+                                in between a time range.
+"""
 
 from typing import List, Dict, Any
 from app.services.github_query.utils.helper import (
@@ -43,8 +54,7 @@ from ..constants import (
 
 class UserRepositories(PaginatedQuery):
     """
-    UserRepositories is a class for querying a user's repositories including details like language statistics,
-    fork count, stargazer count, etc. It extends PaginatedQuery to handle potentially large numbers of repositories.
+    UserRepositories constructs a GraphQL query to fetch user repositories.
     """
 
     def __init__(
@@ -59,7 +69,17 @@ class UserRepositories(PaginatedQuery):
         lag_order_dir: str = "DESC",
     ) -> None:
         """
-        Initializes a query for a user's repositories with various filtering and ordering options.
+        Initializes a GraphQL query for repositories.
+
+        Args:
+            login (str): GitHub username.
+            is_fork (bool): Whether to include forked repositories.
+            ownership (str): Repository ownership type.
+            pg_size (int): Number of repositories per page.
+            repo_order_field (str): Sorting field (e.g., "CREATED_AT").
+            repo_order_dir (str): Sorting direction (ASC/DESC).
+            lang_order_field (str): Sorting field for languages.
+            lang_order_dir (str): Sorting direction for languages.
         """
         super().__init__(
             fields=[
