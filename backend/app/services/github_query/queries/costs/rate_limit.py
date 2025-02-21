@@ -1,5 +1,11 @@
-"""The module defines the RateLimit class, which formulates the GraphQL query string
-to extract the remaining rate limit of the current user."""
+"""
+This module defines the RateLimit class, a specialized query for fetching rate limit information
+from the GitHub API. It provides details about the cost of the last query, the remaining quota,
+and the reset time for the rate limit.
+
+Classes:
+    RateLimit: A subclass of Query that retrieves rate limit information from the GitHub API.
+"""
 
 from ..query import QueryNode, Query
 from ..constants import (
@@ -22,7 +28,9 @@ class RateLimit(Query):
     def __init__(self, dryrun: bool) -> None:
         """
         Initializes the RateLimit query with predefined fields to retrieve rate limit information.
-        The 'rateLimit' field is a special field in the GitHub GraphQL API that provides rate limit status.
+
+        Args:
+            dryrun (bool): A flag indicating whether the query is for rate limit checking only.
         """
         super().__init__(
             fields=[
