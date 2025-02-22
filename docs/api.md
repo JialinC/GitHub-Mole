@@ -5,9 +5,18 @@
 🔹 [⚙️ API Documentation](api.md)  
 
 # ⚙️ API Documentation
-## Published Backend API
-### 📘 Authentication API Documentation
-1️⃣ Initiate OAuth Authorization
+
+These APIs should only be called by the frontend code. 
+
+Most of the APIs require a JWT token.
+
+## 📘 Authentication API Documentation
+
+### 📌 Authentication
+
+All endpoints do not require authentication using JWT tokens.
+
+### 1️⃣ Initiate OAuth Authorization
 
 Initiates the OAuth login process by redirecting the user to GitHub's authorization page.
 
@@ -17,8 +26,6 @@ Method: GET
 
 URL: /oauth/authorize
 
-Headers: No authentication required.
-
 🔹 Response
 
 |Status Code   |Description   |
@@ -26,7 +33,7 @@ Headers: No authentication required.
 |302 Found     |Redirects to GitHub's OAuth authorization page.|
 
 
-2️⃣ OAuth Callback Handling
+### 2️⃣ OAuth Callback Handling
 
 Handles the response from GitHub after the user authorizes the application. It exchanges the authorization code for an access token, retrieves user data, and generates JWT tokens.
 
@@ -36,17 +43,15 @@ Method: GET
 
 URL: /oauth/callback
 
-Headers: No authentication required.
-
 🔹 Response
 
 |Status Code   |Description   |
 |:-------------|:-------------|
-|302           |Found	Redirects the user to the frontend with access and refresh tokens.|
-|400           |Bad Request	Authorization failed or invalid response from GitHub.|
+|302 Found     |Redirects the user to the frontend with access and refresh tokens.|
+|400 Bad Request|Authorization failed or invalid response from GitHub.|
 
 
-3️⃣ User Logout
+### 3️⃣ User Logout
 
 Clears session data and logs the user out.
 
@@ -56,21 +61,22 @@ Method: GET
 
 URL: /oauth/logout
 
-Headers: No authentication required.
-
 🔹 Response
+
 |Status Code   |Description|
 |:-------------|:-------------|
 |302 Found     |Redirects to the index page.|
 
 
-### 📘 Helper API Documentation
+## 📘 Helper API Documentation
+
 This API provides various helper functions, including SSO configuration checks, PAT validation, user info retrieval, token refresh, and duplicate checks.
 
-📌 Authentication
+### 📌 Authentication
+
 All endpoints require authentication using JWT tokens.
 
-1️⃣ Check Single Sign-On (SSO) Configuration
+### 1️⃣ Check Single Sign-On (SSO) Configuration
 
 Returns whether GitHub SSO (Single Sign-On) is configured.
 
@@ -89,7 +95,7 @@ Headers: No authentication required.
 |200 OK	       |Returns whether SSO is configured.|
 
 
-2️⃣ Validate Personal Access Token (PAT)
+### 2️⃣ Validate Personal Access Token (PAT)
 
 Validates a GitHub Personal Access Token (PAT) and retrieves the authenticated user's details.
 
@@ -99,9 +105,7 @@ Method: POST
 
 URL: /helper/validate-pat
 
-Headers: Content-Type: application/json
-
-Body Parameters:
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description|
 |:------------|:------------|:------------|:------------|
@@ -118,7 +122,7 @@ Body Parameters:
 |500 Internal Server Error|	Unexpected server error.|
 
 
-3️⃣ Retrieve User Information
+### 3️⃣ Retrieve User Information
 
 Fetches the authenticated user's GitHub profile information.
 
@@ -127,9 +131,6 @@ Fetches the authenticated user's GitHub profile information.
 Method: GET
 
 URL: /helper/user-info
-
-Headers: Authorization: Bearer YOUR_ACCESS_TOKEN
-(JWT Refresh Token required)
 
 🔹 Response
 
@@ -140,7 +141,7 @@ Headers: Authorization: Bearer YOUR_ACCESS_TOKEN
 |404 Not Found   |	User not found.|
 |500 Internal Server Error|	Unexpected error.|
 
-4️⃣ Refresh Access Token
+### 4️⃣ Refresh Access Token
 
 Generates a new access token using a valid refresh token.
 
@@ -150,10 +151,6 @@ Method: POST
 
 URL: /helper/refresh
 
-Headers: Authorization: Bearer YOUR_REFRESH_TOKEN
-
-(JWT Refresh Token required)
-
 🔹 Response
 
 |Status Code  |Description|
@@ -162,7 +159,7 @@ Headers: Authorization: Bearer YOUR_REFRESH_TOKEN
 |401 Unauthorized|	Invalid or expired refresh token.|
 
 
-5️⃣ Check for Duplicate Entries
+### 5️⃣ Check for Duplicate Entries
 
 Checks if a dataset with the given name and type already exists for the authenticated user.
 
@@ -171,9 +168,6 @@ Checks if a dataset with the given name and type already exists for the authenti
 Method: GET
 
 URL: /helper/check-duplicate?name=dataset_name&type=data_type
-
-Headers: Authorization: Bearer YOUR_ACCESS_TOKEN
-(JWT Token required)
 
 🔹 Query Parameters
 
@@ -190,13 +184,15 @@ Headers: Authorization: Bearer YOUR_ACCESS_TOKEN
 |401 Unauthorized|	Invalid or missing token.|
 
 
-### 📘 GitHub Query API Endpoints
+## 📘 GitHub Query API Endpoints
+
 These API endpoints interact with GitHub's GraphQL and REST APIs to retrieve user details, contributions, repositories, commits, and more.
 
-📌 Authentication
+### 📌 Authentication
+
 All endpoints require authentication using JWT tokens.
 
-1️⃣ Get API Rate Limits
+### 1️⃣ Get API Rate Limits
 
 This endpoint retrieves the rate limit information for the authenticated GitHub user. It provides details about API quota, cost per request, remaining quota, and reset time
 
@@ -215,7 +211,7 @@ URL: /api/graphql/rate-limit
 |500 Internal Server Error|	Server error occurred.|
 
 
-2️⃣ Get Current User Login
+### 2️⃣ Get Current User Login
 
 This API endpoint retrieves the GitHub login details of the currently authenticated user using their OAuth token.
 
@@ -232,7 +228,7 @@ URL: /api/graphql/current-user-login
 |200 OK	      |Returns current user's GitHub login.|
 |401 Unauthorized|	Invalid or missing token.|
 
-3️⃣ Get Specific User Login
+### 3️⃣ Get Specific User Login
 
 This API endpoint retrieves the GitHub login details of a specific user by their username.
 
@@ -252,7 +248,7 @@ URL: /api/graphql/user-login/{login}
 |500 Internal Server Error|	Server error occurred.|
 
 
-4️⃣ Get User Profile Statistics
+### 4️⃣ Get User Profile Statistics
 
 This API endpoint retrieves detailed statistical information about a specific GitHub user's profile, including their contributions, repositories, followers, and other profile-related metrics.
 
@@ -263,6 +259,7 @@ Method: GET
 URL: /api/graphql/user-profile-stats/{login}
 
 🔹 Response
+
 |Status Code  |Description|
 |:------------|:------------|
 |200 OK	|Returns the specified user's GitHub profile statistics.|
@@ -271,7 +268,7 @@ URL: /api/graphql/user-profile-stats/{login}
 |500 Internal Server Error|	Server error occurred.|
 
 
-5️⃣ Get User Contributions
+### 5️⃣ Get User Contributions
 
 This endpoint retrieves a GitHub user's contributions over a specified period, including commits, issues, pull requests, PR reviews, and repository contributions.
 
@@ -289,6 +286,7 @@ URL: /api/graphql/user-contributions-collection/{login}
 |end	      |string (YYYY-MM-DD)|	❌ No |End date for fetching contributions (default: current date).|
 
 🔹 Response
+
 |Status Code  |	Description |
 |:------------|:------------|
 |200 OK	      |Returns user contributions.|
@@ -297,7 +295,7 @@ URL: /api/graphql/user-contributions-collection/{login}
 |500 Internal Server Error|	Server error occurred.|
 
 
-6️⃣ Get User Contribution Years
+### 6️⃣ Get User Contribution Years
 
 This API endpoint retrieves the years in which a GitHub user has made contributions (e.g., commits, issues, pull requests). It provides an overview of the active contribution periods for a given user.
 
@@ -316,7 +314,7 @@ URL: /api/graphql/user-contribution-years/{login}
 |404 Not Found|	The requested GitHub user does not exist.|
 |500 Internal Server Error|	Server error occurred.|
 
-7️⃣ Get GitHub User Contribution Calendar
+### 7️⃣ Get GitHub User Contribution Calendar
 
 This API endpoint retrieves the contribution calendar for a GitHub user, displaying their activity (e.g., commits, issues, PRs) over a specific period.
 
@@ -326,7 +324,7 @@ Method: GET
 
 URL: /api/graphql/user-contribution-calendar/{login}
 
-Query Parameters:
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -342,7 +340,7 @@ Query Parameters:
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|Server error occurred.|
 
-8️⃣ Get User Repositories (Type A)
+### 8️⃣ Get User Repositories (Type A)
 
 This API endpoint retrieves non-forked repositories owned by a GitHub user.
 
@@ -352,7 +350,7 @@ Method: GET
 
 URL: /api/graphql/user-repositories-a/{login}
 
-Query Parameters
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -367,7 +365,7 @@ Query Parameters
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-9️⃣ Get User Repositories (Type B)
+### 9️⃣ Get User Repositories (Type B)
 
 This API endpoint retrieves forked repositories owned by a GitHub user.
 
@@ -377,7 +375,7 @@ Method: GET
 
 URL: /api/graphql/user-repositories-b/{login}
 
-Query Parameters
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -393,7 +391,7 @@ Query Parameters
 |500 Internal Server Error	|A server error occurred.|
 
 
-1️⃣0️⃣ Get User Repositories (Type C)
+### 1️⃣0️⃣ Get User Repositories (Type C)
 
 This API endpoint retrieves non-forked repositories where a GitHub user is a collaborator.
 
@@ -403,7 +401,7 @@ Method: GET
 
 URL: /api/graphql/user-repositories-a/{login}
 
-Query Parameters
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -418,7 +416,7 @@ Query Parameters
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-1️⃣1️⃣ Get User Repositories (Type D)
+### 1️⃣1️⃣ Get User Repositories (Type D)
 
 This API endpoint retrieves forked repositories where a GitHub user is a collaborator.
 
@@ -428,7 +426,7 @@ Method: GET
 
 URL: /api/graphql/user-repositories-a/{login}
 
-Query Parameters
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -444,7 +442,7 @@ Query Parameters
 |500 Internal Server Error	|A server error occurred.|
 
 
-1️⃣2️⃣ Get User Commit Comments
+### 1️⃣2️⃣ Get User Commit Comments
 
 This API endpoint retrieves a paginated list of commit comments made by a GitHub user.
 
@@ -453,6 +451,8 @@ This API endpoint retrieves a paginated list of commit comments made by a GitHub
 Method: GET
 
 URL: /api/graphql/user-commit-comments/{login}
+
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -467,7 +467,7 @@ URL: /api/graphql/user-commit-comments/{login}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-1️⃣3️⃣ Get User Gist Comments
+### 1️⃣3️⃣ Get User Gist Comments
 
 This API endpoint retrieves a paginated list of gist comments made by a GitHub user.
 
@@ -476,6 +476,8 @@ This API endpoint retrieves a paginated list of gist comments made by a GitHub u
 Method: GET
 
 URL: /api/graphql/user-gist-comments/{login}
+
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -490,7 +492,7 @@ URL: /api/graphql/user-gist-comments/{login}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-1️⃣4️⃣ Get User Issue Comments
+### 1️⃣4️⃣ Get User Issue Comments
 
 This API endpoint retrieves paginated issue comments made by a GitHub user.
 
@@ -499,6 +501,8 @@ This API endpoint retrieves paginated issue comments made by a GitHub user.
 Method: GET
 
 URL: /api/graphql/user-issue-comments/{login}
+
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -513,7 +517,7 @@ URL: /api/graphql/user-issue-comments/{login}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-1️⃣5️⃣ Get User Repository Discussion Comments
+### 1️⃣5️⃣ Get User Repository Discussion Comments
 
 This API endpoint retrieves paginated discussion comments made by a GitHub user in repository discussions.
 
@@ -522,6 +526,8 @@ This API endpoint retrieves paginated discussion comments made by a GitHub user 
 Method: GET
 
 URL: /api/graphql/user-repository-discussion-comments/{login}
+
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -537,7 +543,7 @@ URL: /api/graphql/user-repository-discussion-comments/{login}
 |500 Internal Server Error	|A server error occurred.|
 
 
-1️⃣6️⃣ Get User Gists
+### 1️⃣6️⃣ Get User Gists
 
 This API endpoint retrieves paginated gists created by a GitHub user.
 
@@ -546,6 +552,8 @@ This API endpoint retrieves paginated gists created by a GitHub user.
 Method: GET
 
 URL: /api/graphql/user-gists/{login}
+
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -560,7 +568,7 @@ URL: /api/graphql/user-gists/{login}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-1️⃣7️⃣ Get User Issues
+### 1️⃣7️⃣ Get User Issues
 
 This API endpoint retrieves paginated issues associated with a GitHub user.
 
@@ -569,6 +577,8 @@ This API endpoint retrieves paginated issues associated with a GitHub user.
 Method: GET
 
 URL: /api/graphql/user-issues/{login}
+
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -583,7 +593,7 @@ URL: /api/graphql/user-issues/{login}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-1️⃣8️⃣ Get User Pull Requests
+### 1️⃣8️⃣ Get User Pull Requests
 
 This API endpoint retrieves paginated pull requests associated with a GitHub user.
 
@@ -592,6 +602,8 @@ This API endpoint retrieves paginated pull requests associated with a GitHub use
 Method: GET
 
 URL: /api/graphql/user-pull-requests/{login}
+
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -607,7 +619,7 @@ URL: /api/graphql/user-pull-requests/{login}
 |500 Internal Server Error	|A server error occurred.|
 
 
-1️⃣9️⃣ Get User Repository Discussions
+### 1️⃣9️⃣ Get User Repository Discussions
 
 This API endpoint retrieves paginated discussions within repositories owned by a GitHub user.
 
@@ -616,6 +628,8 @@ This API endpoint retrieves paginated discussions within repositories owned by a
 Method: GET
 
 URL: /api/graphql/user-repository-discussions/{login}
+
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -630,7 +644,7 @@ URL: /api/graphql/user-repository-discussions/{login}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-2️⃣0️⃣ Get Repository Branches
+### 2️⃣0️⃣ Get Repository Branches
 
 This API endpoint retrieves paginated branches for a specified GitHub repository.
 
@@ -639,6 +653,8 @@ This API endpoint retrieves paginated branches for a specified GitHub repository
 Method: GET
 
 URL: /api/graphql/repository_branches/{owner}/{repo}
+
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -653,7 +669,7 @@ URL: /api/graphql/repository_branches/{owner}/{repo}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-2️⃣1️⃣ Get Repository Default Branch
+### 2️⃣1️⃣ Get Repository Default Branch
 
 This API endpoint retrieves the default branch for a given GitHub repository.
 
@@ -664,6 +680,7 @@ Method: GET
 URL: /api/graphql/repository_default_branch/{owner}/{repo}
 
 🔹 Query Parameters
+
 |Parameter	|Type	|Required	|Description|
 |:------------|:------------|:------------|:------------|
 |owner	      |string	    |✅ Yes	     |GitHub username or organization name.|
@@ -678,7 +695,7 @@ URL: /api/graphql/repository_default_branch/{owner}/{repo}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-2️⃣2️⃣ Get Repository Contributors
+### 2️⃣2️⃣ Get Repository Contributors
 
 This API endpoint retrieves the contributors of a given GitHub repository's default branch.
 
@@ -687,6 +704,8 @@ This API endpoint retrieves the contributors of a given GitHub repository's defa
 Method: GET
 
 URL: /api/graphql/repository_contributors/{owner}/{repo}
+
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -703,7 +722,7 @@ URL: /api/graphql/repository_contributors/{owner}/{repo}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-2️⃣3️⃣ Get Repository Branch Commits
+### 2️⃣3️⃣ Get Repository Branch Commits
 
 This API endpoint retrieves the commit history for a specific branch of a GitHub repository.
 
@@ -732,7 +751,7 @@ URL: /api/graphql/repository_branch_commits/{owner}/{repo}/{use_default}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-2️⃣4️⃣ Get User Repository Names
+### 2️⃣4️⃣ Get User Repository Names
 
 This API endpoint retrieves the names of all repositories associated with a specific GitHub user.
 
@@ -758,7 +777,7 @@ URL: /api/graphql/user_repository_names/{login}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-2️⃣5️⃣ Get Contributor Contributions to a Repository
+### 2️⃣5️⃣ Get Contributor Contributions to a Repository
 
 This API endpoint retrieves commit contributions made by a specific GitHub user to a repository.
 
@@ -787,7 +806,7 @@ URL: /api/graphql/repository_contributor_contributions/{owner}/{repo}/{login}
 |404 Not Found	|The requested GitHub user does not exist.|
 |500 Internal Server Error	|A server error occurred.|
 
-2️⃣6️⃣ Get GitHub Commit Details
+### 2️⃣6️⃣ Get GitHub Commit Details
 
 This API endpoint retrieves commit details from GitHub, including author information, message, stats, and language breakdown. It also implements rate-limiting handling and retry logic.
 
@@ -815,15 +834,17 @@ URL: /api/rest/commits/{owner}/{repo}/{sha}
 |500 Internal Server Error	|A server error occurred.|
 
 
-### 📘 SDE Team Formation API Endpoints
+## 📘 SDE Team Formation API Endpoints
 
 This API endpoint forms teams based on provided user attributes using constrained K-Means clustering.
 
-📌 Authentication
+### 📌 Authentication
 
 All endpoints require authentication using JWT tokens.
 
-1️⃣ Forms teams based on provided attributes using clustering.
+### 1️⃣ Forms Teams
+
+Forms teams based on provided attributes using clustering.
 
 🔹 Request
 
@@ -831,7 +852,7 @@ Method: POST
 
 URL: /api/team/form-team
 
-🔹 Request Body
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -847,15 +868,17 @@ URL: /api/team/form-team
 |400 Bad      |Request	Invalid input data.|
 |500 Internal Server Error	|Error occurred during team formation.|
 
-### 📘 Database Interaction API Endpoints
+## 📘 Database Interaction API Endpoints
 
 This API allows users to store, retrieve, and manage their GitHub-related datasets, including repositories, commits, issues, PRs, and discussions.
 
-📌 Authentication
+### 📌 Authentication
 
 All endpoints require authentication using JWT tokens.
 
-1️⃣ Check for Duplicate Dataset
+### 1️⃣ Check for Duplicate Dataset
+
+This API endpoint checks if a dataset with the given name and type already exists for the authenticated user.
 
 🔹 Request
 
@@ -863,7 +886,7 @@ Method: POST
 
 URL: /api/db/check-duplicate
 
-🔹 Request Body
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -872,12 +895,16 @@ URL: /api/db/check-duplicate
 
 🔹 Response
 
-|Status Code  |	Description |
+|Status |Code	Description|
 |:------------|:------------|
-|200 OK	      |whether the dataset already exists.|
+|200 OK	|Returns whether the dataset exists.|
+|401 Unauthorized	|Missing or invalid JWT token.|
+|500 Internal Server Error	|A server error occurred.|
 
 
-2️⃣ ave Dataset to Database
+### 2️⃣ Save Dataset to Database
+
+This API endpoint saves user-generated data into the database.
 
 🔹 Request
 
@@ -885,7 +912,7 @@ Method: POST
 
 URL: /api/db/save-data
 
-🔹 Request Body
+🔹 Query Parameters
 
 |Parameter	  |Type	        |Required	  |Description  |
 |:------------|:------------|:------------|:------------|
@@ -902,9 +929,12 @@ URL: /api/db/save-data
 |Status Code  |	Description |
 |:------------|:------------|
 |200 OK	      |Data successfully saved.|
+|401 Unauthorized	|Missing or invalid JWT token.|
 |500 Internal Server Error	|Failed to save data.|
 
-3️⃣ Get User Queries
+### 3️⃣ Get User Queries
+
+This API endpoint retrieves all queries made by the authenticated user.
 
 🔹 Request
 
@@ -917,8 +947,12 @@ URL: /api/db/user-queries
 |Status Code  |	Description |
 |:------------|:------------|
 |200 OK	      |Returns a list of datasets created by the user.|
+|401 Unauthorized	|Missing or invalid JWT token.|
+|500 Internal Server Error	|A server error occurred.|
 
-4️⃣ Delete a User Query
+### 4️⃣ Delete a User Query
+
+This API endpoint deletes a specific user query.
 
 🔹 Request
 
@@ -926,14 +960,21 @@ Method: DELETE
 
 URL: /api/db/user-queries/{query_id}
 
+|Parameter	  |Type	        |Required	  |Description  |
+|:------------|:------------|:------------|:------------|
+|query_id	  |string	    |✅ Yes	     |GitHub username of the user.|
+
 🔹 Response
 
 |Status Code  |	Description |
 |:------------|:------------|
 |200 OK	      |Query successfully deleted.|
+|401 Unauthorized	|Missing or invalid JWT token.|
 |500 Internal Server Error	|Failed to delete query.|
 
-5️⃣ Retrieve Contributions of a Query
+### 5️⃣ Retrieve Contributions of a Query
+
+This API endpoint retrieves user contributions based on the specified query ID.
 
 🔹 Request
 
@@ -941,13 +982,24 @@ Method: GET
 
 URL: /api/db/user-queries/{query_id}
 
+🔹 Query Parameters
+
+|Parameter	  |Type	        |Required	  |Description  |
+|:------------|:------------|:------------|:------------|
+|query_id	  |int	        |✅ Yes	|The ID of the user query to retrieve contributions for.|
+
 🔹 Response
 
 |Status Code  |	Description |
 |:------------|:------------|
 |200 OK	      |Returns contributions for the dataset.|
+|401 Unauthorized	|Missing or invalid JWT token.|
+|404 Not Found	|The requested query does not exist.|
+|500 Internal Server Error	|A server error occurred.|
 
-6️⃣ Delete a Specific Contribution
+### 6️⃣ Delete a Specific Contribution
+
+This API endpoint deletes a specific contribution from a user query.
 
 🔹 Request
 
@@ -955,11 +1007,21 @@ Method: DELETE
 
 URL: /api/db/user-contributions/{query_id}/{contribution_id}
 
+🔹 Query Parameters
+
+|Parameter	  |Type	        |Required	  |Description  |
+|:------------|:------------|:------------|:------------|
+|query_id	  |int	        |✅ Yes	     |The ID of the user query.|
+|contribution_id	|int	|✅ Yes	     |The ID of the contribution to be deleted.|
+
 🔹 Response
+
 |Status Code  |	Description |
 |:------------|:------------|
 |200 OK	      |Contribution successfully deleted.|
-|404 Not Found|	Contribution not found.|
+|401 Unauthorized	|Missing or invalid JWT token.|
+|404 Not Found	|The requested contribution does not exist.|
+|500 Internal Server Error	|A server error occurred.|
 
 
 
