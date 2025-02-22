@@ -177,7 +177,7 @@ const About: React.FC = () => {
                 Received Best Paper award
               </span>{" "}
               <a
-                href="https://drive.google.com/file/d/12YMXTLGl0afpd9_6odbvjmuxDoPSvFEs/view"
+                href="https://ieeexplore.ieee.org/abstract/document/10663022"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400 underline"
@@ -237,7 +237,7 @@ const About: React.FC = () => {
               GitHub metrics," Frontiers in Education 2023, 53rd Annual
               Conference, College Station, TX, October 18-21, 2023.{" "}
               <a
-                href="https://ieeexplore.ieee.org/abstract/document/10343357?casa_token=pCOxC80XzHAAAAAA:jWrqfXVKPZbO1C7mMq3o8jaKb5L3a9n3K1K4KjCu0X1YWhMFrRwW7qeWCu5TKOwzjaPRpvGtcQ"
+                href="https://ieeexplore.ieee.org/abstract/document/10343357"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400 underline"
@@ -268,7 +268,7 @@ const About: React.FC = () => {
               Software Engineering Education and Training (ICSE-SEET),
               Pittsburgh and online, May 2022.{" "}
               <a
-                href="https://ieeexplore.ieee.org/iel7/9793836/9794144/09794264.pdf?casa_token=0D853aJT_lkAAAAA:NHZyeDr_xfR3Jgv2y5m38o2S3BFMJz_KeKI6-PPeytK-NI0rhr48Jw_TqC-qkET2sHcdgyNAr_o"
+                href="https://ieeexplore.ieee.org/iel7/9793836/9794144/09794264.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400 underline"
