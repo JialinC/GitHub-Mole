@@ -1,4 +1,14 @@
-""""""
+"""
+This module defines a class for querying commit history from a specific branch of a GitHub repository using GraphQL.
+
+Classes:
+    RepositoryBranchCommits: A class to create and manage paginated queries for retrieving commit history from a
+    specified branch of a GitHub repository.
+
+Functions:
+    __init__: Initializes the RepositoryBranchCommits class with repository details and pagination settings.
+    commits_list: Extracts commit history from raw GraphQL response data.
+"""
 
 from typing import Dict  # , List, Optional, Any
 from ..query import (
@@ -24,22 +34,14 @@ from ..constants import (
     NODE_TARGET,
     NODE_ON,
     NODE_COMMIT,
-    # FIELD_AUTHORED_DATE,
-    # FIELD_CHANGED_FILES_IF_AVAILABLE,
-    # FIELD_ADDITIONS,
-    # FIELD_DELETIONS,
-    # FIELD_MESSAGE,
-    # FIELD_NAME,
-    # FIELD_EMAIL,
-    # FIELD_LOGIN,
-    # NODE_AUTHOR,
-    # NODE_PARENTS,
-    # NODE_USER,
 )
 
 
 class RepositoryBranchCommits(PaginatedQuery):
-    """ """
+    """
+    RepositoryBranchCommits fetches the commit history for a given repository branch.
+    It extends PaginatedQuery to handle potentially large numbers of commits.
+    """
 
     def __init__(
         self,
@@ -49,7 +51,16 @@ class RepositoryBranchCommits(PaginatedQuery):
         use_default: bool,
         pg_size: int = 50,
     ) -> None:
-        """Initializes a paginated query for repository commits with specific fields and pagination controls."""
+        """
+        Initializes a paginated query for repository commits.
+
+        Args:
+            owner (str): The GitHub username or organization name.
+            repo_name (str): The repository name.
+            branch_name (str): The branch name (ignored if use_default=True).
+            use_default (bool): Whether to fetch commits from the default branch.
+            pg_size (int): The number of commits to retrieve per page.
+        """
 
         self.branch_node = NODE_DEFAULT_BRANCH_REF if use_default else NODE_REF
         branch_args = None if use_default else {ARG_QUALIFIED_NAME: branch_name}
@@ -81,30 +92,6 @@ class RepositoryBranchCommits(PaginatedQuery):
                                                             NODE_NODES,
                                                             fields=[
                                                                 FIELD_OID,
-                                                                # FIELD_AUTHORED_DATE,
-                                                                # FIELD_CHANGED_FILES_IF_AVAILABLE,
-                                                                # FIELD_ADDITIONS,
-                                                                # FIELD_DELETIONS,
-                                                                # FIELD_MESSAGE,
-                                                                # QueryNode(
-                                                                #     NODE_PARENTS,
-                                                                #     fields=[
-                                                                #         FIELD_TOTAL_COUNT
-                                                                #     ],
-                                                                # ),
-                                                                # QueryNode(
-                                                                #     NODE_AUTHOR,
-                                                                #     fields=[
-                                                                #         FIELD_NAME,
-                                                                #         FIELD_EMAIL,
-                                                                #         QueryNode(
-                                                                #             NODE_USER,
-                                                                #             fields=[
-                                                                #                 FIELD_LOGIN
-                                                                #             ],
-                                                                #         ),
-                                                                #     ],
-                                                                # ),
                                                             ],
                                                         ),
                                                         QueryNode(
@@ -138,104 +125,3 @@ class RepositoryBranchCommits(PaginatedQuery):
             Dict[str, Dict]: The extracted commit nodes.
         """
         return raw_data[NODE_REPOSITORY][self.branch_node][NODE_TARGET][NODE_HISTORY]
-
-    # @staticmethod
-    # def flatten_commit(commit: Dict[str, Any]) -> Dict[str, Any]:
-    #     flattened = {}
-    #     for key, value in commit.items():
-    #         if key == "parents":
-    #             flattened["parents"] = value[FIELD_TOTAL_COUNT]
-    #         elif key == "author":
-    #             flattened["author"] = value[FIELD_NAME]
-    #             flattened["author_email"] = value[FIELD_EMAIL]
-    #             if value[NODE_USER]:
-    #                 flattened["author_login"] = value[NODE_USER][FIELD_LOGIN]
-    #             else:
-    #                 flattened["author_login"] = None
-    #         else:
-    #             flattened[key] = value
-    #     return flattened
-
-    # @staticmethod
-    # def flatten_commits(commits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    #     return [RepositoryBranchCommits.flatten_commit(commit) for commit in commits]
-
-    # @staticmethod
-    # def commits_stats(
-    #     raw_data: Dict[str, Dict], cumulative_commits: Optional[Dict[str, Dict]] = None
-    # ) -> Dict[str, Dict]:
-    #     """
-    #     Processes the raw data from the GraphQL query to accumulate commit data per author.
-
-    #     Args:
-    #         raw_data: The raw data returned from the GraphQL query.
-    #         cumulative_commits: Optional cumulative commits dictionary to accumulate results.
-
-    #     Returns:
-    #         A dictionary of cumulative commit data per author, with details like total additions, deletions,
-    #         file changes, and commits.
-    #     """
-    #     nodes = raw_data[NODE_REPOSITORY][NODE_REF][NODE_TARGET][NODE_HISTORY][
-    #         NODE_NODES
-    #     ]
-    #     if cumulative_commits is None:
-    #         cumulative_commits = {}
-
-    #     # Process each commit node to accumulate data
-    #     for node in nodes:
-    #         # Consider only commits with less than 2 parents (usually mainline commits)
-    #         if node[NODE_PARENTS] and node[NODE_PARENTS][FIELD_TOTAL_COUNT] < 2:
-    #             name = node[NODE_AUTHOR][FIELD_NAME]
-    #             login = node[NODE_AUTHOR][NODE_USER]
-    #             if login:
-    #                 login = login[FIELD_LOGIN]
-    #             additions = node[FIELD_ADDITIONS]
-    #             deletions = node[FIELD_DELETIONS]
-    #             files = node[FIELD_CHANGED_FILES_IF_AVAILABLE]
-    #             if name not in cumulative_commits:
-    #                 if login:
-    #                     cumulative_commits[name] = {
-    #                         login: {
-    #                             "total_additions": additions,
-    #                             "total_deletions": deletions,
-    #                             "total_files": files,
-    #                             "total_commits": 1,
-    #                         }
-    #                     }
-    #                 else:
-    #                     cumulative_commits[name] = {
-    #                         "total_additions": additions,
-    #                         "total_deletions": deletions,
-    #                         "total_files": files,
-    #                         "total_commits": 1,
-    #                     }
-    #             else:  # name in cumulative_commits
-    #                 if login:
-    #                     if login in cumulative_commits[name]:
-    #                         cumulative_commits[name][login][
-    #                             "total_additions"
-    #                         ] += additions
-    #                         cumulative_commits[name][login][
-    #                             "total_deletions"
-    #                         ] += deletions
-    #                         cumulative_commits[name][login]["total_files"] += files
-    #                         cumulative_commits[name][login]["total_commits"] += 1
-    #                     else:  # login not in cumulative
-    #                         cumulative_commits[name][login] = {
-    #                             "total_additions": additions,
-    #                             "total_deletions": deletions,
-    #                             "total_files": files,
-    #                             "total_commits": 1,
-    #                         }
-    #                 else:  # no login
-    #                     if "total_additions" in cumulative_commits[name]:
-    #                         cumulative_commits[name]["total_additions"] += additions
-    #                         cumulative_commits[name]["total_deletions"] += deletions
-    #                         cumulative_commits[name]["total_files"] += files
-    #                         cumulative_commits[name]["total_commits"] += 1
-    #                     else:
-    #                         cumulative_commits[name]["total_additions"] = additions
-    #                         cumulative_commits[name]["total_deletions"] = deletions
-    #                         cumulative_commits[name]["total_files"] = files
-    #                         cumulative_commits[name]["total_commits"] = 1
-    #     return cumulative_commits
