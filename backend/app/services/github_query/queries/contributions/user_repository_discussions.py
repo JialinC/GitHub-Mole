@@ -1,5 +1,13 @@
-"""The module defines the UserRepositoryDiscussions class, which formulates the GraphQL query string
-to extract repository discussions created by the user based on a given user ID."""
+"""
+This module defines the UserRepositoryDiscussions class, which is used to query a user's repository discussions on
+GitHub using GraphQL.
+Classes:
+    UserRepositoryDiscussions: A class for querying and handling a user's repository discussions with pagination
+    support.
+Functions:
+    user_repository_discussions(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    created_before_time(repository_discussions: Dict[str, Any], time: str) -> int:
+"""
 
 from typing import List, Dict, Any
 from app.services.github_query.utils.helper import created_before
@@ -33,7 +41,13 @@ class UserRepositoryDiscussions(PaginatedQuery):
     """
 
     def __init__(self, login: str, pg_size: int = 50) -> None:
-        """Initializes a paginated query for GitHub user repository discussions."""
+        """
+        Initializes the UserRepositoryDiscussions query with necessary fields and pagination support.
+
+        Args:
+            login (str): GitHub username.
+            pg_size (int): Number of pull requests per page (default: 50).
+        """
         super().__init__(
             fields=[
                 QueryNode(
