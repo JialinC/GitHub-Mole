@@ -1,4 +1,11 @@
-"""The module defines several classes that formulate GraphQL query string to extract basic user profile information."""
+"""
+This module defines classes to construct GraphQL queries for fetching user profile information from GitHub.
+Classes:
+    UserLoginViewer: Constructs a GraphQL query to fetch the login details of the currently authenticated user.
+    UserLogin: Constructs a GraphQL query to fetch a specific user's profile information using their login name.
+Functions:
+    UserLoginViewer.profile_stats: Processes raw GraphQL query data and extracts user login details.
+"""
 
 from typing import Dict, Any
 from ..query import QueryNode, Query
@@ -34,8 +41,7 @@ from ..constants import (
 
 class UserLoginViewer(Query):
     """
-    UserLoginViewer is a subclass of Query designed to fetch the viewer's login information using the 'viewer' field
-    in a GraphQL query.
+    UserLoginViewer constructs a GraphQL query to fetch the login details of the currently authenticated user.
     """
 
     def __init__(self) -> None:
@@ -83,19 +89,13 @@ class UserLoginViewer(Query):
     @staticmethod
     def profile_stats(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Processes the raw data returned from a GraphQL query about a user's profile
-        and extracts specific statistics. It formats the data into a more
-        accessible and simplified dictionary structure.
+        Processes raw GraphQL query data and extracts user login details.
 
         Args:
-            raw_data (dict): The raw data returned by the query,
-            expected to contain a 'user' key with nested user information.
+            raw_data (dict): The raw response from the GraphQL API.
 
         Returns:
-            dict: A dictionary containing key statistics and information about the user, such as
-            their login, creation date, company, number of followers, etc.
-            Each piece of information is extracted from the nested structure of the
-            input and presented as a flat dictionary for easier access.
+            dict: Processed user login details with simplified structure.
         """
         profile_stats = raw_data[NODE_VIEWER]
         processed_stats = {
@@ -135,8 +135,11 @@ class UserLogin(Query):
 
     def __init__(self, login: str) -> None:
         """
-        Initializes a UserLogin object to fetch specified user information including login, name, id, email,
+        Initializes a GraphQL query to retrieve specified user information, including login, name, ID, email,
         and creation date.
+
+        Args:
+            login (str): The GitHub username of the user.
         """
         super().__init__(
             fields=[

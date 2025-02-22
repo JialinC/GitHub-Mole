@@ -1,5 +1,15 @@
-"""The module defines the RepositoryContributors class, which formulates the GraphQL query string
-to extract all contibutors to a repository's default branch."""
+"""
+This module defines the RepositoryContributors class, which is used to fetch and process contributors' information
+from a given repository's default branch on GitHub using GraphQL.
+
+Classes:
+    RepositoryContributors: A subclass of PaginatedQuery designed to fetch and process contributors' information
+    from a repository's default branch.
+
+Functions:
+    extract_unique_author: Static method to process raw data from the GraphQL query and extract unique authors
+    from the repository's commit history.
+"""
 
 from typing import Dict, Set, Optional
 from ..query import (
@@ -32,12 +42,19 @@ from ..constants import (
 
 class RepositoryContributors(PaginatedQuery):
     """
-    RepositoryContributors is a subclass of PaginatedQuery specifically designed to fetch contributors' information to
-    of a given repository's default branch.
-    It locates the repository base on the owner GitHub ID and the repository's name.
+    RepositoryContributors fetches contributors of a repository's default branch.
+    It extends PaginatedQuery to handle potentially large numbers of contributors.
     """
 
     def __init__(self, owner: str, repo_name: str, pg_size: int = 50) -> None:
+        """
+        Initializes a query to retrieve repository contributors.
+
+        Args:
+            owner (str): The GitHub username or organization name.
+            repo_name (str): The name of the repository.
+            pg_size (int): Number of contributors to fetch per page.
+        """
         super().__init__(
             fields=[
                 QueryNode(
@@ -105,14 +122,14 @@ class RepositoryContributors(PaginatedQuery):
         raw_data: Dict[str, Dict], unique_authors: Optional[Dict[str, Set[str]]] = None
     ) -> Dict[str, Set[str]]:
         """
-        Processes the raw data from the GraphQL query to extract unique authors from the repository's commit history.
+        Processes the raw data to extract unique contributors from the repository's commit history.
 
         Args:
-            raw_data: The raw data returned from the GraphQL query.
-            unique_authors: An optional dictionary to accumulate unique authors' names and logins.
+            raw_data (dict): The raw data returned from the GraphQL query.
+            unique_authors (dict, optional): Dictionary to accumulate unique contributors' names and logins.
 
         Returns:
-            A dictionary containing sets of unique author names and logins.
+            dict: A dictionary containing sets of unique author names and logins.
         """
         nodes = raw_data[NODE_REPOSITORY][NODE_DEFAULT_BRANCH_REF][NODE_TARGET][
             NODE_HISTORY

@@ -1,5 +1,14 @@
-"""The module defines the UserGists class, which formulates the GraphQL query string
-to extract gists created by the user based on a given user ID."""
+"""
+This module defines the UserGists class, which constructs and processes paginated GraphQL queries for retrieving user 
+gists from GitHub.
+Classes:
+    UserGists: A class that extends PaginatedQuery to handle queries for user gists, including pagination support.
+Functions:
+    user_gists(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        Processes raw data to extract user gists information.
+    created_before_time(gists: Dict[str, Any], time: str) -> int:
+        Counts the gists created before a specified time.
+"""
 
 from typing import List, Dict, Any
 from app.services.github_query.utils.helper import created_before
@@ -27,16 +36,19 @@ from ..constants import (
 
 class UserGists(PaginatedQuery):
     """
-    UserGists constructs a paginated GraphQL query specifically for retrieving user user gists.
-    It extends the PaginatedQuery class to handle queries that expect a large amount of data that might be delivered in
-    multiple pages.
+    UserGists constructs a paginated GraphQL query specifically for retrieving user gists.
+    It extends the PaginatedQuery class to handle queries that expect a large amount of data
+    that might be delivered in multiple pages.
     """
 
     def __init__(self, login: str, pg_size: int = 50) -> None:
-        """Initializes a query for User Gists as a paginated query.
+        """
+        Initializes the UserGists query with specific fields and arguments
+        to retrieve user gists, including pagination handling.
 
-        This query is used to fetch a list of gists for a specific user,
-        including pagination support to handle large numbers of gists.
+        Args:
+            login (str): GitHub username.
+            pg_size (int): Number of gists per page (default: 50).
         """
         super().__init__(
             fields=[
@@ -71,13 +83,15 @@ class UserGists(PaginatedQuery):
 
     @staticmethod
     def user_gists(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Processes raw data to extract user gists information.
+        """
+        Extracts and returns the gists from the raw query data.
 
         Args:
-            raw_data: The raw data returned by the query, structured as a dictionary.
+            raw_data (dict): The raw data returned by the GraphQL query.
+            Expected structure: {user: {gists: {nodes: [{createdAt: ""}, ...]}}}.
 
         Returns:
-            A list of dictionaries, each containing data about a single gist.
+            list: A list of dictionaries, each representing a gist and its associated data.
         """
         gists = raw_data.get(NODE_USER, {}).get(NODE_GISTS, {})
         return gists

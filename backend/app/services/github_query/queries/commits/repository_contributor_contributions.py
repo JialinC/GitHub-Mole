@@ -1,5 +1,22 @@
-"""The module defines the RepositoryContributorsContribution class, which formulates the GraphQL query string
-to extract all the commits made by a given contibutor to a repository's default branch."""
+"""
+This module defines the RepositoryContributorContributions class, which is a subclass of PaginatedQuery.
+It is designed to fetch commit contributions made by a specific contributor to a repository's default branch on GitHub.
+The module includes methods to format GitHub IDs, extract commit lists, flatten commit data, and calculate cumulative
+and individual commit contributions.
+
+Classes:
+    RepositoryContributorContributions: A class to query and process commit contributions of a specific user in a
+    repository.
+
+Functions:
+   commits_list(raw_data: Dict[str, Dict]) -> Dict[str, Dict]:
+   flatten_commit(commit: Dict[str, Any]) -> Dict[str, Any]:
+   flatten_commits(commits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+   user_cumulated_contribution(raw_data: Dict[str, Any], cumulative_contribution: Optional[Dict[str, int]] = None,
+    ) -> Dict[str, int]:
+   user_commit_contribution(raw_data: Dict[str, Any], commit_contributions: Optional[List[Dict[str, int]]] = None,
+    ) -> List[Dict[str, int]]:
+"""
 
 from typing import Dict, List, Optional, Any
 from ..query import (
@@ -40,16 +57,23 @@ from ..constants import (
 
 
 def format_github_id(github_id: str) -> dict:
+    """
+    Formats a GitHub ID into a dictionary with the key "id" and the value as the GitHub ID
+    enclosed in double quotes.
+
+    Args:
+        github_id (str): The GitHub ID to format.
+
+    Returns:
+        dict: A dictionary with the formatted GitHub ID.
+    """
     return {"id": f'"{github_id}"'}
 
 
 class RepositoryContributorContributions(PaginatedQuery):
     """
-    RepositoryContributorsContribution is a subclass of PaginatedQuery specifically designed to fetch commits
-    by a given contributor to a given repository's default branch.
-    It locates the repository base on the owner GitHub ID and the repository's name.
-    It locates the specific contributor using the unique GitHub universal identifier ID that can be fetched using
-    the user profile query.
+    RepositoryContributorContributions is a paginated GraphQL query
+    designed to fetch commits made by a specific contributor to a repository.
     """
 
     def __init__(
@@ -61,9 +85,14 @@ class RepositoryContributorContributions(PaginatedQuery):
         pg_size: int = 50,
     ) -> None:
         """
-        Initializes a paginated query to extract contributions made by contributors in a specific repository.
-        Focuses on the commit history of the repository's default branch, targeting individual contributions.
-        GitHub_id: str = "{ id: $id }"
+        Initializes a paginated query to retrieve commit contributions.
+
+        Args:
+            owner (str): Repository owner.
+            repo_name (str): Repository name.
+            branch_name (str): Branch name.
+            github_id (str): GitHub ID of the contributor.
+            pg_size (int): Number of commits per page.
         """
         github_id = format_github_id(github_id)
         super().__init__(
@@ -121,14 +150,33 @@ class RepositoryContributorContributions(PaginatedQuery):
     @staticmethod
     def commits_list(raw_data: Dict[str, Dict]) -> Dict[str, Dict]:
         """
-        Args:
-        Returns:
+        Extracts the commit history nodes from the raw data.
+
+        Args: raw_data (Dict[str, Dict]): The raw data containing repository information.
+
+        Returns: Dict[str, Dict]: The commit history nodes extracted from the raw data.
+
         """
         nodes = raw_data[NODE_REPOSITORY][NODE_REF][NODE_TARGET][NODE_HISTORY]
         return nodes
 
     @staticmethod
     def flatten_commit(commit: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Flattens a commit dictionary by extracting specific fields and transforming nested structures.
+
+        Args:
+            commit (Dict[str, Any]): A dictionary representing a commit with nested structures.
+
+        Returns:
+            Dict[str, Any]: A flattened dictionary with specific fields extracted and transformed.
+                - "parents": The total count of parent commits.
+                - "author": The name of the author.
+                - "author_email": The email of the author.
+                - "author_id": The login ID of the author if available, otherwise None.
+                - "author_login": The login of the author if available, otherwise None.
+                - Other keys and values from the original commit dictionary are included as is.
+        """
         flattened = {}
         for key, value in commit.items():
             if key == "parents":
@@ -146,6 +194,18 @@ class RepositoryContributorContributions(PaginatedQuery):
 
     @staticmethod
     def flatten_commits(commits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Flattens a list of commit dictionaries.
+
+        This function takes a list of commit dictionaries and flattens each commit
+        using the `flatten_commit` method from the `RepositoryContributorContributions` class.
+
+        Args:
+            commits (List[Dict[str, Any]]): A list of commit dictionaries to be flattened.
+
+        Returns:
+            List[Dict[str, Any]]: A list of flattened commit dictionaries.
+        """
         return [
             RepositoryContributorContributions.flatten_commit(commit)
             for commit in commits

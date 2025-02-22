@@ -1,5 +1,17 @@
-"""The module defines the UserPullRequests class, which formulates the GraphQL query string
-to extract pull requests created by the user based on a given user ID."""
+"""
+This module defines the `UserPullRequests` class, which extends the `PaginatedQuery` class to fetch pull requests
+associated with a specific user from GitHub's GraphQL API. It includes methods for extracting pull request data and
+counting pull requests created before a specified time.
+Classes:
+    UserPullRequests: A class to handle paginated queries for user pull requests.
+Methods:
+    __init__(self, login: str, pg_size: int = 50): Initializes the UserPullRequests query with necessary fields and
+    pagination support.
+    user_pull_requests(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]: Extracts pull requests from the raw data
+    returned by a GraphQL query.
+    created_before_time(pull_requests: Dict[str, Any], time: str) -> int: Counts the number of pull requests created
+    before a specified time.
+"""
 
 from typing import List, Dict, Any
 from app.services.github_query.utils.helper import created_before
@@ -34,6 +46,10 @@ class UserPullRequests(PaginatedQuery):
     def __init__(self, login: str, pg_size: int = 50) -> None:
         """
         Initializes the UserPullRequests query with necessary fields and pagination support.
+
+        Args:
+            login (str): GitHub username.
+            pg_size (int): Number of pull requests per page (default: 50).
         """
         super().__init__(
             fields=[

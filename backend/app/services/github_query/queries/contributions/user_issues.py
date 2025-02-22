@@ -1,5 +1,17 @@
-"""The module defines the UserIssues class, which formulates the GraphQL query string
-to extract issues created by the user based on a given user ID."""
+"""
+This module defines the UserIssues class, which extends the PaginatedQuery class to fetch issues associated with a 
+specific user from GitHub using GraphQL.
+
+Classes:
+    UserIssues: A class to handle the fetching and processing of user issues data from GitHub.
+
+Functions:
+    user_issues(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        Extracts issues from the raw data returned by a GraphQL query.
+        
+    created_before_time(issues: Dict[str, Any], time: str) -> int:
+        Counts the number of issues created before a specified time.
+"""
 
 from typing import List, Dict, Any
 from app.services.github_query.utils.helper import created_before
@@ -35,6 +47,10 @@ class UserIssues(PaginatedQuery):
     def __init__(self, login: str, pg_size: int = 50) -> None:
         """
         Initializes the UserIssues query with necessary fields and pagination support.
+
+        Args:
+            login (str): GitHub username.
+            pg_size (int): Number of issues per page (default: 50).
         """
         super().__init__(
             fields=[

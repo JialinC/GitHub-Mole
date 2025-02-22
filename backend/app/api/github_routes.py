@@ -1,4 +1,51 @@
-"""This file defines the URLs for various GraphQL endpoints."""
+"""
+This module defines the GitHub GraphQL API routes for the backend application.
+
+It includes various endpoints to fetch data from GitHub using GraphQL queries and REST API calls.
+The routes are protected with JWT authentication and require a valid JWT token to access.
+
+Routes:
+    - /graphql/rate-limit: Fetches the current API rate limit usage for the authenticated GitHub user.
+    - /graphql/current-user-login: Fetches the login details of the currently authenticated GitHub user.
+    - /graphql/user-login/<login>: Fetches the login details of a specific GitHub user identified by their username.
+    - /graphql/user-profile-stats/<login>: Fetches the profile statistics of a specific GitHub user.
+    - /graphql/user-contributions-collection/<login>: Fetches a user's GitHub contributions over a specified period.
+    - /graphql/user-contribution-years/<login>: Fetches the years in which a GitHub user has made contributions.
+    - /graphql/user-contribution-calendar/<login>: Fetches a user's contribution calendar within a specified date range.
+    - /graphql/user-repositories-a/<login>: Fetches non-forked repositories owned by the specified GitHub user.
+    - /graphql/user-repositories-b/<login>: Fetches forked repositories owned by the specified GitHub user.
+    - /graphql/user-repositories-c/<login>: Fetches non-forked repositories where a GitHub user is a collaborator.
+    - /graphql/user-repositories-d/<login>: Fetches forked repositories where a GitHub user is a collaborator.
+    - /graphql/user-commit-comments/<login>: Fetches commit comments made by a specified GitHub user.
+    - /graphql/user-gist-comments/<login>: Fetches gist comments made by a specified GitHub user.
+    - /graphql/user-issue-comments/<login>: Fetches issue comments made by a specified GitHub user.
+    - /graphql/user-repository-discussion-comments/<login>: Fetches discussion comments made by a specified GitHub user
+       in repository discussions.
+    - /graphql/user-gists/<login>: Fetches gists created by a specified GitHub user.
+    - /graphql/user-issues/<login>: Fetches issues created by or assigned to a specified GitHub user.
+    - /graphql/user-pull-requests/<login>: Fetches pull requests created by or assigned to a specified GitHub user.
+    - /graphql/user-repository-discussions/<login>: Fetches repository discussions associated with a specific GitHub
+      user.
+    - /graphql/repository_branches/<owner>/<repo>: Fetches repository branches for a specified GitHub repository.
+    - /graphql/repository_default_branch/<owner>/<repo>: Fetches the default branch of a GitHub repository.
+    - /graphql/repository_contributors/<owner>/<repo>: Fetches the contributors of a GitHub repository.
+    - /graphql/repository_branch_commits/<owner>/<repo>/<use_default>: Fetches commit history for a specific branch in
+      a GitHub repository.
+    - /graphql/user_repository_names/<login>: Fetches the names of all repositories owned by a given GitHub user.
+    - /graphql/repository_contributor_contributions/<owner>/<repo>/<login>: Fetches commit contributions of a GitHub
+      user in a specific repository.
+    - /rest/commits/<owner>/<repo>/<sha>: Fetches details of a specific commit from GitHub.
+
+Helper Functions:
+    - check_user: Checks if the authenticated user exists in the database.
+    - extract_user_credentials_and_host: Extracts the user's personal access token, protocol, and host from the user
+      object.
+    - fetch_with_retries: Fetches data with retry logic and exponential backoff.
+
+Constants:
+    - MAX_RETRIES: Maximum number of retry attempts for fetching data.
+    - INITIAL_RETRY_DELAY: Initial delay in seconds before retrying a failed request.
+"""
 
 import logging
 import time
@@ -42,6 +89,13 @@ github_bp = Blueprint("api", __name__)
 
 
 def check_user():
+    """
+    Check if the user exists in the database based on the GitHub ID obtained from the JWT token.
+
+    Returns:
+        user (User): The user object if found.
+        Response: A JSON response with an error message and a 404 status code if the user is not found.
+    """
     github_id = get_jwt_identity()
     user = User.query.filter_by(github_id=github_id).first()
     if not user:
@@ -51,6 +105,15 @@ def check_user():
 
 
 def extract_user_credentials_and_host(user):
+    """
+    Extracts the personal access token, protocol, and host from a user's API URL.
+
+    Args:
+        user (object): An object containing user information, including 'personal_access_token' and 'api_url'.
+
+    Returns:
+        tuple: A tuple containing the personal access token (str), protocol (str), and host (str).
+    """
     pat = user.personal_access_token
     parsed_url = urlparse(user.api_url)
     protocol = parsed_url.scheme
@@ -62,10 +125,14 @@ def extract_user_credentials_and_host(user):
 @jwt_required()
 def rate_limit():
     """
-    Route: /graphql/current-user-login
-    Method: GET
-    Description: Fetches the login details of the current authenticated user.
-    Returns: A JSON object containing the login information of the current user.
+    Fetches the current API rate limit usage for the authenticated GitHub user.
+
+    Returns:
+        Response (JSON): A dictionary containing the current rate limit details.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
@@ -77,10 +144,14 @@ def rate_limit():
 @jwt_required()
 def current_user_login():
     """
-    Route: /graphql/current-user-login
-    Method: GET
-    Description: Fetches the login details of the current authenticated user.
-    Returns: A JSON object containing the login information of the current user.
+    Fetches the login details of the currently authenticated GitHub user.
+
+    Returns:
+        Response (JSON): A dictionary containing the current user's GitHub login information.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
@@ -92,11 +163,18 @@ def current_user_login():
 @jwt_required()
 def specific_user_login(login):
     """
-    Route: /graphql/user-login/<username>
-    Method: GET
-    URL Parameter: username - The GitHub username of the user for whom to fetch login details.
-    Description: Retrieves the login details for a specific GitHub user identified by their username.
-    Returns: A JSON object containing the login information of the specified user.
+    Fetches the login details of a specific GitHub user identified by their username.
+
+    URL Parameter:
+        login (str): The GitHub username of the user.
+
+    Returns:
+        Response (JSON): A dictionary containing the user's GitHub login information.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
@@ -108,8 +186,18 @@ def specific_user_login(login):
 @jwt_required()
 def user_profile_stats(login):
     """
-    Route:
-    Method:
+    Fetches the profile statistics of a specific GitHub user.
+
+    URL Parameter:
+        login (str): The GitHub username of the user.
+
+    Returns:
+        Response (JSON): A dictionary containing the user's profile statistics.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
@@ -124,8 +212,22 @@ def user_profile_stats(login):
 @jwt_required()
 def user_contributions_collection(login):
     """
-    Route:
-    Method:
+    Fetches a user's GitHub contributions over a specified period.
+
+    Args:
+        login (str): GitHub username for which contributions are requested.
+
+    Query Parameters:
+        start (str, optional): Start date (YYYY-MM-DD). Defaults to account creation date.
+        end (str, optional): End date (YYYY-MM-DD). Defaults to the current date.
+
+    Returns:
+        Response (JSON): A dictionary containing the count of different contribution types.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     start = request.args.get("start")
     end = request.args.get("end")
@@ -139,8 +241,18 @@ def user_contributions_collection(login):
 @jwt_required()
 def user_contribution_years(login):
     """
-    Route:
-    Method:
+    Fetches the years in which a GitHub user has made contributions.
+
+    URL Parameter:
+        login (str): The GitHub username of the user.
+
+    Returns:
+        Response (JSON): A list of years in which the user has contributed.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
@@ -152,8 +264,22 @@ def user_contribution_years(login):
 @jwt_required()
 def user_contribution_calendar(login):
     """
-    Route:
-    Method:
+    Fetches a user's contribution calendar within a specified date range.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        start (str, optional): Start date for the contribution calendar (format: YYYY-MM-DD).
+        end (str, optional): End date for the contribution calendar (format: YYYY-MM-DD).
+
+    Returns:
+        Response (JSON): Contribution history including activity dates and counts.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     start = request.args.get("start")
     end = request.args.get("end")
@@ -167,8 +293,21 @@ def user_contribution_calendar(login):
 @jwt_required()
 def user_repositories_a(login):
     """
-    Route:
-    Method:
+    Fetches non-forked repositories owned by the specified GitHub user.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of repositories owned by the user.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     repo_t = "A"
     end_cursor = request.args.get("end_cursor")
@@ -182,8 +321,21 @@ def user_repositories_a(login):
 @jwt_required()
 def user_repositories_b(login):
     """
-    Route:
-    Method:
+    Fetches forked repositories owned by the specified GitHub user.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of repositories owned by the user.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     repo_t = "B"
     end_cursor = request.args.get("end_cursor")
@@ -197,8 +349,21 @@ def user_repositories_b(login):
 @jwt_required()
 def user_repositories_c(login):
     """
-    Route:
-    Method:
+    This API endpoint retrieves non-forked repositories where a GitHub user is a collaborator.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of repositories owned by the user.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     repo_t = "C"
     end_cursor = request.args.get("end_cursor")
@@ -212,8 +377,21 @@ def user_repositories_c(login):
 @jwt_required()
 def user_repositories_d(login):
     """
-    Route:
-    Method:
+    This API endpoint retrieves forked repositories where a GitHub user is a collaborator.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of repositories owned by the user.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     repo_t = "D"
     end_cursor = request.args.get("end_cursor")
@@ -227,8 +405,21 @@ def user_repositories_d(login):
 @jwt_required()
 def user_commit_comments(login):
     """
-    Route:
-    Method: GET
+    Fetches commit comments made by a specified GitHub user.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of commit comments.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     end_cursor = request.args.get("end_cursor")
     user = check_user()
@@ -241,8 +432,21 @@ def user_commit_comments(login):
 @jwt_required()
 def user_gist_comments(login):
     """
-    Route:
-    Method: GET
+    Fetches gist comments made by a specified GitHub user.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of gist comments.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     end_cursor = request.args.get("end_cursor")
     user = check_user()
@@ -255,8 +459,21 @@ def user_gist_comments(login):
 @jwt_required()
 def user_issue_comments(login):
     """
-    Route:
-    Method: GET
+    Fetches issue comments made by a specified GitHub user.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of issue comments.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     end_cursor = request.args.get("end_cursor")
     user = check_user()
@@ -271,8 +488,21 @@ def user_issue_comments(login):
 @jwt_required()
 def user_repository_discussion_comments(login):
     """
-    Route:
-    Method: GET
+    Fetches discussion comments made by a specified GitHub user in repository discussions.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of repository discussion comments.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     end_cursor = request.args.get("end_cursor")
     user = check_user()
@@ -287,8 +517,21 @@ def user_repository_discussion_comments(login):
 @jwt_required()
 def user_gists(login):
     """
-    Route:
-    Method: GET
+    Fetches gists created by a specified GitHub user.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of gists created by the user.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     end_cursor = request.args.get("end_cursor")
     user = check_user()
@@ -301,8 +544,21 @@ def user_gists(login):
 @jwt_required()
 def user_issues(login):
     """
-    Route:
-    Method: GET
+    Fetches issues created by or assigned to a specified GitHub user.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of issues associated with the user.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     end_cursor = request.args.get("end_cursor")
     user = check_user()
@@ -315,8 +571,21 @@ def user_issues(login):
 @jwt_required()
 def user_pull_requests(login):
     """
-    Route:
-    Method: GET
+    Fetches pull requests created by or assigned to a specified GitHub user.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of pull requests associated with the user.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     end_cursor = request.args.get("end_cursor")
     user = check_user()
@@ -329,8 +598,21 @@ def user_pull_requests(login):
 @jwt_required()
 def user_repository_discussions(login):
     """
-    Route:
-    Method: GET
+    Fetches repository discussions associated with a specific GitHub user.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of repository discussions related to the user.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     end_cursor = request.args.get("end_cursor")
     user = check_user()
@@ -343,8 +625,22 @@ def user_repository_discussions(login):
 @jwt_required()
 def repository_branches(owner, repo):
     """
-    Route:
-    Method: GET
+    Fetches repository branches for a specified GitHub repository.
+
+    URL Parameters:
+        owner (str): The GitHub username or organization that owns the repository.
+        repo (str): The repository name.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results (default: None).
+
+    Returns:
+        Response (JSON): A list of repository branches.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the repository does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     end_cursor = request.args.get("end_cursor")
     user = check_user()
@@ -357,8 +653,19 @@ def repository_branches(owner, repo):
 @jwt_required()
 def repository_default_branch(owner, repo):
     """
-    Route:
-    Method: GET
+    Fetches the default branch of a GitHub repository.
+
+    URL Parameters:
+        owner (str): The GitHub username or organization name.
+        repo (str): The name of the repository.
+
+    Returns:
+        Response (JSON): The default branch of the specified repository.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the repository does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     user = check_user()
     pat, protocol, host = extract_user_credentials_and_host(user)
@@ -370,8 +677,22 @@ def repository_default_branch(owner, repo):
 @jwt_required()
 def repository_contributors(owner, repo):
     """
-    Route:
-    Method: GET
+    Fetches the contributors of a GitHub repository.
+
+    URL Parameters:
+        owner (str): The GitHub username or organization name.
+        repo (str): The name of the repository.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results.
+
+    Returns:
+        Response (JSON): A list of contributors including their GitHub login, name, and email.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the repository does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     end_cursor = request.args.get("end_cursor")
     user = check_user()
@@ -388,8 +709,24 @@ def repository_contributors(owner, repo):
 @jwt_required()
 def repository_branch_commits(owner, repo, use_default):
     """
-    Route:
-    Method: GET
+    Fetches commit history for a specific branch in a GitHub repository.
+
+    URL Parameters:
+        owner (str): The GitHub username or organization name.
+        repo (str): The name of the repository.
+        use_default (bool): Whether to use the default branch.
+
+    Query Parameters:
+        branch (str, optional): The name of the branch. Required if use_default is False.
+        end_cursor (str, optional): Cursor for paginated results.
+
+    Returns:
+        Response (JSON): A list of commits, including their SHA.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the repository or branch does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     branch = request.args.get("branch")
     end_cursor = request.args.get("end_cursor")
@@ -401,7 +738,6 @@ def repository_branch_commits(owner, repo, use_default):
     return jsonify(data)
 
 
-# mining all commits details
 @github_bp.route(
     "/graphql/user_repository_names/<login>",
     methods=["GET"],
@@ -409,8 +745,21 @@ def repository_branch_commits(owner, repo, use_default):
 @jwt_required()
 def user_repository_names(login):
     """
-    Route:
-    Method: GET
+    Fetches the names of all repositories owned by a given GitHub user.
+
+    URL Parameters:
+        login (str): The GitHub username.
+
+    Query Parameters:
+        end_cursor (str, optional): Cursor for paginated results.
+
+    Returns:
+        Response (JSON): A list of repository names owned by the user.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the user does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     end_cursor = request.args.get("end_cursor")
     user = check_user()
@@ -426,8 +775,24 @@ def user_repository_names(login):
 @jwt_required()
 def repository_contributor_contributions(owner, repo, login):
     """
-    Route:
-    Method: GET
+    Fetches commit contributions of a GitHub user in a specific repository.
+
+    URL Parameters:
+        owner (str): GitHub username of the repository owner.
+        repo (str): Repository name.
+        login (str): GitHub username of the contributor.
+
+    Query Parameters:
+        branch (str, optional): Branch name to filter commits.
+        end_cursor (str, optional): Cursor for paginated results.
+
+    Returns:
+        Response (JSON): List of commits made by the contributor.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the repository or contributor does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
     """
     branch = request.args.get("branch")
     end_cursor = request.args.get("end_cursor")
@@ -444,7 +809,21 @@ INITIAL_RETRY_DELAY = 2
 
 
 def fetch_with_retries(url, headers, max_retries=MAX_RETRIES, timeout=15):
-    """Fetch data with retry logic and exponential backoff."""
+    """
+    Fetch data with retry logic and exponential backoff.
+
+    Args:
+        url (str): The URL to fetch data from.
+        headers (dict): Headers for the request.
+        max_retries (int, optional): Maximum number of retry attempts.
+        timeout (int, optional): Request timeout in seconds.
+
+    Returns:
+        dict: JSON response if successful, or rate-limit response.
+
+    Raises:
+        Timeout: If all retry attempts are exhausted.
+    """
     last_exception = None
     response = None
 
@@ -486,7 +865,22 @@ def fetch_with_retries(url, headers, max_retries=MAX_RETRIES, timeout=15):
 @github_bp.route("/rest/commits/<owner>/<repo>/<sha>", methods=["GET"])
 @jwt_required()
 def get_commit_details(owner, repo, sha):
-    """Fetch commit details from GitHub with rate limiting and retry logic."""
+    """
+    Fetches details of a specific commit from GitHub.
+
+    URL Parameters:
+        owner (str): GitHub username of the repository owner.
+        repo (str): Repository name.
+        sha (str): SHA of the commit.
+
+    Returns:
+        Response (JSON): Commit details including author, stats, and language breakdown.
+
+    Raises:
+        401 Unauthorized: If the JWT token is invalid or missing.
+        404 Not Found: If the commit does not exist.
+        500 Internal Server Error: If an unexpected error occurs.
+    """
     user = check_user()
     token, protocol, host = extract_user_credentials_and_host(user)
     headers = {"Authorization": f"token {token}"}
@@ -536,98 +930,3 @@ def get_commit_details(owner, repo, sha):
             }
 
     return jsonify({"commit": res})
-
-
-# @github_bp.route(
-#     "/rest/commits/<owner>/<repo>/<sha>",
-#     methods=["GET"],
-# )
-# @jwt_required()
-# def get_commit_details(owner, repo, sha):
-#     """
-#     Route:
-#     Method: GET
-#     """
-#     user = check_user()
-#     token, protocol, host = extract_user_credentials_and_host(user)
-#     rate_limit_url = f"{protocol}://{host}/rate_limit"
-#     headers = {"Authorization": f"token {token}"}
-#     try:
-#         response = requests.get(rate_limit_url, headers=headers, timeout=10)
-#         response.raise_for_status()
-#         rate_limit_data = response.json()
-#         remaining_requests = rate_limit_data["rate"]["remaining"]
-#         reset_time = rate_limit_data["rate"]["reset"]
-#         reset_at = datetime.fromtimestamp(reset_time, tz=timezone.utc)
-#         current_time = datetime.now(timezone.utc)
-#         time_diff = reset_at - current_time
-#         seconds = time_diff.total_seconds()
-#         if remaining_requests == 0:
-#             return (
-#                 jsonify(
-#                     {
-#                         "no_limit": True,
-#                         "error": "Rate limit exceeded",
-#                         "wait_seconds": seconds + 2,
-#                         "reset_at": reset_at.isoformat(),
-#                         "message": "Try again after the reset time.",
-#                     }
-#                 ),
-#                 200,
-#             )
-
-#         commit_url = f"{protocol}://{host}/repos/{owner}/{repo}/commits/{sha}"
-#         retries = 3
-#         for attempt in range(retries):
-#             try:
-#                 response = requests.get(commit_url, headers=headers, timeout=10)
-#                 response.raise_for_status()
-#                 break
-#             except requests.exceptions.RequestException as e:
-#                 if attempt < retries - 1:
-#                     logging.warning(
-#                         "Attempt %d failed: %s. Retrying...", attempt + 1, str(e)
-#                     )
-#                     continue
-#                 else:
-#                     logging.error("All retry attempts failed: %s", str(e))
-#                     return (
-#                         jsonify(
-#                             {
-#                                 "error": "Failed to fetch commit details after multiple attempts"
-#                             }
-#                         ),
-#                         500,
-#                     )
-#         commit = response.json()
-#         res = {
-#             "author": commit["commit"]["author"]["name"],
-#             "author_email": commit["commit"]["author"]["email"],
-#             "authoredDate": commit["commit"]["author"]["date"],
-#             "message": commit["commit"]["message"],
-#             "author_login": commit["author"]["login"] if commit["author"] else None,
-#             "parents": len(commit["parents"]),
-#             "additions": commit["stats"]["additions"],
-#             "deletions": commit["stats"]["deletions"],
-#             "changedFilesIfAvailable": len(commit["files"]),
-#             "lang_stats": {},
-#         }
-#         # Calculate language statistics
-#         for file in commit["files"]:
-#             try:
-#                 lexer = guess_lexer_for_filename(file["filename"], file["patch"])
-#             except Exception:
-#                 lexer = TextLexer()  # Default to plain text lexer if no lexer is found
-
-#             if lexer.name in res["lang_stats"]:
-#                 res["lang_stats"][lexer.name]["additions"] += file["additions"]
-#                 res["lang_stats"][lexer.name]["deletions"] += file["deletions"]
-#             else:
-#                 res["lang_stats"][lexer.name] = {
-#                     "additions": file["additions"],
-#                     "deletions": file["deletions"],
-#                 }
-
-#         return jsonify({"commit": res})
-#     except requests.exceptions.RequestException as e:
-#         return jsonify({"error": str(e)}), 500

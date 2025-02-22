@@ -1,5 +1,12 @@
-"""The module defines the UserRepositories class, which formulates the GraphQL query string
-to extract repositories created by the user based on a given user ID."""
+"""
+This module defines the `UserRepositoryNames` class, which is used to query a user's repositories on GitHub.
+It extends the `PaginatedQuery` class to handle potentially large numbers of repositories by paginating the results.
+Classes:
+    UserRepositoryNames: A class for querying a user's repositories, including details like language statistics,
+                         fork count, stargazer count, etc.
+Functions:
+    user_repository_names(raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+"""
 
 from typing import List, Dict, Any
 from ..query import (

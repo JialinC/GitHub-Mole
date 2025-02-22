@@ -1,5 +1,16 @@
-"""The module defines UserProfileStats that formulate GraphQL query string to extract user profile information 
-for a given GitHub ID. Only the used fields are queried, open to customization."""
+"""
+This module defines the UserProfileStats class, which constructs and processes GraphQL queries
+to fetch profile details and statistics of a GitHub user.
+
+Classes:
+    UserProfileStats: Constructs a GraphQL query to retrieve user profile information and processes
+    the raw data to extract specific statistics.
+
+Functions:
+    UserProfileStats.profile_stats(raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        Processes the raw data returned from a GraphQL query about a user's profile and extracts
+        specific statistics, formatting the data into a simplified dictionary structure.
+"""
 
 from typing import Dict, Any
 from ..query import QueryNode, Query
@@ -33,14 +44,16 @@ from ..constants import (
 
 class UserProfileStats(Query):
     """
-    UserProfileStats is a subclass of Query specifically designed to fetch detailed statistical information
-    about a GitHub user's profile using the 'user' field in a GraphQL query.
+    UserProfileStats constructs a GraphQL query to fetch profile details and statistics of a GitHub user.
     """
 
     def __init__(self, login: str) -> None:
         """
-        Initializes a UserProfileStats query object to fetch a comprehensive set of information
-        about a user, including their activities, contributions, and public profile details.
+        Initializes a GraphQL query to retrieve user profile information, including contributions,
+        repositories, and followers.
+
+        Args:
+            login (str): The GitHub username of the user.
         """
         super().__init__(
             fields=[

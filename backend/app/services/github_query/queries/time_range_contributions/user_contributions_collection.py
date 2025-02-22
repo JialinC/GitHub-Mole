@@ -1,5 +1,17 @@
-"""The module defines the UserContributionsCollection class, which formulates the GraphQL query string
-to extract the number of various contribution made by the user based on a given user ID."""
+"""
+This module defines the UserContributionsCollection class, which constructs a GraphQL query to fetch a GitHub user's 
+contributions over a specified time period. The contributions include commits, issues, pull requests, pull request 
+reviews, and repository contributions. The module also provides a method to process the raw data returned from the 
+GraphQL query and extract the contribution counts.
+Classes:
+    UserContributionsCollection: Constructs a GraphQL query to retrieve user contributions and processes the raw data 
+    to extract contribution counts.
+Methods:
+    __init__(login: str, start: str, end: str): Initializes the GraphQL query with the specified user login and time 
+    range.
+    user_contributions_collection(raw_data: Dict[str, Any]) -> Counter: Processes the raw data from the GraphQL API to 
+    extract and count user contributions.
+"""
 
 from typing import Dict, Any
 from collections import Counter
@@ -23,8 +35,8 @@ from ..constants import (
 
 class UserContributionsCollection(Query):
     """
-    UserContributionsCollection is a subclass of Query specifically designed to fetch a GitHub user's contributions
-    over a certain period. It includes detailed contribution counts like commits, issues, pull requests, etc.
+    UserContributionsCollection constructs a GraphQL query to fetch a GitHub user's contributions
+    over a given time period. It retrieves contributions such as commits, issues, pull requests, etc.
     """
 
     def __init__(
@@ -34,7 +46,12 @@ class UserContributionsCollection(Query):
         end: str,
     ) -> None:
         """
-        Initializes a UserContributionsCollection query object to fetch detailed contribution information of a user.
+        Initializes a GraphQL query to retrieve user contributions.
+
+        Args:
+            login (str): GitHub username.
+            start (str): Start date for fetching contributions.
+            end (str): End date for fetching contributions.
         """
         super().__init__(
             fields=[
@@ -67,15 +84,13 @@ class UserContributionsCollection(Query):
     @staticmethod
     def user_contributions_collection(raw_data: Dict[str, Any]) -> Counter:
         """
-        Processes the raw data returned from a GraphQL query about a user's contributions collection
-        and aggregates the various types of contributions into a countable collection.
+        Processes the raw data returned from a GraphQL query to extract contribution counts.
 
         Args:
-            raw_data (dict): The raw data returned by the query,
-                            expected to contain nested contribution counts.
+            raw_data (dict): The response from the GraphQL API, containing user contribution data.
 
         Returns:
-            Counter: A collection counter aggregating the various types of contributions made by the user.
+            Counter: Dictionary-like object with contribution counts.
         """
         raw_data = raw_data[NODE_USER][NODE_CONTRIBUTIONS_COLLECTION]
         contribution_collection = Counter(
