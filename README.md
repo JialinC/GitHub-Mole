@@ -6,9 +6,16 @@ GitHub-Mole is an open-source software designed to automate the large-scale extr
 
 GitHub-Mole can be easily deployed locally using the provided docker-compose.yml and Dockerfile. The only prerequisite is that Docker is installed on your system.
 
-### Step 1: Set Up GitHub Authentication
+### Step 1: Clone the Repository
 
-You can log in using your GitHub Personal Access Token (PAT) without additional configuration. However, if you prefer to use GitHub SSO, you will need to create an OAuth app under GitHub Developer Settings and provide the Client ID and Client Secret in your docker-compose.yml file:
+```sh
+git clone https://github.com/JialinC/GitHub-Mole.git
+cd GitHub-Mole
+```
+
+### Step 2: Set Up GitHub Authentication
+
+When you use GitHub-Mole you can log in using your GitHub Personal Access Token (PAT) without additional configuration. If you prefer this skip to Step 3. However, if you prefer to use GitHub SSO to log in to GitHub-Mole, you will need to create an OAuth app under GitHub Developer Settings and provide the Client ID and Client Secret in your docker-compose.yml file:
 
 ```yaml
 environment:
@@ -29,7 +36,7 @@ GITHUB_HOSTNAME: "https://github.ncsu.edu"
 GITHUB_API_URL: "https://api.github.ncsu.edu"
 ```
 
-### Step 2: Start the Application
+### Step 3: Start the Application
 
 Run the following command to build and launch the application:
 
@@ -69,11 +76,25 @@ docker-compose up --build
 
 The rest of the installation remains unchanged.
 
-## Documentation
+## 📊Web-based UI
+GitHub-Mole has a user friendly web interface that let user query GitHub contributino data interactively. User can use CSV file as input to do large scale GitHub contribution mining.
+
+<table>
+  <tr>
+    <td><img src="./docs/images/readme/dashboard.png" alt="Dashboard" width="410" height="280"></td>
+    <td><img src="./docs/images/readme/contribution.png" alt="Query Contribution" width="410" height="320"></td>
+  </tr>
+  <tr>
+    <td><img src="./docs/images/readme/contribution_plot.png" alt="Contribution Plot" width="410" height="245"></td>
+    <td><img src="./docs/images/readme/repo_plot.png" alt="Repo Plot" width="410" height="300"></td>
+  </tr>
+</table>
+
+## 📖Documentation
 
 For detailed documentation, see [GitHub-Mole Documentation](https://jialinc.github.io/GitHub-Mole/)
 
-## License
+## 📜License
 Open source licensed under the MIT license (see LICENSE file for details).
 
 
