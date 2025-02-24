@@ -114,7 +114,7 @@ def form_teams(columns: dict, team_size: int, allow_exceed: bool) -> dict:
             for c in clusters:
                 if len(c) > size_min:
                     if allow_exceed:
-                        team_key = f"Team {over_size_team + 1}"
+                        team_key = f"Team {over_size_team}"
                         teams[team_key].append(
                             {"id": c[size_min][0], "type": c[size_min][1]}
                         )
