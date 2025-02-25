@@ -843,7 +843,7 @@ Users can start the team formation process by selecting one of the following opt
 - **Upload a CSV file containing a custom dataset**  
 - **Upload a CSV file containing a list of GitHub IDs**  
 
-<img src="./images/team/self_input/" alt="Team Formation Page Screenshot" width="826" height="329">  
+<img src="./images/team/self_input/self_data_page.png" alt="Team Formation Page Screenshot" width="826" height="329">  
 
 ---
 
