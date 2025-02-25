@@ -574,7 +574,7 @@ They can also choose a specific repository (or all repositories) to analyze:
 
 GitHub-Mole then renders a histogram showing the code size (in bytes) for each programming language used in the selected repositories. It also generates pie charts illustrating the percentage distribution of languages.  
 
-<img src="./images/contribution/single_contrib/repo/repo_all.png" alt="All Repositories Chart Screenshot" width="818" height="608">  
+<img src="./images/contribution/single_contrib/repo/repo_all.png" alt="All Repositories Chart Screenshot" width="817" height="608">  
 
 If a user selects a specific repository, GitHub-Mole generates graphs specific to that repository:  
 
@@ -703,13 +703,13 @@ This feature is useful when users are interested in contributions made to branch
 
 Users can select a specific **repository** and **branch** to view all contributors within that branch.  
 
-<img src="./images/commits_repo/all_branch/result.png" alt="All Branches Query Result Screenshot" width="825" height="443">  
+<img src="./images/commits_repo/all_branch/result.png" alt="All Branches Query Result Screenshot" width="824" height="443">  
 
 <img src="./images/commits_repo/all_branch/branch.png" alt="Branch Selection Screenshot" width="815" height="242">  
 
 GitHub-Mole then generates visualizations based on commit data from the selected branch, enabling users to compare contributions across different branches.  
 
-<img src="./images/commits_repo/all_branch/graph.png" alt="Branch Contribution Graph Screenshot" width="815" height="617">
+<img src="./images/commits_repo/all_branch/graph.png" alt="Branch Contribution Graph Screenshot" width="814" height="617">
 
 ### Data Export & Storage  
 
@@ -843,7 +843,7 @@ Users can start the team formation process by selecting one of the following opt
 - **Upload a CSV file containing a custom dataset**  
 - **Upload a CSV file containing a list of GitHub IDs**  
 
-<img src="./images/team/self_input/self_data_page.png" alt="Team Formation Page Screenshot" width="826" height="329">  
+<img src="./images/team/self_input/" alt="Team Formation Page Screenshot" width="826" height="329">  
 
 ---
 
