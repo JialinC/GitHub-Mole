@@ -72,51 +72,178 @@ Users can query the total number of each type of GitHub contribution for specifi
 The complete list of GitHub contributions mined by GitHub-Mole is provided in the following table:  
 
 <details>
-<summary>Click to expand the table</summary>
+  <summary>Click to expand the table</summary>
 
-| Field                    | Description|
-|:---------------------------|:-----------------------------------------------|
-| **GitHub ID**                  |User's GitHub login, this is also the input.|
-| **Name**                       |The user's public profile name.|
-| **Email**                      |The user's publicly visible profile email.|
-| **Created At**                 |The date and time when the account was created.|
-| **Age (days)**                 |The number of days since the account was created until the query date.|
-| **Bio**                        |The user's public profile bio.|
-| **Company**                    |The user's public profile company.|
-| **Watching**                   |The number of repositories the given user is watching.|
-| **Starred Repositories**       |The number of Repositories the user has starred.|
-| **Following**                  |The number of users the given user is following.|
-| **Followers**                  |The number of users the given user is followed by.|
-| **Private Contributions**      |A count of contributions made by the user that the viewer cannot access. Only non-zero when the user has chosen to share their private contribution counts.|
-| **Commits**                    |The number of Commits the given user has created.|
-| **Gists**                      |The number of Gists the user has created.|
-| **Issues**                     |The number of Issues associated with this user.|
-| **Projects**                   |The number of projects under the owner.|
-| **Pull Requests**              |The number of pull requests associated with this user.|
-| **Pull Request Reviews**       |The number of Pull request review contributions made by this user.|
-| **Repositories**               |The number of repositories that the user owns.|
-| **Repository Discussions**     |The number of Discussions this user has started.|
-| **Commit Comments**            |The number of commit comments made by this user.|
-| **Issue Comments**             |The number of issue comments made by this user.|
-| **Gist Comments**              |The number of gist comments made by this user.|
-| **Repository Discussion Comments** |The number of Discussion comments this user has authored.|
-| **Owned Original Repo**        |The number of repositories that created and owned by the user.|
-| **Owned Original Repo Size**   |The total size in bytes of repositories that created and owned by the user.|
-| **Owned Original Repo Selected Langs Size** |The total size in bytes of user selected languages in repositories that created and owned by the user.|
-| **Owned Original Repo Langs Number** |The total number of languages used in repositories that created and owned by the user.|
-| **Owned Forked Repo**          |The number of forked repositories owned by the user.|
-| **Owned Forked Repo Size**     |The total size in bytes of forked repositories owned by the user.|
-| **Owned Forked Repo Selected Langs Size** |The total size in bytes of user selected languages in forked repositories owned by the user.|
-| **Owned Forked Repo Langs Number** |The total number of languages used in forked repositories owned by the user.|
-| **Collaborating Original Repo** |The total number of original repositories in which the user contributes as a collaborator. |
-| **Collaborating Original Repo Size** |The total size in bytes of original repositories in which the user contributes as a collaborator.|
-| **Collaborating Original Repo Selected Langs Size** |The total size in bytes of user selected languages in original repositories in which the user contributes as a collaborator.|
-| **Collaborating Original Repo Langs Number** |The total number of languages used in original repositories in which the user contributes as a collaborator.|
-| **Collaborating Forked Repo**  |The number of forked repositories where the user contributes as a collaborator.|
-| **Collaborating Forked Repo Size** |The total size in bytes of forked repositories where the user contributes as a collaborator.|
-| **Collaborating Forked Repo Selected Langs Size** |The total size in bytes of user selected languages in forked repositories where the user contributes as a collaborator.|
-| **Collaborating Forked Repo Langs Number** |The total number of languages used in forked repositories where the user contributes as a collaborator.|
-| **Total Langs Number**         |The number of languages that the user has used on GitHub.|
+  <table>
+    <tr>
+      <th>Field</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td><b>GitHub ID</b></td>
+      <td>User's GitHub login, this is also the input.</td>
+    </tr>
+    <tr>
+      <td><b>Name</b></td>
+      <td>The user's public profile name.</td>
+    </tr>
+    <tr>
+      <td><b>Email</b></td>
+      <td>The user's publicly visible profile email.</td>
+    </tr>
+    <tr>
+      <td><b>Created At</b></td>
+      <td>The date and time when the account was created.</td>
+    </tr>
+    <tr>
+      <td><b>Age (days)</b></td>
+      <td>The number of days since the account was created until the query date.</td>
+    </tr>
+    <tr>
+      <td><b>Bio</b></td>
+      <td>The user's public profile bio.</td>
+    </tr>
+    <tr>
+      <td><b>Company</b></td>
+      <td>The user's public profile company.</td>
+    </tr>
+    <tr>
+      <td><b>Watching</b></td>
+      <td>The number of repositories the given user is watching.</td>
+    </tr>
+    <tr>
+      <td><b>Starred Repositories</b></td>
+      <td>The number of Repositories the user has starred.</td>
+    </tr>
+    <tr>
+      <td><b>Following</b></td>
+      <td>The number of users the given user is following.</td>
+    </tr>
+    <tr>
+      <td><b>Followers</b></td>
+      <td>The number of users the given user is followed by.</td>
+    </tr>
+    <tr>
+      <td><b>Private Contributions</b></td>
+      <td>A count of contributions made by the user that the viewer cannot access. Only non-zero when the user has chosen to share their private contribution counts.</td>
+    </tr>
+    <tr>
+      <td><b>Commits</b></td>
+      <td>The number of Commits the given user has created.</td>
+    </tr>
+    <tr>
+      <td><b>Gists</b></td>
+      <td>The number of Gists the user has created.</td>
+    </tr>
+    <tr>
+      <td><b>Issues</b></td>
+      <td>The number of Issues associated with this user.</td>
+    </tr>
+    <tr>
+      <td><b>Projects</b></td>
+      <td>The number of projects under the owner.</td>
+    </tr>
+    <tr>
+      <td><b>Pull Requests</b></td>
+      <td>The number of pull requests associated with this user.</td>
+    </tr>
+    <tr>
+      <td><b>Pull Request Reviews</b></td>
+      <td>The number of Pull request review contributions made by this user.</td>
+    </tr>
+    <tr>
+      <td><b>Repositories</b></td>
+      <td>The number of repositories that the user owns.</td>
+    </tr>
+    <tr>
+      <td><b>Repository Discussions</b></td>
+      <td>The number of Discussions this user has started.</td>
+    </tr>
+    <tr>
+      <td><b>Commit Comments</b></td>
+      <td>The number of commit comments made by this user.</td>
+    </tr>
+    <tr>
+      <td><b>Issue Comments</b></td>
+      <td>The number of issue comments made by this user.</td>
+    </tr>
+    <tr>
+      <td><b>Gist Comments</b></td>
+      <td>The number of gist comments made by this user.</td>
+    </tr>
+    <tr>
+      <td><b>Repository Discussion Comments</b></td>
+      <td>The number of Discussion comments this user has authored.</td>
+    </tr>
+    <tr>
+      <td><b>Owned Original Repo</b></td>
+      <td>The number of repositories that created and owned by the user.</td>
+    </tr>
+    <tr>
+      <td><b>Owned Original Repo Size</b></td>
+      <td>The total size in bytes of repositories that created and owned by the user.</td>
+    </tr>
+    <tr>
+      <td><b>Owned Original Repo Selected Langs Size</b></td>
+      <td>The total size in bytes of user selected languages in repositories that created and owned by the user.</td>
+    </tr>
+    <tr>
+      <td><b>Owned Original Repo Langs Number</b></td>
+      <td>The total number of languages used in repositories that created and owned by the user.</td>
+    </tr>
+    <tr>
+      <td><b>Owned Forked Repo</b></td>
+      <td>The number of forked repositories owned by the user.</td>
+    </tr>
+    <tr>
+      <td><b>Owned Forked Repo Size</b></td>
+      <td>The total size in bytes of forked repositories owned by the user.</td>
+    </tr>
+    <tr>
+      <td><b>Owned Forked Repo Selected Langs Size</b></td>
+      <td>The total size in bytes of user selected languages in forked repositories owned by the user.</td>
+    </tr>
+    <tr>
+      <td><b>Owned Forked Repo Langs Number</b></td>
+      <td>The total number of languages used in forked repositories owned by the user.</td>
+    </tr>
+    <tr>
+      <td><b>Collaborating Original Repo</b></td>
+      <td>The total number of original repositories in which the user contributes as a collaborator.</td>
+    </tr>
+    <tr>
+      <td><b>Collaborating Original Repo Size</b></td>
+      <td>The total size in bytes of original repositories in which the user contributes as a collaborator.</td>
+    </tr>
+    <tr>
+      <td><b>Collaborating Original Repo Selected Langs Size</b></td>
+      <td>The total size in bytes of user selected languages in original repositories in which the user contributes as a collaborator.</td>
+    </tr>
+    <tr>
+      <td><b>Collaborating Original Repo Langs Number</b></td>
+      <td>The total number of languages used in original repositories in which the user contributes as a collaborator.</td>
+    </tr>
+    <tr>
+      <td><b>Collaborating Forked Repo</b></td>
+      <td>The number of forked repositories where the user contributes as a collaborator.</td>
+    </tr>
+    <tr>
+      <td><b>Collaborating Forked Repo Size</b></td>
+      <td>The total size in bytes of forked repositories where the user contributes as a collaborator.</td>
+    </tr>
+    <tr>
+      <td><b>Collaborating Forked Repo Selected Langs Size</b></td>
+      <td>The total size in bytes of user selected languages in forked repositories where the user contributes as a collaborator.</td>
+    </tr>
+    <tr>
+      <td><b>Collaborating Forked Repo Langs Number</b></td>
+      <td>The total number of languages used in forked repositories where the user contributes as a collaborator.</td>
+    </tr>
+    <tr>
+      <td><b>Total Langs Number</b></td>
+      <td>The number of languages that the user has used on GitHub.</td>
+    </tr>
+  </table>
 
 </details>
 
@@ -182,59 +309,223 @@ The following table lists the currently supported GitHub contribution types and 
 
 
 <details>
-<summary>Click to expand the table</summary>
+  <summary>Click to expand the table</summary>
 
-| Contribution Type                   | Fields               | Description                                                                 |
-|:------------------------------------|:---------------------|:----------------------------------------------------------------------------|
-| **Commit Comments**                 | GitHub ID            | User's GitHub login                                                         |
-|                                     | Created At           | The date and time when the comment was created                              |
-|                                     | Body Text            | The content of the comment                                                  |
-| **Gist Comments**                   | GitHub ID            | User's GitHub login                                                         |
-|                                     | Created At           | The date and time when the comment was created                              |
-|                                     | Body Text            | The content of the comment                                                  |
-| **Issue Comments**                  | GitHub ID            | User's GitHub login                                                         |
-|                                     | Created At           | The date and time when the comment was created                              |
-|                                     | Body Text            | The content of the comment                                                  |
-| **Repository Discussion Comments**  | GitHub ID            | User's GitHub login                                                         |
-|                                     | Created At           | The date and time when the comment was created                              |
-|                                     | Body Text            | The content of the comment                                                  |
-| **Gists**                           | GitHub ID            | User's GitHub login                                                         |
-|                                     | Created At           | The date and time when the gist was created                                 |
-|                                     | Description          | The description of the gist                                                 |
-| **Issues**                          | GitHub ID            | User's GitHub login                                                         |
-|                                     | Created At           | The date and time when the issue was created                                |
-|                                     | Title                | The title of the issue                                                      |
-|                                     | Body Text            | The content of the issue                                                    |
-| **Pull Requests**                   | GitHub ID            | User's GitHub login                                                         |
-|                                     | Created At           | The date and time when the pull request was created                         |
-|                                     | Body Text            | The content of the pull request                                             |
-| **Repository Discussions**          | GitHub ID            | User's GitHub login                                                         |
-|                                     | Created At           | The date and time when the discussion was created                           |
-|                                     | Body Text            | The content of the discussion                                               |
-| **Owned Original Repo**             | GitHub ID            | User's GitHub login                                                         |
-|                                     | Name                 | The name of the repository                                                  |
-|                                     | Created At           | The date and time when the repository was created                           |
-|                                     | Updated At           | The date and time when the repository was last updated                      |
-|                                     | Primary Language     | The main programming language used in the repository                        |
-|                                     | Language Stats       | Statistics on the languages used in the repository                          |
-| **Owned Forked Repo**               | GitHub ID            | User's GitHub login                                                         |
-|                                     | Name                 | The name of the repository                                                  |
-|                                     | Created At           | The date and time when the repository was created                           |
-|                                     | Updated At           | The date and time when the repository was last updated                      |
-|                                     | Primary Language     | The main programming language used in the repository                        |
-|                                     | Language Stats       | Statistics on the languages used in the repository                          |
-| **Collaborating Original Repo**     | GitHub ID            | User's GitHub login                                                         |
-|                                     | Name                 | The name of the repository                                                  |
-|                                     | Created At           | The date and time when the repository was created                           |
-|                                     | Updated At           | The date and time when the repository was last updated                      |
-|                                     | Primary Language     | The main programming language used in the repository                        |
-|                                     | Language Stats       | Statistics on the languages used in the repository                          |
-| **Collaborating Forked Repo**       | GitHub ID            | User's GitHub login                                                         |
-|                                     | Name                 | The name of the repository                                                  |
-|                                     | Created At           | The date and time when the repository was created                           |
-|                                     | Updated At           | The date and time when the repository was last updated                      |
-|                                     | Primary Language     | The main programming language used in the repository                        |
-|                                     | Language Stats       | Statistics on the languages used in the repository                          |
+  <table>
+    <tr>
+      <th>Contribution Type</th>
+      <th>Fields</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td rowspan="3"><b>Commit Comments</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the comment was created</td>
+    </tr>
+    <tr>
+      <td>Body Text</td>
+      <td>The content of the comment</td>
+    </tr>
+    <tr>
+      <td rowspan="3"><b>Gist Comments</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the comment was created</td>
+    </tr>
+    <tr>
+      <td>Body Text</td>
+      <td>The content of the comment</td>
+    </tr>
+    <tr>
+      <td rowspan="3"><b>Issue Comments</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the comment was created</td>
+    </tr>
+    <tr>
+      <td>Body Text</td>
+      <td>The content of the comment</td>
+    </tr>
+    <tr>
+      <td rowspan="3"><b>Repository Discussion Comments</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the comment was created</td>
+    </tr>
+    <tr>
+      <td>Body Text</td>
+      <td>The content of the comment</td>
+    </tr>
+    <tr>
+      <td rowspan="3"><b>Gists</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the gist was created</td>
+    </tr>
+    <tr>
+      <td>Description</td>
+      <td>The description of the gist</td>
+    </tr>
+    <tr>
+      <td rowspan="4"><b>Issues</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the issue was created</td>
+    </tr>
+    <tr>
+      <td>Title</td>
+      <td>The title of the issue</td>
+    </tr>
+    <tr>
+      <td>Body Text</td>
+      <td>The content of the issue</td>
+    </tr>
+    <tr>
+      <td rowspan="3"><b>Pull Requests</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the pull request was created</td>
+    </tr>
+    <tr>
+      <td>Body Text</td>
+      <td>The content of the pull request</td>
+    </tr>
+    <tr>
+      <td rowspan="3"><b>Repository Discussions</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the discussion was created</td>
+    </tr>
+    <tr>
+      <td>Body Text</td>
+      <td>The content of the discussion</td>
+    </tr>
+    <tr>
+      <td rowspan="6"><b>Owned Original Repo</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Name</td>
+      <td>The name of the repository</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the repository was created</td>
+    </tr>
+    <tr>
+      <td>Updated At</td>
+      <td>The date and time when the repository was last updated</td>
+    </tr>
+    <tr>
+      <td>Primary Language</td>
+      <td>The main programming language used in the repository</td>
+    </tr>
+    <tr>
+      <td>Language Stats</td>
+      <td>Statistics on the languages used in the repository</td>
+    </tr>
+    <tr>
+      <td rowspan="6"><b>Owned Forked Repo</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Name</td>
+      <td>The name of the repository</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the repository was created</td>
+    </tr>
+    <tr>
+      <td>Updated At</td>
+      <td>The date and time when the repository was last updated</td>
+    </tr>
+    <tr>
+      <td>Primary Language</td>
+      <td>The main programming language used in the repository</td>
+    </tr>
+    <tr>
+      <td>Language Stats</td>
+      <td>Statistics on the languages used in the repository</td>
+    </tr>
+    <tr>
+      <td rowspan="6"><b>Collaborating Original Repo</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Name</td>
+      <td>The name of the repository</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the repository was created</td>
+    </tr>
+    <tr>
+      <td>Updated At</td>
+      <td>The date and time when the repository was last updated</td>
+    </tr>
+    <tr>
+      <td>Primary Language</td>
+      <td>The main programming language used in the repository</td>
+    </tr>
+    <tr>
+      <td>Language Stats</td>
+      <td>Statistics on the languages used in the repository</td>
+    </tr>
+    <tr>
+      <td rowspan="6"><b>Collaborating Forked Repo</b></td>
+      <td>GitHub ID</td>
+      <td>User's GitHub login</td>
+    </tr>
+    <tr>
+      <td>Name</td>
+      <td>The name of the repository</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td>The date and time when the repository was created</td>
+    </tr>
+    <tr>
+      <td>Updated At</td>
+      <td>The date and time when the repository was last updated</td>
+    </tr>
+    <tr>
+      <td>Primary Language</td>
+      <td>The main programming language used in the repository</td>
+    </tr>
+    <tr>
+      <td>Language Stats</td>
+      <td>Statistics on the languages used in the repository</td>
+    </tr>
+  </table>
 
 </details>
 
@@ -328,20 +619,60 @@ The retrieved commit data is displayed in a structured table with the following 
 <details>
   <summary>Click to expand the table</summary>
 
-| Field           | Description                                                                 |
-|:---------------|:----------------------------------------------------------------------------|
-| **Repository**  | The name of the repository where the commit was made                        |
-| **Author**      | The name of the commit author                                              |
-| **Author Email** | The email address associated with the author’s commit                     |
-| **Author Login** | The GitHub username of the author                                         |
-| **Branch**      | The branch where the commit was recorded                                   |
-| **Authored Date** | The date and time when the commit was created                            |
-| **Changed Files** | The number of files modified in the commit                               |
-| **Additions**   | The number of lines added in the commit                                   |
-| **Deletions**   | The number of lines removed in the commit                                 |
-| **Message**     | The commit message describing the changes                                 |
-| **Parents**     | The number of parent commits of the current commit                        |
-| **Languages**   | The programming languages detected in the commit                         |
+  <table>
+    <tr>
+      <th>Field</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td><b>Repository</b></td>
+      <td>The name of the repository where the commit was made</td>
+    </tr>
+    <tr>
+      <td><b>Author</b></td>
+      <td>The name of the commit author</td>
+    </tr>
+    <tr>
+      <td><b>Author Email</b></td>
+      <td>The email address associated with the author’s commit</td>
+    </tr>
+    <tr>
+      <td><b>Author Login</b></td>
+      <td>The GitHub username of the author</td>
+    </tr>
+    <tr>
+      <td><b>Branch</b></td>
+      <td>The branch where the commit was recorded</td>
+    </tr>
+    <tr>
+      <td><b>Authored Date</b></td>
+      <td>The date and time when the commit was created</td>
+    </tr>
+    <tr>
+      <td><b>Changed Files</b></td>
+      <td>The number of files modified in the commit</td>
+    </tr>
+    <tr>
+      <td><b>Additions</b></td>
+      <td>The number of lines added in the commit</td>
+    </tr>
+    <tr>
+      <td><b>Deletions</b></td>
+      <td>The number of lines removed in the commit</td>
+    </tr>
+    <tr>
+      <td><b>Message</b></td>
+      <td>The commit message describing the changes</td>
+    </tr>
+    <tr>
+      <td><b>Parents</b></td>
+      <td>The number of parent commits of the current commit</td>
+    </tr>
+    <tr>
+      <td><b>Languages</b></td>
+      <td>The programming languages detected in the commit</td>
+    </tr>
+  </table>
 
 </details>
 
@@ -394,14 +725,36 @@ By default, GitHub only counts commits made to the **default branch** as part of
 <details>
   <summary>Click to expand the table</summary>
 
-| GitHub Contribution Rules                   | Criteria                                                       |
-|---------------------------------------------|----------------------------------------------------------------|
-|**Commits that count toward contributions:** | ✅ Must be in the default branch or a forked repo with at least one star. | 
-|                                             | ✅ The commit must be authored by the user (email must match GitHub account). | 
-|                                             | ✅ Must be pushed to GitHub in a public repo or a private repo where the user is a contributor. | 
-|**Commits that do NOT count:**               | ❌ Commits in non-default branches or unstarred forks. | 
-|                                             | ❌ Commits made using an email not associated with GitHub. | 
-|                                             | ❌ Commits that are not pushed to GitHub. | 
+  <table>
+    <tr>
+      <th>GitHub Contribution Rules</th>
+      <th>Criteria</th>
+    </tr>
+    <tr>
+      <td><b>Commits that count toward contributions:</b></td>
+      <td>✅ Must be in the default branch or a forked repo with at least one star.</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>✅ The commit must be authored by the user (email must match GitHub account).</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>✅ Must be pushed to GitHub in a public repo or a private repo where the user is a contributor.</td>
+    </tr>
+    <tr>
+      <td><b>Commits that do NOT count:</b></td>
+      <td>❌ Commits in non-default branches or unstarred forks.</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>❌ Commits made using an email not associated with GitHub.</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>❌ Commits that are not pushed to GitHub.</td>
+    </tr>
+  </table>
 
 </details>
 
