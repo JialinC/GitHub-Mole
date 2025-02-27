@@ -157,7 +157,8 @@ const About: React.FC = () => {
               Jialin Cui, Runqiu Zhang, Qinjin Jia, Fangtong Zhou, Ruochi Li,
               and Edward F. Gehringer, "A Statistical Study of Female Students
               in a Software Engineering Class: Preparedness, Performance, and
-              Contribution"{" "}
+              Contribution," Frontiers in Education 2024, 54rd Annual
+              Conference, Washington DC, USA October 13-16, 2024.{" "}
               <a
                 href="https://drive.google.com/file/d/17wRdx54qm16f32RVFM0o6Hl7ZC0FwLUu/view?usp=drive_link"
                 target="_blank"
@@ -171,7 +172,7 @@ const About: React.FC = () => {
               Jialin Cui, Runqiu Zhang, Fangtong Zhou, Ruochi Li, Yang Song, and
               Edward Gehringer, "How Much Effort Do You Need to Expend on a
               Technical Interview? A Study of LeetCode Problem Solving
-              Statistics", Conference on Software Engineering Education and
+              Statistics," Conference on Software Engineering Education and
               Training (CSEE&T) 2024, Würzburg, Germany, July 29-August 1, 2024.{" "}
               <span className="font-semibold text-white">
                 Received Best Paper award
