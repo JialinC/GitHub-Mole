@@ -2,7 +2,8 @@
 🔹 [🏠 Home](index.md)  
 🔹 [📥 Installation](installation.md)  
 🔹 [🛠 Usage Guide](usage.md)  
-🔹 [⚙️ API Documentation](api.md)  
+🔹 [⚙️ API Documentation](api.md)
+🔹 [📓 Database Schema](schema.md)
 
 # ⚙️ API Documentation
 
