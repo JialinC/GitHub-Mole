@@ -7,6 +7,7 @@ Welcome to the official documentation for **GitHub-Mole**!
 - 📥 [Installation Guide](installation.md)
 - 🛠 [Usage Guide](usage.md)
 - ⚙️ [API Documentation](api.md)
+- 📓 [Database Schema](schema.md)
 
 ## 🔥 Getting Started
 To install **GitHub-Mole**, check out the [Installation Guide](installation.md).

@@ -2,7 +2,8 @@
 🔹 [🏠 Home](index.md)  
 🔹 [📥 Installation](installation.md)  
 🔹 [🛠 Usage Guide](usage.md)  
-🔹 [⚙️ API Documentation](api.md)  
+🔹 [⚙️ API Documentation](api.md)
+🔹 [📓 Database Schema](schema.md)
 
 # ⚙️ API Documentation
 
@@ -11,6 +12,8 @@ These APIs should only be called by the frontend code.
 Most of the APIs require a JWT token.
 
 ## 📘 Authentication API Documentation
+
+This API facilitates GitHub-based Single Sign-On (SSO) authentication for secure user access.
 
 ### 📌 Authentication
 
