@@ -13,6 +13,8 @@ Most of the APIs require a JWT token.
 
 ## 📘 Authentication API Documentation
 
+This API facilitates GitHub-based Single Sign-On (SSO) authentication for secure user access.
+
 ### 📌 Authentication
 
 All endpoints do not require authentication using JWT tokens.
